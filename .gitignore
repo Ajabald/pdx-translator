@@ -1,0 +1,28 @@
+# Данные пользователя — никогда не коммитим
+*.sqlite3
+*.sqlite3-*
+*.sqlite3.*
+*.ck3proj
+*.ck3proj-*
+*.ck3tm
+*.bak
+*.migrated
+Bdd/
+Projects/
+backups/
+
+# Окружение и сборка
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+
+# Редакторы и система
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

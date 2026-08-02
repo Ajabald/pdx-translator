@@ -1,0 +1,135 @@
+"""Тест миграции схемы v1 -> v2."""
+from __future__ import annotations
+
+import sqlite3
+
+from ck3loc.db import SCHEMA_VERSION, get_connection
+
+# DDL версии 1 — литералом, чтобы тест не зависел от текущего db.py
+V1_DDL = """
+CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE projects (
+    id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE,
+    en_root TEXT NOT NULL, ru_root TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')), last_opened_at TEXT
+);
+CREATE TABLE files (
+    id INTEGER PRIMARY KEY,
+    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    rel_path TEXT NOT NULL, is_orphan_ru INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0, UNIQUE(project_id, rel_path)
+);
+CREATE TABLE units (
+    id INTEGER PRIMARY KEY,
+    file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+    key TEXT NOT NULL, en_version TEXT NOT NULL DEFAULT '',
+    en_text TEXT, en_hash TEXT, prev_en_text TEXT, ru_text TEXT,
+    status TEXT NOT NULL DEFAULT 'untranslated'
+        CHECK (status IN ('untranslated','auto','translated','reviewed','stale','orphaned')),
+    line_no INTEGER, comment_before TEXT NOT NULL DEFAULT '',
+    comment_inline TEXT NOT NULL DEFAULT '', is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT,
+    UNIQUE(file_id, key)
+);
+CREATE INDEX idx_units_file ON units(file_id);
+CREATE INDEX idx_units_status ON units(status) WHERE is_deleted = 0;
+CREATE INDEX idx_units_hash ON units(en_hash);
+CREATE TABLE tm_entries (
+    id INTEGER PRIMARY KEY, en_hash TEXT NOT NULL, en_text TEXT NOT NULL,
+    ru_text TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'user',
+    project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL, key TEXT,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(en_hash, ru_text, source)
+);
+CREATE INDEX idx_tm_hash ON tm_entries(en_hash);
+CREATE TABLE scan_history (
+    id INTEGER PRIMARY KEY,
+    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    started_at TEXT NOT NULL, finished_at TEXT, stats_json TEXT
+);
+CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT);
+INSERT INTO schema_meta VALUES ('schema_version', '1');
+"""
+
+V1_STATUSES = ("untranslated", "auto", "translated", "reviewed", "stale", "orphaned")
+
+
+def make_v1_db(path):
+    conn = sqlite3.connect(path)
+    conn.executescript(V1_DDL)
+    conn.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1, 'p', 'e', 'r')")
+    conn.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1, 1, 'a_l_english.yml')")
+    for i, st in enumerate(V1_STATUSES):
+        if st == "orphaned":
+            # у осиротевших нет исходного текста, но есть перевод — он должен уцелеть
+            conn.execute(
+                "INSERT INTO units (file_id, key, en_text, en_hash, ru_text, status) "
+                "VALUES (1, ?, NULL, NULL, 'сирота', 'orphaned')", (f"key{i}",))
+            continue
+        conn.execute(
+            "INSERT INTO units (file_id, key, en_text, en_hash, ru_text, status) "
+            "VALUES (1, ?, ?, ?, ?, ?)",
+            (f"key{i}", f"text{i}", f"hash{i}",
+             f"перевод{i}" if st in ("translated", "reviewed", "stale") else None, st),
+        )
+    conn.execute("INSERT INTO tm_entries (en_hash, en_text, ru_text) VALUES ('h', 'e', 'r')")
+    conn.commit()
+    conn.close()
+
+
+def test_migration_v1_to_current(tmp_path):
+    """Цепочка v1 -> v2 -> v3 за одно открытие базы."""
+    db_path = tmp_path / "old.sqlite3"
+    make_v1_db(db_path)
+
+    conn = get_connection(db_path)
+    assert conn.execute(
+        "SELECT value FROM schema_meta WHERE key='schema_version'").fetchone()[0] == str(SCHEMA_VERSION)
+    # осиротевшая строка ушла в архив, остальные данные на месте
+    assert conn.execute("SELECT COUNT(*) FROM units").fetchone()[0] == len(V1_STATUSES) - 1
+    assert conn.execute("SELECT ru_text FROM units WHERE key='key2'").fetchone()[0] == "перевод2"
+    assert conn.execute(
+        "SELECT COUNT(*) FROM units WHERE status='orphaned'").fetchone()[0] == 0
+    archived = conn.execute("SELECT * FROM legacy_translations").fetchone()
+    assert archived["key"] == "key5" and archived["ru_text"] == "сирота"
+    # новые статусы пишутся, старый — нет
+    conn.execute("UPDATE units SET status='ignored' WHERE key='key0'")
+    conn.execute("UPDATE units SET status='custom' WHERE key='key2'")
+    conn.commit()
+    import pytest as _pytest
+    with _pytest.raises(sqlite3.IntegrityError):
+        conn.execute("UPDATE units SET status='orphaned' WHERE key='key1'")
+    with _pytest.raises(sqlite3.IntegrityError):
+        conn.execute("INSERT INTO units (file_id, key) VALUES (1, 'key1')")
+    # схема v3: языки проекта, project_meta, files.trailing, tm без project_id
+    proj_cols = {r[1] for r in conn.execute("PRAGMA table_info(projects)")}
+    assert {"src_lang", "tgt_lang"} <= proj_cols
+    assert conn.execute("SELECT src_lang FROM projects").fetchone()[0] == "english"
+    assert {r[1] for r in conn.execute("PRAGMA table_info(files)")} >= {"trailing"}
+    assert "is_orphan_ru" not in {r[1] for r in conn.execute("PRAGMA table_info(files)")}
+    assert "project_id" not in {r[1] for r in conn.execute("PRAGMA table_info(tm_entries)")}
+    assert conn.execute("SELECT COUNT(*) FROM tm_entries").fetchone()[0] == 1
+    conn.execute("SELECT COUNT(*) FROM project_meta")
+    assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
+    # бэкапы обеих ступеней
+    assert (tmp_path / "old.sqlite3.v1.bak").exists()
+    assert (tmp_path / "old.sqlite3.v2.bak").exists()
+    conn.close()
+
+    # повторное открытие — no-op
+    conn2 = get_connection(db_path)
+    assert conn2.execute("SELECT COUNT(*) FROM units").fetchone()[0] == len(V1_STATUSES) - 1
+    assert conn2.execute("SELECT status FROM units WHERE key='key0'").fetchone()[0] == "ignored"
+    assert conn2.execute("SELECT COUNT(*) FROM legacy_translations").fetchone()[0] == 1
+    conn2.close()
+
+
+def test_fresh_db_is_current(tmp_path):
+    conn = get_connection(tmp_path / "new.sqlite3")
+    conn.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1, 'p', 'e', 'r')")
+    conn.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1, 1, 'f')")
+    conn.execute("INSERT INTO units (file_id, key, en_text, status) VALUES (1, 'k', 'e', 'ignored')")
+    conn.execute("INSERT INTO legacy_translations (rel_path, key, ru_text) VALUES ('f','old','т')")
+    conn.commit()
+    assert conn.execute("SELECT tgt_lang FROM projects").fetchone()[0] == "russian"
+    conn.close()
