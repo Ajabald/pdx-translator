@@ -71,14 +71,32 @@ def test_total_noise_dropped(real_pairs):
     assert total < 300, f"проверки снова шумят: {total} сообщений"
 
 
-def test_new_checks_find_real_problems(real_pairs):
-    """Новые правила ловят настоящие огрехи, а не выдумывают их."""
-    found = {code: 0 for code in ("double_space", "edge_space", "unbalanced_quotes")}
-    for _key, en, ru in real_pairs:
+def test_paragraph_breaks_are_not_double_spaces(real_pairs):
+    """Регрессия: абзацный разрыв объявлялся двойным пробелом.
+
+    Правило заменяло каждый перенос строки (два символа: обратный слэш и «n»)
+    на пробел, поэтому `\\n\\n` выглядел как два пробела подряд. На живом моде
+    так помечались 84 перевода из 4851 — все до единого ложно, настоящих
+    двойных пробелов в переводах нет вовсе.
+    """
+    with_breaks = [(k, en, ru) for k, en, ru in real_pairs if "\\n\\n" in ru]
+    assert with_breaks, "в моде есть абзацные разрывы — иначе тест бессмысленен"
+    for key, en, ru in with_breaks:
+        assert "double_space" not in check_unit(en, ru), key
+
+
+def test_typographic_checks_do_not_invent_problems(real_pairs):
+    """Правила про пробелы и кавычки молчат на вычитанном тексте.
+
+    Если здесь начнёт срабатывать — сперва посмотреть глазами на строку: это
+    либо настоящая опечатка переводчика, либо снова ложное правило.
+    """
+    noisy = {code: [] for code in ("double_space", "edge_space", "unbalanced_quotes")}
+    for key, en, ru in real_pairs:
         for code in check_unit(en, ru):
-            if code in found:
-                found[code] += 1
-    assert found["double_space"] > 0, "двойные пробелы в переводах точно есть"
+            if code in noisy:
+                noisy[code].append(key)
+    assert not any(noisy.values()), {k: v[:5] for k, v in noisy.items() if v}
 
 
 def test_ignored_issue_disappears(db):

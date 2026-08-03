@@ -118,7 +118,10 @@ def check_unit(
         add("same_as_en")
     if ru_text != ru_text.strip():
         add("edge_space")
-    if "  " in ru_text.replace("\\n", " ").strip():
+    # Абзацный разрыв \n\n — не двойной пробел. Раньше escape-последовательности
+    # заменялись пробелом, и любое описание события с абзацами попадало в
+    # замечания. Считаем пробелы внутри отрезков между разрывами.
+    if any("  " in part for part in RE_NEWLINE.split(ru_text.strip())):
         add("double_space")
     if _unbalanced_pairs(ru_text):
         add("unbalanced_quotes")

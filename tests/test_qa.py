@@ -59,6 +59,27 @@ def test_newline_mismatch():
     assert "newline_mismatch" not in check_unit("a\\nb", "а\\nб")
 
 
+def test_paragraph_break_is_not_a_double_space():
+    """Регрессия: абзацный разрыв объявлялся опечаткой.
+
+    Перенос строки в формате Paradox записан двумя символами — обратным слэшем
+    и «n». Правило заменяло каждый такой перенос на пробел и потом искало два
+    пробела подряд, поэтому любой абзацный разрыв `\\n\\n` выглядел как двойной
+    пробел. На живом проекте так помечались 84 перевода из 4851 — все ложно.
+    """
+    assert "double_space" not in check_unit("Dawn.\\n\\nThen night.", "Рассвет.\\n\\nПотом ночь.")
+    # пробел рядом с переносом — тоже не двойной пробел
+    assert "double_space" not in check_unit("a\\nb", "а \\n б")
+
+
+def test_double_space_still_caught():
+    assert "double_space" in check_unit("Two words", "Два  слова")
+    assert "double_space" in check_unit("a\\nb", "аа  бб\\nвв")
+    # краевые пробелы — это отдельное замечание, не двойной пробел
+    codes = check_unit("Text", "  текст")
+    assert "edge_space" in codes and "double_space" not in codes
+
+
 def test_empty_translated():
     assert check_unit("Text", "   ") == ["empty_translated"]
 
