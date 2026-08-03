@@ -135,6 +135,40 @@ def test_roundtrip_semantic():
     assert py_.render(lf2.language, lf2.entries, lf2.trailing) == rendered
 
 
+def test_real_newline_escaped_on_write():
+    """Настоящий перенос строки в переводе разрывал запись пополам.
+
+    Нажать Enter в поле перевода или вставить текст из мессенджера — обычное
+    дело; в файле мода после этого первая половина оставалась без закрывающей
+    кавычки, а вторая переставала быть записью.
+    """
+    entry = LocEntry(key="k", version="0", text="Первая строка\nВторая строка")
+    rendered = py_.render("russian", [entry])
+
+    assert len(rendered.rstrip("\n").split("\n")) == 2      # заголовок и одна запись
+    again = py_.parse_text(rendered)
+    assert len(again.entries) == 1
+    assert again.entries[0].text == "Первая строка\\nВторая строка"
+    assert again.warnings == []
+
+
+def test_windows_newline_escaped():
+    rendered = py_.render("russian", [LocEntry(key="k", version="0", text="а\r\nб\rв")])
+    assert py_.parse_text(rendered).entries[0].text == "а\\nб\\nв"
+
+
+def test_existing_escape_untouched():
+    entry = LocEntry(key="k", version="0", text="Абзац\\n\\nВторой")
+    assert py_.parse_text(py_.render("russian", [entry])).entries[0].text == "Абзац\\n\\nВторой"
+
+
+def test_raw_quote_inside_value_preserved():
+    """Голая кавычка внутри значения — норма формата: в ванильной локализации
+    CK3 таких записей 8413. Экранировать их нельзя, иначе поедет текст."""
+    entry = LocEntry(key="k", version="0", text='Он сказал "нет" и ушёл')
+    assert py_.parse_text(py_.render("russian", [entry])).entries[0].text == 'Он сказал "нет" и ушёл'
+
+
 def test_write_file_bom(tmp_path):
     p = tmp_path / "out_l_russian.yml"
     py_.write_file(p, "russian", [LocEntry(key="k", version="0", text="привет")])

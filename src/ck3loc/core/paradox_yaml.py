@@ -114,6 +114,25 @@ def parse_file(path: Path) -> LocFile:
     return parse_text(text, source_name=path.name)
 
 
+_REAL_NEWLINE = re.compile(r"\r\n|[\r\n]")
+
+
+def escape_value(text: str) -> str:
+    """Привести значение к одной строке.
+
+    В формате Paradox перенос внутри текста записывается двумя символами
+    (обратный слэш и «n»); настоящий перевод строки разрывает запись пополам, и
+    файл становится битым: первая половина остаётся без закрывающей кавычки, а
+    вторая перестаёт быть записью. Попасть туда он может легко — достаточно
+    нажать Enter в поле перевода или вставить текст из мессенджера.
+
+    Кавычки при этом НЕ трогаем: игра читает значение до последней кавычки в
+    строке, и голая кавычка внутри текста — норма (в ванильной локализации CK3
+    таких записей 8413 против 89 с экранированной).
+    """
+    return _REAL_NEWLINE.sub(lambda _: "\\n", text)
+
+
 def render(language: str, entries: Iterable[LocEntry], trailing: str = "") -> str:
     """Собрать текст файла в каноническом формате (один пробел отступа у записей)."""
     parts: list[str] = [f"l_{language}:\n"]
@@ -121,9 +140,9 @@ def render(language: str, entries: Iterable[LocEntry], trailing: str = "") -> st
         if e.comment_before:
             parts.append(e.comment_before)
         ver = e.version if e.version else ""
-        line = f' {e.key}:{ver} "{e.text}"'
+        line = f' {e.key}:{ver} "{escape_value(e.text)}"'
         if e.comment_inline:
-            line += f" {e.comment_inline}"
+            line += " " + _REAL_NEWLINE.sub(" ", e.comment_inline)
         parts.append(line + "\n")
     if trailing:
         parts.append(trailing)
