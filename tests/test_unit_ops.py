@@ -45,6 +45,22 @@ def test_save_ru_text_transitions(db):
     assert u["prev_en_text"] is None
 
 
+def test_real_newline_normalized_on_save(db):
+    """Enter в поле перевода не должен разводить базу с файлом.
+
+    Раньше настоящий перенос строки доживал до базы, при записи в мод
+    превращался в escape-последовательность формата Paradox — и каждое
+    следующее сканирование докладывало «расхождение с файлом» на строке,
+    которую никто не трогал.
+    """
+    ids = seed(db)
+    unit_ops.save_ru_text(db, ids["k4"], "Первая\nВторая\r\nТретья")
+
+    assert get(db, ids["k4"])["ru_text"] == "Первая\\nВторая\\nТретья"
+    # в память переводов попадает то же самое, иначе подсказки разъедутся
+    assert tm.lookup(db, "World")[0].ru_text == "Первая\\nВторая\\nТретья"
+
+
 def test_save_feeds_tm(db):
     ids = seed(db)
     unit_ops.save_ru_text(db, ids["k4"], "Мир")

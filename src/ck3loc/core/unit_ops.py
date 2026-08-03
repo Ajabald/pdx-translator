@@ -10,7 +10,7 @@ import sqlite3
 import uuid
 from collections.abc import Iterable
 
-from ck3loc.core import qa, tm
+from ck3loc.core import paradox_yaml, qa, tm
 from ck3loc.core.statuses import Status
 
 # Статусы, которые нельзя ставить без наличия перевода
@@ -145,6 +145,11 @@ def save_ru_text(
     row = conn.execute("SELECT * FROM units WHERE id = ?", (unit_id,)).fetchone()
     if row is None:
         return
+    # Настоящий перенос строки приводим к виду формата Paradox сразу при записи
+    # в базу, а не только при выгрузке в мод: иначе база и файл расходятся
+    # ровно на этот символ, и каждое следующее сканирование докладывает
+    # «расхождение с файлом» на строке, которую никто не трогал.
+    text = paradox_yaml.escape_value(text)
     ru_text = text if text.strip() else None
     if ru_text != row["ru_text"]:
         record_history(conn, [unit_id], origin=origin, batch_id=batch_id)
