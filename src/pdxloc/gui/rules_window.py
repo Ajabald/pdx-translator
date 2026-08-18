@@ -19,19 +19,21 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Qt, QThread, QTimer, Signal
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
-    QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+    QAbstractItemView, QComboBox, QDialog, QDialogButtonBox,
     QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QMenu, QMessageBox,
-    QPlainTextEdit, QPushButton, QScrollArea, QSpinBox, QSplitter, QTabWidget,
+    QLineEdit, QMenu, QMessageBox,
+    QPlainTextEdit, QPushButton, QScrollArea, QSplitter, QTabWidget,
     QTableWidget, QTableWidgetItem, QToolButton, QTreeWidget, QTreeWidgetItem,
     QVBoxLayout, QWidget,
 )
 
 from pdxloc import __version__, settings
-from pdxloc.core import languages, qa, qa_exchange, qa_rules
+from pdxloc.core import languages, qa_exchange, qa_rules
 from pdxloc.core.i18n import QT_TRANSLATE_NOOP, fill, translate
 from pdxloc.core.qa_rules import Rule, RuleSet
 from pdxloc.gui import rules_state, theme
+from pdxloc.gui.rules_ignores_tab import IgnoresTab
+from pdxloc.gui.rules_param_editors import ParamEditors
 
 GLOBAL, PROJECT = "global", "project"
 SCOPE_LABELS = {
@@ -95,172 +97,6 @@ class _CountWorker(QObject):
         self.done.emit(counts, len(rows))
 
 
-# --- редакторы параметров ------------------------------------------------
-
-
-class _ParamEditors(QWidget):
-    """Поля параметров правила, собранные по типу значения.
-
-    Тип берём у значения по умолчанию: список строк — поле через запятую,
-    целое — счётчик, `bool` — галка, строка из фиксированного набора —
-    выпадающий список. Отдельной схемы типов нет намеренно: она разошлась бы
-    с самими параметрами при первой же правке `qa_rules.py`.
-    """
-
-    changed = Signal()
-
-    # параметры, у которых значения — перечисление, а не свободный текст
-    CHOICES = {
-        "compare": ("multiset", "set", "count"),
-        "direction": ("any", "fewer", "more"),
-        "mode": ("forbid", "require"),
-    }
-    HINTS = {
-        "ignore_extra_heads": QT_TRANSLATE_NOOP(
-            "RulesWindow", "Comma separated: Concept, Select_CString"),
-        "allow_extra_tags": QT_TRANSLATE_NOOP(
-            "RulesWindow", "Comma separated: #L, #P"),
-        "ignore_tags": QT_TRANSLATE_NOOP("RulesWindow", "Comma separated"),
-        "ending_wrappers": QT_TRANSLATE_NOOP("RulesWindow", "Comma separated"),
-        "ending_suffixes": QT_TRANSLATE_NOOP("RulesWindow", "Comma separated"),
-        "verbs": QT_TRANSLATE_NOOP(
-            "RulesWindow",
-            "Comma separated; fragments of a regular expression are allowed"),
-        "compare": QT_TRANSLATE_NOOP(
-            "RulesWindow", "multiset — with counts, set — composition only, "
-                           "count — the number only"),
-        "direction": QT_TRANSLATE_NOOP(
-            "RulesWindow", "any — any discrepancy, fewer — lost ones only, "
-                           "more — extra ones only"),
-        "allow_replacement": QT_TRANSLATE_NOOP(
-            "RulesWindow", "The wrapper is not «on top of» but «instead of» the "
-                           "reference — 59% of all bracket discrepancies"),
-        "compare_with_source": QT_TRANSLATE_NOOP(
-            "RulesWindow", "Stay silent if the same space is in the original"),
-        "only_if_source_balanced": QT_TRANSLATE_NOOP(
-            "RulesWindow", "Stay silent if the original itself is unbalanced"),
-        "ignore_if_in_source": QT_TRANSLATE_NOOP(
-            "RulesWindow", "Stay silent if the double space is in the original"),
-        "ignore_flags": QT_TRANSLATE_NOOP(
-            "RulesWindow", "Do not count formatting flags like |E as a discrepancy"),
-        "strip_markup_first": QT_TRANSLATE_NOOP(
-            "RulesWindow", "Count brackets after stripping the markup"),
-        "only_if_all_lost": QT_TRANSLATE_NOOP(
-            "RulesWindow", "Complain only when not a single variable is left in "
-                           "the translation, and stay silent when the set merely "
-                           "differs"),
-        # параметры своих правил
-        "pattern": QT_TRANSLATE_NOOP(
-            "RulesWindow", "A regular expression; a match counts whole, "
-                           "brackets inside do not change that"),
-        "source": QT_TRANSLATE_NOOP(
-            "RulesWindow", "A regular expression over the original"),
-        "target": QT_TRANSLATE_NOOP(
-            "RulesWindow", "What must be in the translation. Groups of the "
-                           "original are substituted as \\1"),
-        "target_as_regex": QT_TRANSLATE_NOOP(
-            "RulesWindow", "Treat the answer as a regular expression too. Off, "
-                           "the answer is searched as plain text — that is why "
-                           "$\\1$ works"),
-        "mode": QT_TRANSLATE_NOOP(
-            "RulesWindow", "forbid — fires when found, require — fires when "
-                           "missing"),
-        "ignore_case": QT_TRANSLATE_NOOP("RulesWindow", "Ignore the case"),
-        "pairs": QT_TRANSLATE_NOOP(
-            "RulesWindow", "Comma separated, two characters each: «», ()"),
-        "chars": QT_TRANSLATE_NOOP(
-            "RulesWindow", "In a row, without separators: …—"),
-        "tolerance": QT_TRANSLATE_NOOP(
-            "RulesWindow", "How big a difference is still not an issue"),
-    }
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._form = QFormLayout(self)
-        self._form.setContentsMargins(0, 0, 0, 0)
-        self._widgets: dict[str, QWidget] = {}
-        self._kinds: dict[str, type] = {}
-
-    def set_rule(self, rule: Rule) -> None:
-        while self._form.count():
-            item = self._form.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        self._widgets.clear()
-        self._kinds.clear()
-
-        for name, value in rule.params.items():
-            widget = self._make(name, value)
-            if widget is None:
-                continue
-            hint = self.HINTS.get(name)
-            if hint:
-                widget.setToolTip(translate("RulesWindow", hint))
-            self._widgets[name] = widget
-            self._kinds[name] = type(value)
-            self._form.addRow(name, widget)
-
-    def _make(self, name: str, value) -> QWidget | None:
-        if isinstance(value, bool):
-            box = QCheckBox()
-            box.setChecked(value)
-            box.toggled.connect(lambda _: self.changed.emit())
-            return box
-        if isinstance(value, int):
-            spin = QSpinBox()
-            spin.setRange(0, 10_000)
-            spin.setValue(value)
-            spin.valueChanged.connect(lambda _: self.changed.emit())
-            return spin
-        if isinstance(value, float):
-            edit = QLineEdit(str(value))
-            edit.editingFinished.connect(self.changed.emit)
-            return edit
-        if isinstance(value, (list, tuple)):
-            edit = QLineEdit(", ".join(str(v) for v in value))
-            edit.editingFinished.connect(self.changed.emit)
-            return edit
-        if isinstance(value, str):
-            choices = self.CHOICES.get(name)
-            if choices:
-                combo = QComboBox()
-                combo.addItems(choices)
-                combo.setCurrentText(value)
-                combo.currentTextChanged.connect(lambda _: self.changed.emit())
-                return combo
-            edit = QLineEdit(value)
-            edit.editingFinished.connect(self.changed.emit)
-            return edit
-        return None
-
-    def values(self, rule: Rule) -> dict:
-        """Значения полей, приведённые к типу параметра по умолчанию."""
-        out: dict = {}
-        for name, default in rule.params.items():
-            widget = self._widgets.get(name)
-            if widget is None:
-                out[name] = default
-                continue
-            out[name] = self._read(widget, default)
-        return out
-
-    @staticmethod
-    def _read(widget: QWidget, default):
-        if isinstance(widget, QCheckBox):
-            return widget.isChecked()
-        if isinstance(widget, QSpinBox):
-            return widget.value()
-        if isinstance(widget, QComboBox):
-            return widget.currentText()
-        text = widget.text().strip()
-        if isinstance(default, (list, tuple)):
-            return [p.strip() for p in text.split(",") if p.strip()]
-        if isinstance(default, float):
-            try:
-                return float(text.replace(",", "."))
-            except ValueError:
-                return default
-        return text
 
 
 # --- вкладка «Правила» ---------------------------------------------------
@@ -476,7 +312,7 @@ class RulesTab(QWidget):
 
         params_box = QGroupBox(translate("RulesWindow", "Leniency"))
         params_layout = QVBoxLayout(params_box)
-        self.params = _ParamEditors()
+        self.params = ParamEditors()
         self.params.changed.connect(self._on_edited)
         params_layout.addWidget(self.params)
         self.no_params_label = QLabel(translate("RulesWindow", "This rule has no settings."))
@@ -1247,114 +1083,6 @@ class NewRuleDialog(QDialog):
         return self.title_edit.text().strip(), self.kind_combo.currentData()
 
 
-# --- вкладка «Помеченные „не ошибка“» ------------------------------------
-
-
-class IgnoresTab(QWidget):
-    """Заглушённые замечания и возврат их в проверку.
-
-    `qa.unignore_issue` существовал с самого начала, но из интерфейса не
-    вызывался нигде: пометив замечание ложным по ошибке, вернуть его было
-    нельзя иначе как правкой базы руками.
-    """
-
-    changed = Signal()
-
-    def __init__(self, conn: sqlite3.Connection | None, parent=None):
-        super().__init__(parent)
-        self.conn = conn
-        layout = QVBoxLayout(self)
-
-        # Пустой список ничего не сообщает о том, что это за вкладка и как сюда
-        # что-то попадает, — а попадает оно из другого окна, из отчёта F6.
-        # Пустое состояние обязано отвечать на вопрос «что это», иначе его
-        # задают вслух.
-        self.empty_label = QLabel(translate(
-            "RulesWindow",
-            "Nothing has been silenced yet.\n\n"
-            "This is where issues go after the «Not an error» button in the "
-            "check report (F6): a silenced issue stops showing up both in the "
-            "report and in the «!» column of the table. From here it can be "
-            "put back into the check."))
-        self.empty_label.setWordWrap(True)
-        self.empty_label.setAlignment(Qt.AlignCenter)
-        self.empty_label.setEnabled(False)      # приглушённый, это не ошибка
-        layout.addWidget(self.empty_label, 1)
-
-        self.list = QListWidget()
-        self.list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        layout.addWidget(self.list, 1)
-
-        row = QHBoxLayout()
-        self.return_btn = QPushButton(translate("RulesWindow", "Return to the check"))
-        self.return_btn.clicked.connect(self._return_selected)
-        row.addWidget(self.return_btn)
-        self.return_all_btn = QPushButton(translate("RulesWindow", "Return all"))
-        self.return_all_btn.clicked.connect(self._return_all)
-        row.addWidget(self.return_all_btn)
-        row.addStretch(1)
-        layout.addLayout(row)
-        self.reload()
-
-    def reload(self) -> None:
-        self.list.clear()
-        if self.conn is None:
-            return
-        try:
-            rows = self.conn.execute(
-                """SELECT g.unit_id, g.code, u.key, f.rel_path
-                   FROM qa_ignores g
-                   JOIN units u ON u.id = g.unit_id
-                   JOIN files f ON f.id = u.file_id
-                   ORDER BY f.rel_path, u.key"""
-            ).fetchall()
-        except sqlite3.Error:
-            rows = []
-        rules = rules_state.ruleset()
-        for row in rows:
-            item = QListWidgetItem(
-                f"{row['key']} — {rules.message(row['code'])}  ({row['rel_path']})")
-            item.setData(Qt.UserRole, (row["unit_id"], row["code"]))
-            self.list.addItem(item)
-        self.return_btn.setEnabled(bool(rows))
-        self.return_all_btn.setEnabled(bool(rows))
-        # Список и объяснение делят одно место: пустой список показывать не за
-        # чем, а объяснение при непустом только мешало бы
-        self.list.setVisible(bool(rows))
-        self.empty_label.setVisible(not rows)
-
-    def status_text(self) -> str:
-        n = self.list.count()
-        if not n:
-            return translate("RulesWindow", "Nothing is marked «not an error».")
-        return fill(translate("RulesWindow", "Marked «not an error»: %1."), n)
-
-    def _return(self, pairs) -> None:
-        if self.conn is None or not pairs:
-            return
-        for unit_id, code in pairs:
-            qa.unignore_issue(self.conn, unit_id, code)
-        self.reload()
-        self.changed.emit()
-
-    def _return_selected(self) -> None:
-        self._return([i.data(Qt.UserRole) for i in self.list.selectedItems()])
-
-    def _return_all(self) -> None:
-        if not self.list.count():
-            return
-        if QMessageBox.question(
-                self, translate("RulesWindow", "Return all"),
-                fill(translate("RulesWindow",
-                               "Return all %1 issues to the check?"),
-                     self.list.count())
-        ) != QMessageBox.Yes:
-            return
-        self._return([self.list.item(i).data(Qt.UserRole)
-                      for i in range(self.list.count())])
-
-    def shutdown(self) -> None:
-        pass
 
 
 # --- окно ----------------------------------------------------------------
