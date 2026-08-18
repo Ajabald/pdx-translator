@@ -56,6 +56,12 @@ def main() -> int:
     parser.add_argument("--tgt-lang", default="russian", help="Translation language")
     args = parser.parse_args()
 
+    # Лог заводится до ветвления: он нужен обоим режимам, а `logs` намеренно не
+    # тянет Qt — иначе `--scan-cli` перестал бы работать там, где PySide6 нет.
+    from pdxloc import logs
+
+    logs.setup()
+
     if args.project and (args.scan or args.create):
         return _scan_cli(args)
 
