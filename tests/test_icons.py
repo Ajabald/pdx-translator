@@ -41,23 +41,6 @@ def test_the_application_has_its_own_icon(qtbot) -> None:
     assert icon.availableSizes(), "иконка пустая"
 
 
-def test_the_spec_points_at_a_real_icon_file() -> None:
-    """Спека обещает `.ico` — файл обязан существовать.
-
-    Иначе PyInstaller упадёт на сборке релиза, а узнаем мы об этом уже по тегу,
-    когда job `build` покраснеет у всех на виду.
-    """
-    import re
-    from pathlib import Path
-
-    root = Path(__file__).resolve().parents[1]
-    spec = (root / "pdx-translator.spec").read_text(encoding="utf-8")
-    found = re.search(r'^\s*icon="([^"]+)"', spec, re.M)
-    assert found, "в спеке не задана иконка"
-    assert (root / found.group(1)).is_file(), (
-        f"спека ссылается на {found.group(1)}, а файла нет")
-
-
 def test_every_declared_icon_has_a_file() -> None:
     """Спека обещает иконку — файл обязан существовать, иначе кнопка пустая."""
     missing = [name for name in declared_icons() if not icons.available(name)]

@@ -7,6 +7,56 @@
 
 block_cipher = None
 
+# --- свойства exe ---------------------------------------------------------
+#
+# Без ресурса версии у файла пустая вкладка «Подробно», и это не косметика:
+# безымянный exe без издателя и описания — типовой признак для эвристик
+# антивирусов, а подписывать сборку нам нечем.
+#
+# Версия НЕ дублируется здесь строкой, а читается из `pdxloc.__init__`:
+# продублированная, она разъезжается с настоящей на первом же выпуске, и
+# заметить это некому — свойства файла никто не читает, пока не понадобятся.
+# Разбор регуляркой, а не импортом: спека выполняется до того, как пакет
+# оказывается на пути, и импорт тянул бы за собой PySide6 ради одной строки.
+
+import re
+from pathlib import Path
+
+from PyInstaller.utils.win32.versioninfo import (
+    FixedFileInfo, StringFileInfo, StringStruct, StringTable, VarFileInfo,
+    VarStruct, VSVersionInfo,
+)
+
+_init = Path("src/pdxloc/__init__.py").read_text(encoding="utf-8")
+VERSION = re.search(r'__version__\s*=\s*"([^"]+)"', _init).group(1)
+COPYRIGHT = re.search(r'COPYRIGHT\s*=\s*"([^"]+)"', _init).group(1)
+
+# Windows хочет ровно четыре числа; «0.1.0» превращается в (0, 1, 0, 0).
+_numbers = tuple(int(p) for p in VERSION.split(".")) + (0, 0, 0, 0)
+FILEVERS = _numbers[:4]
+
+version_info = VSVersionInfo(
+    ffi=FixedFileInfo(filevers=FILEVERS, prodvers=FILEVERS,
+                      mask=0x3F, flags=0x0, OS=0x40004, fileType=0x1),
+    kids=[
+        # Кодовая страница 04B0 — Unicode. Язык 0000 «нейтральный», а не
+        # английский: интерфейс переключается между тремя языками, и объявлять
+        # файл англоязычным было бы неправдой.
+        StringFileInfo([StringTable("000004B0", [
+            StringStruct("CompanyName", "Ajabald"),
+            StringStruct("ProductName", "PDX Translator"),
+            StringStruct("FileDescription",
+                         "Offline workbench for translating Paradox mod localisation"),
+            StringStruct("FileVersion", VERSION),
+            StringStruct("ProductVersion", VERSION),
+            StringStruct("InternalName", "pdx-translator"),
+            StringStruct("OriginalFilename", "pdx-translator.exe"),
+            StringStruct("LegalCopyright", f"{COPYRIGHT}. GNU GPL v3 or later."),
+        ])]),
+        VarFileInfo([VarStruct("Translation", [0, 1200])]),
+    ],
+)
+
 a = Analysis(
     ["src/pdxloc/__main__.py"],
     pathex=["src"],
@@ -46,6 +96,7 @@ exe = EXE(
     # `app.setWindowIcon` из `gui/icons/app.png`. Оба файла собирает
     # `tools/make_icon.py` из одного исходника.
     icon="pdx-translator.ico",
+    version=version_info,
 )
 
 coll = COLLECT(
