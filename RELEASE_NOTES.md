@@ -36,13 +36,19 @@ First public release.
 
 ## 📥 Download
 
-**Windows 10/11, 64-bit**
+**Windows 10/11, 64-bit** — no Python needed either way.
 
+* [**pdx-translator-setup-0.1.0.exe**](https://github.com/Ajabald/pdx-translator/releases/download/v0.1.0/pdx-translator-setup-0.1.0.exe) — installer *(recommended)*
 * [**pdx-translator-v0.1.0.zip**](https://github.com/Ajabald/pdx-translator/releases/download/v0.1.0/pdx-translator-v0.1.0.zip) — portable, 50 MB
 
-Unpack anywhere and run `pdx-translator.exe`. No Python and no installation
-needed: the `Bdd` and `Projects` folders are created next to the executable, so
-it can live on a flash drive.
+The installer asks for no administrator rights and installs for the current
+user. That is not laziness: the application keeps `Bdd`, `Projects` and
+`backups` next to itself, and inside `Program Files` a normal user cannot write
+there. Uninstalling leaves those folders alone — they hold your memory
+databases, projects and backups of translations.
+
+The portable archive is the same build: unpack it anywhere, run
+`pdx-translator.exe`, and it can live on a flash drive.
 
 From source (Python 3.11 or newer) — see the
 [README](https://github.com/Ajabald/pdx-translator#installing-and-running).

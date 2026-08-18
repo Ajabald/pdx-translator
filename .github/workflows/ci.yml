@@ -82,9 +82,25 @@ jobs:
         run: pyinstaller pdx-translator.spec
       - name: Package
         run: Compress-Archive -Path dist/pdx-translator/* -DestinationPath pdx-translator-${{ github.ref_name }}.zip
+      - name: Install Inno Setup
+        # На образе раннера его нет; choco там есть всегда.
+        run: choco install innosetup --no-progress -y
+      - name: Installer
+        # Версия без «v»: тег зовётся v0.1.0, а Windows в свойствах файла хочет
+        # числа. `VersionInfoVersion` от «v» подавился бы.
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v',''
+          # Скобки в имени обязательно в ${...}: без них PowerShell обрывает
+          # имя переменной на ProgramFiles, а «(x86)» разбирает отдельно.
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe не найден: $iscc" }
+          & $iscc /DAppVersion=$version installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "сборка установщика не удалась" }
       - uses: softprops/action-gh-release@v2
         with:
-          files: pdx-translator-*.zip
+          files: |
+            pdx-translator-*.zip
+            pdx-translator-setup-*.exe
           name: PDX Translator ${{ github.ref_name }}
           # Описание релиза лежит в репозитории и правится вместе с кодом.
           # Иначе оно пишется в веб-форме второпях и нигде не хранится: к

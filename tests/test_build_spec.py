@@ -80,3 +80,50 @@ def test_the_workflow_uses_the_release_notes() -> None:
     root = Path(__file__).resolve().parents[1]
     workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     assert "body_path: RELEASE_NOTES.md" in workflow
+
+
+def test_the_installer_stays_out_of_program_files() -> None:
+    """Установщик обязан ставить для пользователя, а не в Program Files.
+
+    Приложение держит `Bdd`, `Projects`, `backups`, `qa_rules.json` и лог рядом
+    с собой (`settings.app_root`). В Program Files обычному пользователю писать
+    нельзя, и всё это молча сломалось бы. Поменяй кто-нибудь `PrivilegesRequired`
+    — тест это увидит.
+    """
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    iss = (root / "installer.iss").read_text(encoding="utf-8")
+    assert "PrivilegesRequired=lowest" in iss
+
+
+def test_the_installer_does_not_delete_translator_work() -> None:
+    """Удаление не должно уносить папки с работой переводчика.
+
+    `[UninstallDelete]` в скрипте быть не должно вовсе: базы памяти, проекты и
+    резервные копии переводов — месяцы чужого труда, и вернуть их неоткуда.
+    """
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    iss = (root / "installer.iss").read_text(encoding="utf-8")
+    assert "[UninstallDelete]" not in iss
+
+
+def test_the_installer_version_comes_from_outside() -> None:
+    """Версия приходит параметром, а не третьей копией в скрипте."""
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    iss = (root / "installer.iss").read_text(encoding="utf-8")
+    assert "#define AppVersion" not in iss, "версия вписана в скрипт — разъедется"
+    assert "AppVersion={#AppVersion}" in iss
+
+
+def test_the_workflow_builds_and_attaches_the_installer() -> None:
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "installer.iss" in workflow, "установщик не собирается"
+    assert "pdx-translator-setup-*.exe" in workflow, "установщик не прикладывается"
