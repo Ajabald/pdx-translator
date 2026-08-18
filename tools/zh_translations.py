@@ -46,7 +46,7 @@ CHECKED: dict[str, int] = {
     "Languages": 16,
     "LanguagesDialog": 11,
     "LocImport": 9,
-    "MainWindow": 81,
+    "MainWindow": 82,
     "Mt": 12,
     "MtDialog": 27,
     "MtRun": 8,
@@ -762,8 +762,10 @@ ZH["MainWindow"] = {
         "已恢复行数：%1",
     "(no project open)":
         "（未打开项目）",
-    "A translator for Crusader Kings 3 mod localizations.<br>Format: Paradox pseudo-YAML (UTF-8 with BOM).<br><br>":
-        "用于《十字军之王 3》模组本地化的翻译工具。<br>格式：Paradox 伪 YAML（带 BOM 的 UTF-8）。<br><br>",
+    "A translator's workbench for the localisation of Paradox game mods.<br>Format: Paradox pseudo-YAML (UTF-8 with BOM) and the older CSV.<br><br>":
+        "用于 Paradox 游戏模组本地化的译者工作台。<br>格式：Paradox 伪 YAML（带 BOM 的 UTF-8）以及旧版 CSV。<br><br>",
+    "This program comes with ABSOLUTELY NO WARRANTY. It is free software, and you are welcome to redistribute it under the terms of the GNU General Public License, version 3 or later — see the LICENSE file.<br><br>Uses Qt through PySide6 under the GNU LGPL v3.<br><br>":
+        "本程序不提供任何担保。这是自由软件，欢迎你依照 GNU 通用公共许可证第 3 版或更新版本的条款重新分发它——参见 LICENSE 文件。<br><br>通过 PySide6 使用 Qt，依照 GNU LGPL v3 授权。<br><br>",
     "Project: %1<br>Memory databases: %2":
         "项目：%1<br>记忆库数据库：%2",
 }

@@ -1916,17 +1916,22 @@ Scanning re-reads the files under the new names.</source>
         <translation>已恢复行数：%1</translation>
     </message>
     <message>
-        <location line="+91"/>
+        <location line="+102"/>
         <source>(no project open)</source>
         <translation>（未打开项目）</translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>A translator for Crusader Kings 3 mod localizations.&lt;br&gt;Format: Paradox pseudo-YAML (UTF-8 with BOM).&lt;br&gt;&lt;br&gt;</source>
-        <translation>用于《十字军之王 3》模组本地化的翻译工具。&lt;br&gt;格式：Paradox 伪 YAML（带 BOM 的 UTF-8）。&lt;br&gt;&lt;br&gt;</translation>
+        <source>A translator&apos;s workbench for the localisation of Paradox game mods.&lt;br&gt;Format: Paradox pseudo-YAML (UTF-8 with BOM) and the older CSV.&lt;br&gt;&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
+        <source>This program comes with ABSOLUTELY NO WARRANTY. It is free software, and you are welcome to redistribute it under the terms of the GNU General Public License, version 3 or later — see the LICENSE file.&lt;br&gt;&lt;br&gt;Uses Qt through PySide6 under the GNU LGPL v3.&lt;br&gt;&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Project: %1&lt;br&gt;Memory databases: %2</source>
         <translation>项目：%1&lt;br&gt;记忆库数据库：%2</translation>
     </message>
@@ -4967,7 +4972,7 @@ An unfinished database file will not be created.</source>
 <context>
     <name>Toolbar</name>
     <message>
-        <location filename="../main_window.py" line="-768"/>
+        <location filename="../main_window.py" line="-787"/>
         <location filename="../toolbar.py" line="+137"/>
         <source>Toolbar</source>
         <translation>工具栏</translation>

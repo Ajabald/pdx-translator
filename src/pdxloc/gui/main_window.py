@@ -1038,15 +1038,34 @@ class MainWindow(QMainWindow):
         self._update_status_bar()
 
     def _about(self) -> None:
-        from pdxloc import __version__
+        """Окно «О программе». Оно же — уведомление об условиях распространения.
+
+        Так просит само приложение к GPL-3.0 («How to Apply These Terms»): для
+        программы с окнами уведомление об отсутствии гарантий показывают именно
+        в about box, а не в консоли, которой у нас нет.
+
+        Про Qt сказано здесь же, и это не вежливость: в портативной сборке Qt
+        уезжает внутрь архива (93 МБ из 120), то есть мы его распространяем, а
+        LGPL требует сообщить получателю, что библиотека там и под какой
+        лицензией.
+        """
+        from pdxloc import COPYRIGHT, __version__
 
         where = self.project_path or translate("MainWindow", "(no project open)")
         QMessageBox.about(
             self, PRODUCT,
-            f"<b>{PRODUCT}</b> v{__version__}<br><br>"
+            f"<b>{PRODUCT}</b> v{__version__}<br>{COPYRIGHT}<br><br>"
             + translate("MainWindow",
-                        "A translator for Crusader Kings 3 mod localizations.<br>"
-                        "Format: Paradox pseudo-YAML (UTF-8 with BOM).<br><br>")
+                        "A translator's workbench for the localisation of "
+                        "Paradox game mods.<br>"
+                        "Format: Paradox pseudo-YAML (UTF-8 with BOM) and the "
+                        "older CSV.<br><br>")
+            + translate("MainWindow",
+                        "This program comes with ABSOLUTELY NO WARRANTY. It is "
+                        "free software, and you are welcome to redistribute it "
+                        "under the terms of the GNU General Public License, "
+                        "version 3 or later — see the LICENSE file.<br><br>"
+                        "Uses Qt through PySide6 under the GNU LGPL v3.<br><br>")
             + fill(translate("MainWindow", "Project: %1<br>Memory databases: %2"),
                    where, settings.bdd_dir()))
 

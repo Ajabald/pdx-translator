@@ -255,10 +255,18 @@ RU["MainWindow"] = {
     "Rows reverted: %1": "Возвращено строк: %1",
     # о программе
     "(no project open)": "(проект не открыт)",
-    "A translator for Crusader Kings 3 mod localizations.<br>"
-    "Format: Paradox pseudo-YAML (UTF-8 with BOM).<br><br>":
-        "Переводчик локализаций модов Crusader Kings 3.<br>"
-        "Формат: Paradox pseudo-YAML (UTF-8 c BOM).<br><br>",
+    "A translator's workbench for the localisation of Paradox game mods.<br>"
+    "Format: Paradox pseudo-YAML (UTF-8 with BOM) and the older CSV.<br><br>":
+        "Рабочее место переводчика локализаций модов игр Paradox.<br>"
+        "Формат: Paradox pseudo-YAML (UTF-8 c BOM) и старый CSV.<br><br>",
+    "This program comes with ABSOLUTELY NO WARRANTY. It is free software, and "
+    "you are welcome to redistribute it under the terms of the GNU General "
+    "Public License, version 3 or later — see the LICENSE file.<br><br>"
+    "Uses Qt through PySide6 under the GNU LGPL v3.<br><br>":
+        "Программа распространяется БЕЗ ВСЯКИХ ГАРАНТИЙ. Это свободное "
+        "программное обеспечение, и вы можете распространять его на условиях "
+        "GNU General Public License версии 3 или новее — см. файл LICENSE."
+        "<br><br>Использует Qt через PySide6 на условиях GNU LGPL v3.<br><br>",
     "Project: %1<br>Memory databases: %2": "Проект: %1<br>Базы памяти: %2",
     "Project languages": "Языки проекта",
     "The language of the folders changed. Scan the project now?\n\n"

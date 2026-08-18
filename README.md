@@ -216,17 +216,18 @@ What matters here:
 «Checks → Configure checks…» (Shift+F6). What counts as an error depends on the
 mod, the language and the stage of the work, so the rule set is not a constant:
 
-- **15 built-in rules.** For each you can set whether it is on, its severity
+- **17 built-in rules.** For each you can set whether it is on, its severity
   (error or warning) and its leniencies — for example, which inflection wrappers
   should not count as a bracket mismatch.
 - **Your own rules** in six kinds: token multiset comparison, token count, a
   regular expression over the translation, one over the source–translation pair,
   character balance, and forbidden characters. A custom rule is configured
   entirely, message text and examples included.
-- **Four ready-made sets**: «Strict», «CK3 · Russian (recommended)»,
-  «Breakage only» and «Own». The difference is not cosmetic: on a live
-  translation of 136 113 rows the strict set reports 41 713 issues, the built-in
-  defaults 37 040, «CK3 · Russian» 12 591 and «Breakage only» 11 404.
+- **Seven ready-made sets**: «Strict», «Breakage only», «Own», and one per game
+  and language — «CK3 · Russian», «HOI4 · Russian», «CK2 · Russian»,
+  «Stellaris · Russian». The difference is not cosmetic: on a live translation
+  of 136 113 rows the strict set reports 41 713 issues, the built-in defaults
+  37 040, «CK3 · Russian» 12 591 and «Breakage only» 11 404 (measured 2026-08-10).
 - **Three layers**: built-in values, the global `qa_rules.json` next to the
   application, and the settings stored inside the project itself. Each layer
   keeps only the differences, so updating the application does not wipe your
@@ -315,5 +316,17 @@ Building the portable version: `pyinstaller pdx-translator.spec`.
 
 ## Licence
 
-[GNU GPL v3](LICENSE) or later. Forking and reworking is free; derivative works
-must stay under the same licence with the source open.
+Copyright (C) 2026 Ajabald
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the [GNU General Public License](LICENSE) as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. It is distributed in the hope that it will be useful, but
+**WITHOUT ANY WARRANTY** — without even the implied warranty of merchantability
+or fitness for a particular purpose. See the GNU General Public License for more
+details.
+
+Forking and reworking is free; derivative works must stay under the same licence
+with the source open.
+
+Third-party components and their licences — [THIRD-PARTY.md](THIRD-PARTY.md).

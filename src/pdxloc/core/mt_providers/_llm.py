@@ -53,7 +53,15 @@ SCHEMA = {
 }
 
 CONTRACT = (
-    "You translate strings from a Crusader Kings III mod.\n"
+    # Игра здесь не названа намеренно. Раньше стояло «a Crusader Kings III
+    # mod», и при переводе мода HOI4 или Stellaris модели сообщали заведомую
+    # неправду — а домен она из промпта и берёт. Прокинуть настоящую игру
+    # сюда мешает подпись `build_prompt`: до провайдера доходят только языки
+    # (см. бэклог, «Игра проекта не доходит до промпта»). Пока — общая
+    # формулировка, которая верна для всех семи игр, а уточнить домен
+    # переводчик может своим текстом в «Параметрах».
+    "You translate strings from a mod for a Paradox Interactive "
+    "grand-strategy game.\n"
     "Input is a JSON array of objects: {\"id\": <number>, \"text\": <string>}.\n"
     "Answer with a JSON object {\"rows\": [...]} holding the same number of "
     "entries with the same ids: {\"id\": <number>, \"text\": <translation>}.\n"
