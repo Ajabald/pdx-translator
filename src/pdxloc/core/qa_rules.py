@@ -35,6 +35,7 @@
 from __future__ import annotations
 
 import re
+import time
 from collections import Counter
 from dataclasses import dataclass, field, replace
 from functools import lru_cache
@@ -48,6 +49,22 @@ SEVERITIES = (ERROR, WARNING, INFO)
 SEVERITY_RANK = {ERROR: 0, WARNING: 1, INFO: 2}
 
 BUILTIN = "builtin"
+
+# Сколько времени своё правило вправе потратить на ОДНУ строку, прежде чем его
+# погасят до конца прохода.
+#
+# Повод — катастрофический бэктрекинг: `(\w+)+$` на длинной строке считается
+# минутами, а проход идёт по сотне тысяч строк. Полсекунды на строку — это уже
+# на три порядка больше, чем у любого честного правила, так что ложных
+# срабатываний ждать неоткуда.
+#
+# **Чего это не даёт, и обещать обратное было бы неправдой.** Одиночный
+# зависший вызов `re` так не прервать: таймаута у модуля нет, сигналы на
+# Windows не работают, а сторонний движок сломал бы принцип единственной
+# зависимости. Защита здесь от «правило испортило весь проход», а не от
+# «правило повесило приложение». Второе ловится раньше — `regex_warning`
+# предупреждает в окне правил ещё до запуска.
+SLOW_RULE_SECONDS = 0.5
 
 # Категории — порядок задаёт порядок групп в окне правил
 CATEGORIES: dict[str, str] = {
@@ -1053,6 +1070,13 @@ class RuleSet:
     def __init__(self, rules):
         self.rules: tuple[Rule, ...] = tuple(rules)
         self.by_id: dict[str, Rule] = {r.id: r for r in self.rules}
+        # Своё правило, съевшее на одной строке больше SLOW_RULE_SECONDS,
+        # выключается до конца прохода. Копится здесь, а не в глобальной
+        # переменной: набор живёт ровно один проход, и следующий начинается
+        # с чистого листа — правило могло споткнуться об одну строку из ста
+        # тысяч, и наказывать его навсегда не за что.
+        self.exhausted: set[str] = set()
+        self.spent: dict[str, float] = {}
 
     # --- доступ ---
 
@@ -1094,10 +1118,16 @@ class RuleSet:
     # --- применение ---
 
     def check(self, en_text: str, ru_text: str) -> list[str]:
-        """Коды замечаний для пары «оригинал — перевод»."""
+        """Коды замечаний для пары «оригинал — перевод».
+
+        Правило, съевшее слишком много времени, гаснет до конца прохода — см.
+        `SLOW_RULE_SECONDS` и `exhausted`.
+        """
         found: list[str] = []
         for rule in self.rules:
             if not rule.enabled or rule.id in PROJECT_WIDE:
+                continue
+            if rule.id in self.exhausted:
                 continue
             if rule.id == EMPTY:
                 # Пустой перевод обрывает разбор: остальные замечания к пустой
@@ -1108,6 +1138,7 @@ class RuleSet:
             check = check_of(rule)
             if check is None:
                 continue
+            started = time.perf_counter()
             try:
                 hit = check(en_text, ru_text, rule.params)
             except Exception:   # noqa: BLE001 — правило с битой настройкой гасим
@@ -1119,6 +1150,10 @@ class RuleSet:
                 # уже гасим правило с неразбираемым выражением (`_user_re`);
                 # разбираться с настройкой — работа окна правил.
                 continue
+            spent = time.perf_counter() - started
+            self.spent[rule.id] = self.spent.get(rule.id, 0.0) + spent
+            if rule.origin == USER and spent >= SLOW_RULE_SECONDS:
+                self.exhausted.add(rule.id)
             if hit:
                 found.append(rule.id)
         if not ru_text.strip():
