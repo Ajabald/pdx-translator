@@ -90,10 +90,18 @@ jobs:
         # числа. `VersionInfoVersion` от «v» подавился бы.
         run: |
           $version = "${{ github.ref_name }}" -replace '^v',''
-          # Скобки в имени обязательно в ${...}: без них PowerShell обрывает
-          # имя переменной на ProgramFiles, а «(x86)» разбирает отдельно.
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $iscc)) { throw "ISCC.exe не найден: $iscc" }
+          # Путь не угадываем: choco ставит машинно, winget — в профиль
+          # пользователя, и жёсткая строка ломается на первом же расхождении.
+          # Скобки в имени переменной обязательно в ${...}: иначе PowerShell
+          # обрывает имя на ProgramFiles, а «(x86)» разбирает отдельно.
+          $iscc = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+            "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) { $iscc = (Get-Command ISCC -ErrorAction SilentlyContinue).Source }
+          if (-not $iscc) { throw "ISCC.exe не найден" }
+          Write-Host "ISCC: $iscc"
           & $iscc /DAppVersion=$version installer.iss
           if ($LASTEXITCODE -ne 0) { throw "сборка установщика не удалась" }
       - uses: softprops/action-gh-release@v2

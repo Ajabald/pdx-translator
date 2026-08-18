@@ -48,3 +48,6 @@ desktop.ini
 # Предпросмотр иконки — производная от tools/appicon*.svg, пересобирается
 # командой tools/make_icon.py.
 /tools/appicon-preview.png
+
+# Установщик — производная от dist/ и installer.iss, собирается в CI.
+/pdx-translator-setup-*.exe
