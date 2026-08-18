@@ -283,7 +283,10 @@ pdx-translator/
 ├─ Bdd/            translation memory databases (*.pdxtm) — per game as well
 │  └─ CK3/
 ├─ backups/        previous versions of files overwritten when writing to the mod
+│                  (snapshots are named by time; anything else you put there
+│                   is left alone)
 ├─ qa_rules.json   the global check configuration
+├─ pdx-translator.log   the diagnostic log — attach it to a bug report
 └─ run.bat
 ```
 
