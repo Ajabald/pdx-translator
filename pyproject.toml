@@ -1,12 +1,24 @@
 [project]
 name = "pdx-translator"
 version = "0.1.0"
-description = "Оффлайн-переводчик локализаций модов Crusader Kings 3 и других игр Paradox"
+# Описание английское, как и главный README: GitHub показывает только его, и
+# описание пакета обязано читаться тем же человеком, что и карточка репозитория.
+# «Workbench», а не «переводчик»: инструмент отличается от батч-конвертеров,
+# занявших нишу, именно построчной работой, и слово это несёт.
+description = "An offline workbench for translating Paradox mod localisation"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
-keywords = ["crusader-kings", "paradox", "localization", "translation", "modding"]
+# Игры перечислены поимённо, потому что искать будут по ним, а не по слову
+# «Paradox»: у каждой своя сцена модов и своя аудитория переводчиков. CK3
+# впереди не стоит — игр семь, и они равноправны с 2026-08-11.
+keywords = [
+    "paradox-interactive", "localization", "translation", "modding",
+    "translation-memory", "game-localization",
+    "crusader-kings", "stellaris", "hearts-of-iron", "victoria-3",
+    "europa-universalis", "imperator-rome",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Win32 (MS Windows)",
