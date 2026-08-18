@@ -127,3 +127,31 @@ def test_the_workflow_builds_and_attaches_the_installer() -> None:
     workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     assert "installer.iss" in workflow, "установщик не собирается"
     assert "pdx-translator-setup-*.exe" in workflow, "установщик не прикладывается"
+
+
+def test_the_uninstaller_speaks_up_about_kept_data() -> None:
+    """Оставшаяся папка выглядит как недоделанное удаление — надо объяснить.
+
+    Данные мы не трогаем (см. тест выше), но молчать об этом нельзя: человек
+    видит папку на месте и не понимает, сработало ли удаление вообще.
+    """
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    iss = (root / "installer.iss").read_text(encoding="utf-8")
+    assert "CurUninstallStepChanged" in iss
+    for lang in ("en", "ru"):
+        assert f"{lang}.DataKept=" in iss, f"нет сообщения на {lang}"
+
+
+def test_the_uninstaller_stays_silent_when_asked_to() -> None:
+    """В тихом режиме окно показывать нельзя — закрыть его некому.
+
+    Без этой оговорки `/VERYSILENT` повис бы навсегда, а именно так удаляют
+    из скриптов и при обновлении.
+    """
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    iss = (root / "installer.iss").read_text(encoding="utf-8")
+    assert "not UninstallSilent" in iss

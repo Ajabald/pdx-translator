@@ -83,3 +83,43 @@ Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; \
 ; и `backups` остаются: это работа переводчика — базы памяти, файлы проектов и
 ; резервные копии переводов. Снести их вместе с программой значило бы стереть
 ; месяцы чужого труда, и вернуть его будет неоткуда.
+;
+; Но молчать об этом нельзя: оставшаяся папка выглядит как недоделанное
+; удаление. Поэтому в конце говорим, что именно сохранено и где.
+
+[CustomMessages]
+en.DataKept=Your work has been kept and not deleted:
+en.DataKeptHint=Delete the folder by hand if you no longer need any of it.
+ru.DataKept=Ваша работа сохранена и не удалена:
+ru.DataKeptHint=Удалите папку вручную, если ничего из этого больше не нужно.
+
+[Code]
+function KeptFolders(): String;
+var
+  Names: array[0..2] of String;
+  I: Integer;
+begin
+  Names[0] := 'Bdd';
+  Names[1] := 'Projects';
+  Names[2] := 'backups';
+  Result := '';
+  for I := 0 to 2 do
+    if DirExists(ExpandConstant('{app}\') + Names[I]) then
+      Result := Result + #13#10 + '    ' + Names[I];
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  Kept: String;
+begin
+  // Только после удаления и только в обычном режиме: в тихом (/VERYSILENT)
+  // окно некому закрыть, и удаление повисло бы навсегда.
+  if (CurUninstallStep = usPostUninstall) and (not UninstallSilent) then
+  begin
+    Kept := KeptFolders();
+    if Kept <> '' then
+      MsgBox(CustomMessage('DataKept') + #13#10 + ExpandConstant('{app}')
+             + Kept + #13#10#13#10 + CustomMessage('DataKeptHint'),
+             mbInformation, MB_OK);
+  end;
+end;
