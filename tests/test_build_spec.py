@@ -1,9 +1,12 @@
-"""Спека сборки обещает файлы и версию — обещания проверяются здесь.
+"""Сборка релиза: спека, иконка и описание.
 
-Проверять важно потому, что ошибку в спеке видно только на сборке релиза,
-то есть уже по тегу, когда job `build` краснеет у всех на виду.
+Проверять важно потому, что ошибку здесь видно только на самой сборке, то
+есть уже по тегу, когда job `build` краснеет у всех на виду, а описание
+релиза правится и вовсе один раз в жизни выпуска.
 """
 from __future__ import annotations
+
+import re
 
 
 def test_the_spec_builds_a_version_resource_from_the_real_version() -> None:
@@ -48,3 +51,32 @@ def test_the_spec_points_at_a_real_icon_file() -> None:
     assert found, "в спеке не задана иконка"
     assert (root / found.group(1)).is_file(), (
         f"спека ссылается на {found.group(1)}, а файла нет")
+
+
+def test_release_notes_point_at_the_current_version() -> None:
+    """Ссылка на архив в описании релиза содержит версию — значит протухает.
+
+    Ровно как «15 встроенных правил» в README: текст остаётся верным на вид, а
+    ведёт на файл прошлого выпуска, и человек скачивает не то.
+    """
+    from pathlib import Path
+
+    from pdxloc import __version__
+
+    root = Path(__file__).resolve().parents[1]
+    notes = (root / "RELEASE_NOTES.md").read_text(encoding="utf-8")
+
+    assert f"pdx-translator-v{__version__}.zip" in notes, (
+        f"в RELEASE_NOTES.md нет ссылки на архив v{__version__}")
+    stale = re.findall(r"pdx-translator-v(\d+\.\d+\.\d+)\.zip", notes)
+    assert set(stale) == {__version__}, (
+        f"описание ссылается на чужие версии: {sorted(set(stale) - {__version__})}")
+
+
+def test_the_workflow_uses_the_release_notes() -> None:
+    """Файл без ссылки из workflow — просто текст, который никто не увидит."""
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "body_path: RELEASE_NOTES.md" in workflow

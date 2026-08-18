@@ -85,6 +85,11 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: pdx-translator-*.zip
+          name: PDX Translator ${{ github.ref_name }}
+          # Описание релиза лежит в репозитории и правится вместе с кодом.
+          # Иначе оно пишется в веб-форме второпях и нигде не хранится: к
+          # следующему выпуску вспоминать, что изменилось, будет не по чему.
+          body_path: RELEASE_NOTES.md
           # Релиз без архива хуже красного CI: люди увидят версию, которую
           # нечем скачать.
           fail_on_unmatched_files: true
