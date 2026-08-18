@@ -22,6 +22,7 @@ from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QTableView
 
+from pdxloc import settings
 from pdxloc.core import qa, qa_rules, statuses as statuses_mod, tm, unit_ops
 from pdxloc.core.i18n import QT_TRANSLATE_NOOP, translate
 from pdxloc.core.statuses import STATUS_RANK, Status
@@ -640,6 +641,51 @@ class UnitsTableView(QTableView):
         for col in QUICK_COLS:
             header.setSectionResizeMode(col, QHeaderView.Fixed)
             self.setColumnWidth(col, 26)
+        self.restore_column_widths()
+
+    # --- ширины колонок ---
+    #
+    # Сохраняются только те колонки, которые вообще можно потянуть, то есть
+    # `Interactive`. У `Stretch` ширина считается по окну, у `Fixed` она
+    # постоянна — записывать их значило бы однажды восстановить растянутую
+    # колонку фиксированной шириной прошлого окна.
+    #
+    # Ключ — английская подпись колонки, а не номер: тот же довод, что у
+    # скрытых колонок (`view/hidden_columns`). Вставь кто-нибудь колонку в
+    # середину, номера сдвинулись бы, и ширина уехала бы чужой колонке.
+    #
+    # `header.saveState()` не берём намеренно: он тянет за собой ещё и порядок
+    # секций с индикатором сортировки, а сортировкой в этом окне заведует
+    # `SortState` и восстанавливает её сам — два хозяина у одного индикатора
+    # разъезжаются молча.
+
+    def _resizable_columns(self) -> list[tuple[int, str]]:
+        header = self.horizontalHeader()
+        return [(col, label) for col, label in DATA_COLUMNS
+                if header.sectionResizeMode(col) == QHeaderView.Interactive]
+
+    def save_column_widths(self) -> None:
+        widths = {label: self.columnWidth(col)
+                  for col, label in self._resizable_columns()
+                  if self.columnWidth(col) > 0}
+        settings.qsettings().setValue(
+            "view/column_widths", "|".join(f"{k}={v}" for k, v in sorted(widths.items())))
+
+    def restore_column_widths(self) -> None:
+        raw = settings.qsettings().value("view/column_widths", "")
+        if not raw:
+            return
+        saved: dict[str, int] = {}
+        for part in str(raw).split("|"):
+            label, _, value = part.partition("=")
+            if value.isdigit():
+                saved[label] = int(value)
+        for col, label in self._resizable_columns():
+            width = saved.get(label)
+            # Ноль и отрицательное игнорируем: такая ширина прячет колонку
+            # насовсем, а прятать их — дело «Вид → Колонки», и там это обратимо.
+            if width and width > 0:
+                self.setColumnWidth(col, width)
 
     def selected_unit_ids(self) -> list[int]:
         model = self.model()

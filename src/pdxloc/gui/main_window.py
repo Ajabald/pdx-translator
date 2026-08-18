@@ -1080,5 +1080,9 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         settings.qsettings().setValue("geometry", self.saveGeometry())
+        # Ширины колонок — рядом с геометрией и по той же причине: человек
+        # подогнал таблицу под свой экран, и заставлять его делать это каждый
+        # запуск незачем (в EET это `ColumnsSizes`).
+        self.editor_screen.table.save_column_widths()
         self._close_project()
         super().closeEvent(event)
