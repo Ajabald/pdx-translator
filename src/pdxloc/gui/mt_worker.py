@@ -25,12 +25,23 @@ from pdxloc.core.mt_providers import ProviderConfig
 
 
 class MtWorker(QObject):
-    """Прогон перевода: читает строки, пишет результат, докладывает о ходе."""
+    """Прогон перевода: читает строки, пишет результат, докладывает о ходе.
+
+    **Сигнала `cancelled` здесь нет намеренно**, хотя у соседних воркеров он
+    есть (`scan_dialog.ScanWorker`, `tm_build_tab._BuildWorker`). У тех отмена
+    терминальна: прерванное сканирование и недособранная база не дают ничего,
+    о чём стоило бы докладывать, и `cancelled` приходит **вместо** `finished`.
+
+    Здесь наоборот. Строки, успевшие перевестись до отмены, уже записаны в
+    базу, и сводку по ним человек обязан увидеть — значит отмена не состояние
+    прогона, а свойство его результата, и живёт она в `report.cancelled`.
+    Отдельный сигнал такое сказать не может: он излучался бы **вместе** с
+    `finished`, и подписчику пришлось бы гадать, какой из двух главный.
+    """
 
     progress = Signal(int, int, str)
-    finished = Signal(object)      # MtReport
+    finished = Signal(object)      # MtReport; отмена — поле report.cancelled
     failed = Signal(str)
-    cancelled = Signal()
 
     def __init__(
         self,
@@ -82,8 +93,6 @@ class MtWorker(QObject):
                     should_cancel=lambda: self._cancel)
             finally:
                 conn.close()
-            if report.cancelled:
-                self.cancelled.emit()
             self.finished.emit(report)
         except Exception as e:  # noqa: BLE001 — показываем пользователю любую ошибку
             self.failed.emit(str(e))
