@@ -35,14 +35,20 @@ def record_history(
     """Запомнить текущее состояние строк ДО изменения.
 
     Вызывается перед записью, иначе откатывать будет нечего.
+
+    Вместе с переводом и статусом запоминаются `prev_en_text` и `change_kind`.
+    Без них откат возвращал строке «Устарело», но не то, **чем** она устарела:
+    дифф пропадал, и человек оставался с красной строкой без объяснения.
     """
     ids = list(unit_ids)
     if not ids:
         return
     placeholders = ",".join("?" * len(ids))
     conn.execute(
-        f"INSERT INTO unit_history (unit_id, ru_text, status, origin, batch_id) "
-        f"SELECT id, ru_text, status, ?, ? FROM units WHERE id IN ({placeholders})",
+        f"INSERT INTO unit_history "
+        f"(unit_id, ru_text, status, prev_en_text, change_kind, origin, batch_id) "
+        f"SELECT id, ru_text, status, prev_en_text, change_kind, ?, ? "
+        f"FROM units WHERE id IN ({placeholders})",
         (origin, batch_id, *ids),
     )
     for unit_id in ids:
@@ -57,14 +63,16 @@ def record_history(
 def undo_batch(conn: sqlite3.Connection, batch_id: str) -> int:
     """Вернуть строки к состоянию до групповой операции."""
     rows = conn.execute(
-        "SELECT unit_id, ru_text, status FROM unit_history WHERE batch_id = ?",
+        "SELECT unit_id, ru_text, status, prev_en_text, change_kind "
+        "FROM unit_history WHERE batch_id = ?",
         (batch_id,),
     ).fetchall()
     for row in rows:
         conn.execute(
-            "UPDATE units SET ru_text = ?, status = ?, updated_at = datetime('now') "
-            "WHERE id = ?",
-            (row["ru_text"], row["status"], row["unit_id"]),
+            "UPDATE units SET ru_text = ?, status = ?, prev_en_text = ?, "
+            "change_kind = ?, updated_at = datetime('now') WHERE id = ?",
+            (row["ru_text"], row["status"], row["prev_en_text"],
+             row["change_kind"], row["unit_id"]),
         )
     conn.execute("DELETE FROM unit_history WHERE batch_id = ?", (batch_id,))
     conn.commit()

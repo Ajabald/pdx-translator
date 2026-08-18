@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pdxloc.core.i18n import QT_TRANSLATE_NOOP, fill, translate
 
-SCHEMA_VERSION = 9
+SCHEMA_VERSION = 10
 
 # Как подписана собственная память проекта в колонке «Источник». Значение
 # рождается прямо в SQL (TM_VIEW_BASE ниже) и переводится в момент показа —
@@ -108,6 +108,12 @@ CREATE TABLE IF NOT EXISTS unit_history (
     unit_id    INTEGER NOT NULL REFERENCES units(id) ON DELETE CASCADE,
     ru_text    TEXT,
     status     TEXT,
+    -- Прежняя редакция оригинала и вид правки. Без них откат возвращал строке
+    -- статус «Устарело», но не то, ЧЕМ она устарела: дифф пропадал, и человек
+    -- видел красную строку без объяснения. Поля живут здесь, а не в units,
+    -- потому что откат — операция над историей.
+    prev_en_text TEXT,
+    change_kind  TEXT,
     changed_at TEXT NOT NULL DEFAULT (datetime('now')),
     origin     TEXT NOT NULL DEFAULT 'manual',
     batch_id   TEXT
@@ -353,6 +359,9 @@ def migrate(conn: sqlite3.Connection, from_version: int) -> None:
     if version == 8:
         _migrate_8_to_9(conn)
         version = 9
+    if version == 9:
+        _migrate_9_to_10(conn)
+        version = 10
     if version != SCHEMA_VERSION:
         raise RuntimeError(
             fill(translate("Db",
@@ -755,6 +764,28 @@ def _migrate_8_to_9(conn: sqlite3.Connection) -> None:
     conn.execute("BEGIN")
     try:
         conn.execute("UPDATE schema_meta SET value = '9' WHERE key = 'schema_version'")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def _migrate_9_to_10(conn: sqlite3.Connection) -> None:
+    """v9 -> v10: история помнит, чем строка устарела.
+
+    Две колонки, как в v7→v8: `unit_history` не пересобирается, копия файла не
+    нужна. Значения у прежних записей остаются пустыми, и это честно — в тот
+    момент их никто не сохранял. Откат такой записи вернёт текст и статус, но
+    диффа не покажет: восстановить его задним числом неоткуда.
+    """
+    conn.execute("BEGIN")
+    try:
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(unit_history)")}
+        if "prev_en_text" not in cols:
+            conn.execute("ALTER TABLE unit_history ADD COLUMN prev_en_text TEXT")
+        if "change_kind" not in cols:
+            conn.execute("ALTER TABLE unit_history ADD COLUMN change_kind TEXT")
+        conn.execute("UPDATE schema_meta SET value = '10' WHERE key = 'schema_version'")
         conn.commit()
     except Exception:
         conn.rollback()

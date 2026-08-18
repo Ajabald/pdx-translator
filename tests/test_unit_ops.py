@@ -177,6 +177,50 @@ def test_apply_to_same_en_is_undoable(db):
     assert restored["status"] == Status.AUTO.value
 
 
+def test_undo_brings_back_the_diff_not_just_the_status(db):
+    """Откат возвращает и то, ЧЕМ строка устарела.
+
+    Раньше история хранила только текст и статус: после Ctrl+Z строка снова
+    становилась «Устарело», но `prev_en_text` был потерян — дифф исчезал, и
+    человек оставался с красной строкой без объяснения, чего от него хотят.
+    """
+    ids = seed(db)
+    stale = ids["k5"]
+    assert get(db, stale)["prev_en_text"] == "Old EN"
+
+    db.execute("UPDATE units SET change_kind = 'meaning' WHERE id = ?", (stale,))
+    db.commit()
+
+    batch = unit_ops.new_batch_id()
+    unit_ops.record_history(db, [stale], origin="manual", batch_id=batch)
+    # актуализация: перевод подтверждён, дифф больше не нужен
+    unit_ops.save_ru_text(db, stale, "Новый перевод")
+    db.execute("UPDATE units SET prev_en_text = NULL, change_kind = NULL WHERE id = ?",
+               (stale,))
+    db.commit()
+    assert get(db, stale)["prev_en_text"] is None
+
+    unit_ops.undo_batch(db, batch)
+
+    back = get(db, stale)
+    assert back["ru_text"] == "Старый"
+    assert back["status"] == Status.STALE.value
+    assert back["prev_en_text"] == "Old EN", "дифф не вернулся вместе со статусом"
+    assert back["change_kind"] == "meaning"
+
+
+def test_history_of_a_fresh_row_carries_no_diff(db):
+    """У неустаревшей строки диффа нет, и выдумывать его откату незачем."""
+    ids = seed(db)
+    batch = unit_ops.new_batch_id()
+    unit_ops.record_history(db, [ids["k3"]], batch_id=batch)
+
+    row = db.execute(
+        "SELECT prev_en_text, change_kind FROM unit_history WHERE batch_id = ?",
+        (batch,)).fetchone()
+    assert row["prev_en_text"] is None and row["change_kind"] is None
+
+
 def test_apply_best_tm(db):
     ids = seed(db)
     tm.upsert(db, "World", "Мир из базы")

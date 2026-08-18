@@ -44,7 +44,7 @@ def test_schema_version_is_pinned() -> None:
 
     Поменял — напиши миграцию и её тест, а потом уже правь эту строку.
     """
-    assert db.SCHEMA_VERSION == 9
+    assert db.SCHEMA_VERSION == 10
 
 
 def test_migration_adds_locale_columns_without_touching_rows(tmp_path, make_tree) -> None:

@@ -204,3 +204,42 @@ def test_migration_v8_to_9_adds_the_glossary(tmp_path):
         assert not (tmp_path / "v8.sqlite3.v8.bak").exists()
     finally:
         again.close()
+
+
+def test_migration_v9_to_10_remembers_what_went_stale(tmp_path):
+    """v9 -> v10: история помнит прежний оригинал и вид правки.
+
+    Две колонки, `unit_history` не пересобирается. У прежних записей значения
+    остаются пустыми — их в тот момент никто не сохранял, и восстановить задним
+    числом неоткуда.
+    """
+    db_path = tmp_path / "v9.sqlite3"
+    conn = get_connection(db_path)
+    conn.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1,'p','e','r')")
+    conn.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1, 1, 'f')")
+    conn.execute("INSERT INTO units (id, file_id, key, en_text, ru_text, status) "
+                 "VALUES (1, 1, 'k', 'New', 'Новый', 'stale')")
+    conn.execute("INSERT INTO unit_history (unit_id, ru_text, status) "
+                 "VALUES (1, 'Старый', 'translated')")
+    # откатываем схему к v9: колонок ещё нет
+    conn.execute("ALTER TABLE unit_history DROP COLUMN prev_en_text")
+    conn.execute("ALTER TABLE unit_history DROP COLUMN change_kind")
+    conn.execute("UPDATE schema_meta SET value = '9' WHERE key = 'schema_version'")
+    conn.commit()
+    conn.close()
+
+    again = get_connection(db_path)
+    try:
+        cols = {r[1] for r in again.execute("PRAGMA table_info(unit_history)")}
+        assert {"prev_en_text", "change_kind"} <= cols
+        assert again.execute(
+            "SELECT value FROM schema_meta WHERE key='schema_version'"
+        ).fetchone()[0] == str(SCHEMA_VERSION)
+
+        row = again.execute(
+            "SELECT ru_text, prev_en_text, change_kind FROM unit_history").fetchone()
+        assert row[0] == "Старый"           # прежняя запись цела
+        assert row[1] is None and row[2] is None
+        assert not (tmp_path / "v9.sqlite3.v9.bak").exists()
+    finally:
+        again.close()
