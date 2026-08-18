@@ -2,12 +2,13 @@
 
 *[По-русски](README.ru.md)*
 
-An offline desktop tool for translating Crusader Kings 3 mod localisation — a
-translator's workbench rather than a batch converter: a string table with
-statuses, translation memory, mod-version diffing and configurable markup checks.
+An offline desktop tool for translating the localisation of Paradox game mods —
+a translator's workbench rather than a batch converter: a string table with
+statuses, translation memory, a term glossary, mod-version diffing and
+configurable markup checks.
 
-Paradox games share the same localisation format, so the tool works with other
-titles in the series: pick the game and the languages when creating a project.
+Eight games of the series are supported, plus a custom one under any name. Pick
+the game and the languages when creating a project.
 
 > Version 0.1.0. The interface is available in English, Russian and Simplified
 > Chinese — pick the language in «File → Preferences», it applies immediately.
@@ -19,9 +20,11 @@ titles in the series: pick the game and the languages when creating a project.
   «Projects» screen it can be shown in the file manager, dropped from the list
   (`Delete`) or deleted together with the file (`Shift+Delete`) — deletion goes
   to the recycle bin, so a misclick is recoverable.
-- **Games of the series**: Crusader Kings III, Europa Universalis IV, Europa
-  Universalis V, Hearts of Iron IV, Stellaris, Victoria 3, Imperator: Rome —
-  plus a custom game under any name if the format matches but the title is not on the list. Each game carries
+- **Eight games of the series**: Crusader Kings III, Crusader Kings II, Europa
+  Universalis IV, Europa Universalis V, Hearts of Iron IV, Stellaris,
+  Victoria 3, Imperator: Rome — plus a custom game under any name if the format
+  matches but the title is not on the list. Crusader Kings II uses the older CSV
+  format; it is recognised by the data, not by the file name. Each game carries
   its own set of language folders, so you cannot pick a language that game does
   not have. Projects and memory databases live in per-game pens (`Projects\CK3`,
   `Bdd\CK3`): vanilla CK3 strings have no business being suggested to a

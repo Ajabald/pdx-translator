@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from pdxloc.core import qa_rules
+from pdxloc.core import games, qa_rules
 
 ROOT = Path(__file__).resolve().parents[1]
 READMES = {"en": ROOT / "README.md", "ru": ROOT / "README.ru.md"}
@@ -68,6 +68,34 @@ def test_preset_count_matches_the_registry(lang: str) -> None:
         f"которого нет в таблице — допишите его в WORDS")
     assert said == PRESETS, (
         f"{READMES[lang].name} обещает наборов: {said}, а в реестре {PRESETS}")
+
+
+GAMES_RE = {
+    "en": re.compile(r"\*\*(\w+) games of the series"),
+    "ru": re.compile(r"\*\*(\w+) игр серии"),
+}
+
+
+@pytest.mark.parametrize("lang", sorted(READMES))
+def test_game_count_matches_the_registry(lang: str) -> None:
+    """CK2 появилась 2026-08-15 и не была названа ни в одном README до 08-19."""
+    found = GAMES_RE[lang].search(text(lang))
+    assert found, f"в {READMES[lang].name} не нашлось обещания про число игр"
+    said = WORDS[lang].get(found.group(1).lower())
+    assert said == len(games.GAMES), (
+        f"{READMES[lang].name} обещает игр: {said}, а в реестре {len(games.GAMES)}")
+
+
+@pytest.mark.parametrize("lang", sorted(READMES))
+def test_every_game_is_named_in_the_readme(lang: str) -> None:
+    """Игра, о которой не сказано, для пользователя не существует.
+
+    Пробелы схлопываем: README свёрстан под 80 колонок, и «Europa Universalis
+    IV» законно разъезжается по двум строкам. Перенос — не смысл.
+    """
+    said = " ".join(text(lang).split())
+    missing = [g for g in games.ORDER if games.title(g) not in said]
+    assert not missing, f"{READMES[lang].name}: игры не названы — {missing}"
 
 
 @pytest.mark.parametrize("lang", sorted(READMES))
