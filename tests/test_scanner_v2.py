@@ -1,9 +1,9 @@
 """Тесты v2-веток сканера: auto-ignore и рескан ignored/custom."""
 from __future__ import annotations
 
-from ck3loc.core.scanner import scan_project
-from ck3loc.core.statuses import Status
-from ck3loc.core.unit_ops import set_status
+from pdxloc.core.scanner import scan_project
+from pdxloc.core.statuses import Status
+from pdxloc.core.unit_ops import set_status
 
 from test_scanner import get_unit, make_project
 

@@ -11,8 +11,8 @@ import time
 
 import pytest
 
-from ck3loc import project, settings
-from ck3loc.core import fuzzy, tm_import
+from pdxloc import project
+from pdxloc.core import fuzzy, tm_import
 
 pytestmark = pytest.mark.realdata
 
@@ -22,7 +22,8 @@ BUDGET_MS = 50
 
 
 def _biggest_base():
-    bases = project.list_tm_databases(settings.bdd_dir())
+    # базы лежат в загонах своих игр, а старые — в корне Bdd
+    bases = project.all_tm_databases()
     if not bases:
         return None
     return max(bases, key=lambda item: int(item[1].get("entries", 0) or 0))
@@ -45,7 +46,7 @@ def indexed_base(tmp_path_factory):
 def test_similar_lookup_is_fast(indexed_base, tmp_path):
     path, entries = indexed_base
     conn = project.create_project(
-        tmp_path / "p.ck3proj", name="P", src_root="e", tgt_root="r")
+        tmp_path / "p.pdxproj", name="P", src_root="e", tgt_root="r")
     try:
         project.attach_tm_sources(conn, [path])
         queries = [

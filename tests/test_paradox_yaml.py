@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from ck3loc.core import paradox_yaml as py_
-from ck3loc.core.models import LocEntry
+from pdxloc.core import paradox_yaml as py_
+from pdxloc.core.models import LocEntry
 
 from conftest import REALDATA_EN, REALDATA_RU, realdata_available, requires_realdata
 
@@ -83,7 +83,7 @@ def test_missing_closing_quote_salvaged():
     assert len(lf.entries) == 1
     assert lf.entries[0].text == "Text without closing quote"
     assert len(lf.warnings) == 1
-    assert "закрывающей кавычки" in lf.warnings[0]
+    assert "no closing quote" in lf.warnings[0]
 
 
 def test_missing_header_warns_but_parses():

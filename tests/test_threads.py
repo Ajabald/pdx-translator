@@ -34,14 +34,14 @@ def loc_tree(tmp_path):
 
 
 def test_tm_build_dialog_finishes_without_hanging(loc_tree, tmp_path, qtbot, monkeypatch):
-    from ck3loc import settings
-    from ck3loc.gui.tm_import_dialog import TmImportDialog
+    from pdxloc import settings
+    from pdxloc.gui.tm_build_tab import TmBuildTab
 
     bdd = tmp_path / "Bdd"
     bdd.mkdir()
     monkeypatch.setattr(settings, "bdd_dir", lambda: bdd)
 
-    class Watched(TmImportDialog):
+    class Watched(TmBuildTab):
         """Запоминает, в каком потоке отработал обработчик завершения."""
 
         done_tid = None
@@ -61,19 +61,20 @@ def test_tm_build_dialog_finishes_without_hanging(loc_tree, tmp_path, qtbot, mon
 
     # обработчик завершения обязан выполняться в потоке GUI, иначе окно виснет
     assert dlg.done_tid == threading.get_ident()
-    assert "Пар переводов: 2" in dlg.report_box.toPlainText()
+    assert "Translation pairs: 2" in dlg.report_box.toPlainText()
     # поток должен остановиться сам, без ожидания из основного
     qtbot.waitUntil(lambda: not dlg._thread.isRunning(), timeout=5000)
-    assert (bdd / "Тест_english-russian.ck3tm").is_file()
+    # база ложится в загон своей игры (см. core/games.py)
+    assert (bdd / "CK3" / "Тест_english-russian.pdxtm").is_file()
 
 
 def test_scan_dialog_finishes_without_hanging(tmp_path, make_tree, qtbot):
-    from ck3loc import project
-    from ck3loc.gui.scan_dialog import ScanProgressDialog
+    from pdxloc import project
+    from pdxloc.gui.scan_dialog import ScanProgressDialog
 
     en = make_tree({"m_l_english.yml": EN}, "en")
     ru = make_tree({"m_l_russian.yml": RU}, "ru")
-    path = tmp_path / "p.ck3proj"
+    path = tmp_path / "p.pdxproj"
     conn = project.create_project(path, name="P", src_root=en, tgt_root=ru)
     conn.close()
 
@@ -86,12 +87,12 @@ def test_scan_dialog_finishes_without_hanging(tmp_path, make_tree, qtbot):
 
 
 def test_scan_can_be_cancelled(tmp_path, make_tree, qtbot):
-    from ck3loc import project
-    from ck3loc.gui.scan_dialog import ScanProgressDialog
+    from pdxloc import project
+    from pdxloc.gui.scan_dialog import ScanProgressDialog
 
     en = make_tree({f"f{i}_l_english.yml": EN for i in range(40)}, "en")
     ru = make_tree({}, "ru")
-    path = tmp_path / "p.ck3proj"
+    path = tmp_path / "p.pdxproj"
     conn = project.create_project(path, name="P", src_root=en, tgt_root=ru)
     conn.close()
 
@@ -111,7 +112,7 @@ def test_no_worker_signal_is_connected_to_a_lambda():
     import re
     from pathlib import Path
 
-    gui = Path(__file__).resolve().parents[1] / "src" / "ck3loc" / "gui"
+    gui = Path(__file__).resolve().parents[1] / "src" / "pdxloc" / "gui"
     bad = []
     for path in sorted(gui.glob("*.py")):
         text = path.read_text(encoding="utf-8")
@@ -123,14 +124,24 @@ def test_no_worker_signal_is_connected_to_a_lambda():
     assert not bad, "сигнал рабочего потока подключён к лямбде:\n" + "\n".join(bad)
 
 
-def test_standard_buttons_are_russian(qtbot):
-    """Кнопки Qt («Close», «Yes», «No») должны быть на русском."""
+def test_qt_own_buttons_follow_the_interface_language(qtbot):
+    """Штатные кнопки Qt («Close», «Yes») переводятся вместе с интерфейсом.
+
+    Свой перевод и перевод Qt ставятся одним действием: если разъедутся, в
+    русском окне окажется английская кнопка «Close» — и наоборот.
+    """
     from PySide6.QtWidgets import QApplication, QDialogButtonBox
 
-    from ck3loc.app import _install_qt_translations
+    from pdxloc.gui import language
 
-    _install_qt_translations(QApplication.instance())
+    app = QApplication.instance()
+    language.apply(app, "ru", save=False)
     box = QDialogButtonBox(QDialogButtonBox.Close | QDialogButtonBox.Ok)
     qtbot.addWidget(box)
     close_text = box.button(QDialogButtonBox.Close).text().replace("&", "")
     assert close_text == "Закрыть", f"кнопка осталась английской: {close_text}"
+
+    language.apply(app, "en", save=False)
+    box_en = QDialogButtonBox(QDialogButtonBox.Close)
+    qtbot.addWidget(box_en)
+    assert box_en.button(QDialogButtonBox.Close).text().replace("&", "") == "Close"

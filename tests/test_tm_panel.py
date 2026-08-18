@@ -8,10 +8,10 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import pytest  # noqa: E402
 from PySide6.QtCore import Qt  # noqa: E402
 
-from ck3loc import project, settings  # noqa: E402
-from ck3loc.core import tm  # noqa: E402
-from ck3loc.core.scanner import scan_project  # noqa: E402
-from ck3loc.gui.detail_pane import DetailPane  # noqa: E402
+from pdxloc import project, settings  # noqa: E402
+from pdxloc.core import tm  # noqa: E402
+from pdxloc.core.scanner import scan_project  # noqa: E402
+from pdxloc.gui.detail_pane import DetailPane  # noqa: E402
 
 from test_scanner import make_project  # noqa: E402
 from test_tm_import import build_vanilla  # noqa: E402
@@ -38,7 +38,7 @@ def test_hits_carry_identity(pane):
     hit = pane.tm_list.item(0).data(Qt.UserRole)
     assert hit.ru_text == "Привет"
     assert hit.editable and hit.id > 0
-    assert hit.origin == "Проект"
+    assert hit.origin == "Project"
 
 
 def test_edit_entry_updates_memory(pane, db):
@@ -68,7 +68,7 @@ def test_attached_entry_is_not_editable(tmp_path, make_tree, monkeypatch, qtbot)
     tm_path, _ = build_vanilla(tmp_path, make_tree)
     monkeypatch.setattr(settings, "bdd_dir", lambda: tm_path.parent)
     en = make_tree({"mod_l_english.yml": 'l_english:\n m:0 "Hello"\n'}, "en2")
-    conn = project.create_project(tmp_path / "p.ck3proj", name="P",
+    conn = project.create_project(tmp_path / "p.pdxproj", name="P",
                                   src_root=en, tgt_root=tmp_path / "ru2")
     project.set_tm_sources(conn, [tm_path.name])
     project.attach_tm_sources(conn, project.project_tm_paths(conn))

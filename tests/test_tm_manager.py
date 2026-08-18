@@ -5,10 +5,9 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-import pytest  # noqa: E402
 
-from ck3loc import project, settings  # noqa: E402
-from ck3loc.core import tm  # noqa: E402
+from pdxloc import project, settings  # noqa: E402
+from pdxloc.core import tm  # noqa: E402
 
 from test_tm_import import build_vanilla  # noqa: E402
 
@@ -31,7 +30,7 @@ def test_browse_and_search(db):
 
 def test_browse_marks_own_entries_editable(db):
     seed(db)
-    assert all(r.editable and r.origin == "Проект" for r in tm.browse(db))
+    assert all(r.editable and r.origin == "Project" for r in tm.browse(db))
 
 
 def test_update_entry(db):
@@ -48,7 +47,7 @@ def test_update_to_existing_duplicate_collapses(db):
     tm.upsert(db, "Hello", "Привет")
     tm.upsert(db, "Hello", "Здравствуйте")
     db.commit()
-    record = [r for r in tm.browse(db) if r.ru_text == "Здравствуйте"][0]
+    record = next(r for r in tm.browse(db) if r.ru_text == "Здравствуйте")
     assert tm.update_entry(db, record.id, "Привет")
     assert [h.ru_text for h in tm.lookup(db, "Hello")] == ["Привет"]
 
@@ -76,7 +75,7 @@ def test_counts(db):
 def test_attached_entries_are_read_only(tmp_path, make_tree, monkeypatch):
     tm_path, _ = build_vanilla(tmp_path, make_tree)
     monkeypatch.setattr(settings, "bdd_dir", lambda: tm_path.parent)
-    conn = project.create_project(tmp_path / "p.ck3proj", name="P",
+    conn = project.create_project(tmp_path / "p.pdxproj", name="P",
                                   src_root="e", tgt_root="r")
     project.set_tm_sources(conn, [tm_path.name])
     project.attach_tm_sources(conn, project.project_tm_paths(conn))
@@ -100,21 +99,21 @@ def test_attached_entries_are_read_only(tmp_path, make_tree, monkeypatch):
 
 
 def test_dialog_edit_and_delete(db, qtbot):
-    from ck3loc.gui.tm_manager_dialog import COL_RU, TmManagerDialog
+    from pdxloc.gui.tm_entries_tab import COL_RU, TmEntriesTab
     from PySide6.QtCore import Qt
 
     seed(db)
-    dlg = TmManagerDialog(db)
-    qtbot.addWidget(dlg)
-    assert dlg.model.rowCount() == 3
+    tab = TmEntriesTab(db)
+    qtbot.addWidget(tab)
+    assert tab.model.rowCount() == 3
 
     # правка через таблицу
-    row = next(i for i in range(3) if dlg.model.record(i).en_text == "Hello")
-    assert dlg.model.setData(dlg.model.index(row, COL_RU), "Здравствуйте", Qt.EditRole)
+    row = next(i for i in range(3) if tab.model.record(i).en_text == "Hello")
+    assert tab.model.setData(tab.model.index(row, COL_RU), "Здравствуйте", Qt.EditRole)
     assert [h.ru_text for h in tm.lookup(db, "Hello")] == ["Здравствуйте"]
 
     # поиск
-    dlg.search.setText("Мир")
-    dlg._reload()
-    assert dlg.model.rowCount() == 1
-    assert "показано: 1" in dlg.count_label.text()
+    tab.search.setText("Мир")
+    tab.reload()
+    assert tab.model.rowCount() == 1
+    assert "shown: 1" in tab.status_text()

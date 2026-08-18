@@ -1,11 +1,11 @@
 """Тесты v3-M1: правило ru==en, конфликты, дубликаты, _updated в оригинале."""
 from __future__ import annotations
 
-from ck3loc.core.exporter import export_project
-from ck3loc.core.models import ExportOptions
-from ck3loc.core.paradox_yaml import parse_file
-from ck3loc.core.scanner import LEGACY_MARKER, scan_project
-from ck3loc.core.statuses import Status
+from pdxloc.core.exporter import export_project
+from pdxloc.core.models import ExportOptions
+from pdxloc.core.paradox_yaml import parse_file
+from pdxloc.core.scanner import LEGACY_MARKER, scan_project
+from pdxloc.core.statuses import Status
 
 from test_scanner import get_unit, make_project
 
@@ -74,7 +74,7 @@ def test_conflict_detected_when_en_also_changed(db, make_tree):
     make_tree({"m_l_russian.yml": 'l_russian:\n a:0 "Здравствуйте"\n'}, "ru")
     stats = scan_project(db, pid)
     assert stats.ru_conflicts == 1
-    rel, key, db_ru, disk_ru = stats.ru_conflict_list[0]
+    _rel, key, db_ru, disk_ru = stats.ru_conflict_list[0]
     assert key == "a" and db_ru == "Привет" and disk_ru == "Здравствуйте"
     assert get_unit(db, "a")["ru_text"] == "Привет"      # база главнее
     assert get_unit(db, "a")["status"] == Status.STALE.value

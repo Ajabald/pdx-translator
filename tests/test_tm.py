@@ -1,7 +1,7 @@
 """Тесты памяти переводов."""
 from __future__ import annotations
 
-from ck3loc.core import tm
+from pdxloc.core import tm
 
 
 def test_upsert_and_lookup(db):

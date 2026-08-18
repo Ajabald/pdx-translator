@@ -1,16 +1,18 @@
 """Приёмочный тест на реальных деревьях BLA.
 
 Проверяет: импорт без потерь, статистику, экспорт с семантической
-эквивалентностью текущему RU-дереву пользователя.
+эквивалентностью текущему RU-дереву пользователя и шум проверок по наборам
+правил.
 """
 from __future__ import annotations
 
 import pytest
 
-from ck3loc.core import paradox_yaml
-from ck3loc.core.exporter import export_project
-from ck3loc.core.models import ExportOptions
-from ck3loc.core.scanner import LEGACY_MARKER, en_to_ru_relpath, scan_project
+from pdxloc.core import paradox_yaml, qa, qa_rules
+from pdxloc.core.exporter import export_project
+from pdxloc.core.models import ExportOptions
+from pdxloc.core.paradox_yaml import map_relpath
+from pdxloc.core.scanner import LEGACY_MARKER, scan_project
 
 from conftest import REALDATA_EN, REALDATA_RU, realdata_available
 from test_scanner import make_project
@@ -32,7 +34,7 @@ EXPECTED_MARKERS = 594         # строк с маркером «ТРЕБУЕТ
 def imported(tmp_path_factory):
     import sqlite3
 
-    from ck3loc.db import init_schema
+    from pdxloc.db import init_schema
 
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
@@ -100,7 +102,7 @@ def test_export_semantic_equivalence(imported, tmp_path):
             continue
         rel = en_path.relative_to(REALDATA_EN).as_posix()
         en_keys = {e.key: e for e in paradox_yaml.parse_file(en_path).entries}
-        old_ru_path = REALDATA_RU / en_to_ru_relpath(rel)
+        old_ru_path = REALDATA_RU / map_relpath(rel, "english", "russian")
         if not old_ru_path.is_file():
             continue
         old_ru = {e.key: e for e in paradox_yaml.parse_file(old_ru_path).entries}
@@ -112,7 +114,7 @@ def test_export_semantic_equivalence(imported, tmp_path):
             and LEGACY_MARKER not in e.comment_inline
             and e.text and e.text != en_keys[key].text
         }
-        new_path = out / en_to_ru_relpath(rel)
+        new_path = out / map_relpath(rel, "english", "russian")
         if not expected:
             continue
         assert new_path.is_file(), rel
@@ -122,6 +124,51 @@ def test_export_semantic_equivalence(imported, tmp_path):
             assert new_ru[key] == text, f"{rel}: текст изменился у {key}"
         checked += len(expected)
     assert checked > 3500   # достаточно массивная проверка
+
+
+# --- шум проверок --------------------------------------------------------
+#
+# Числа сняты на этом же дереве (2026-08-10) и держатся здесь, а не только в
+# документации: настройка проверок затевалась ради снижения шума, а шум —
+# единственное её свойство, которое нельзя увидеть на синтетических парах.
+# Дерево живое и с обновлением мода поедет, как и `EXPECTED_UNITS` выше;
+# поменялись числа — сверься, что виновато обновление, а не правило.
+
+CUSTOM = qa_rules.CUSTOM        # встроенные значения, без пресета
+EXPECTED_ISSUES = {"strict": 353, CUSTOM: 149, "ck3_ru": 149, "quiet": 27}
+# Главный вклад в «строгий»: эвристика длины, потому и выключена по умолчанию
+EXPECTED_STRICT_LEN_RATIO = 204
+
+
+def _issues(conn, pid, preset):
+    return qa.run_qa(conn, pid,
+                     ruleset=qa_rules.resolve({"preset": preset}, locale="ru"))
+
+
+@pytest.mark.parametrize("preset,expected", sorted(EXPECTED_ISSUES.items()))
+def test_issue_count_per_preset(imported, preset, expected):
+    conn, pid, _ = imported
+    assert len(_issues(conn, pid, preset)) == expected
+
+
+def test_presets_are_monotonic_on_live_data(imported):
+    """Строгий шумнее встроенного, тот — рекомендованного, тот — тихого.
+
+    На синтетике монотонность закрыта `test_qa_defaults.py`, но там пары
+    подобраны под правила. Здесь наоборот: правила встречаются с текстом,
+    которого никто не подбирал.
+    """
+    conn, pid, _ = imported
+    counts = {p: len(_issues(conn, pid, p))
+              for p in ("strict", CUSTOM, "ck3_ru", "quiet")}
+    assert counts["strict"] >= counts[CUSTOM] >= counts["ck3_ru"] >= counts["quiet"]
+
+
+def test_length_heuristic_is_the_bulk_of_strict_noise(imported):
+    conn, pid, _ = imported
+    codes = [i.code for i in _issues(conn, pid, "strict")]
+    assert codes.count("len_ratio") == EXPECTED_STRICT_LEN_RATIO
+    assert "len_ratio" not in qa_rules.resolve().active_ids()
 
 
 def test_export_bom_and_header(imported, tmp_path):

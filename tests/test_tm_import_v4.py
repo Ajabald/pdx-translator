@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from ck3loc.core import tm_import
-from ck3loc.project import tm_meta
+from pdxloc.core import tm_import
+from pdxloc.project import tm_meta
 
 EN = 'l_english:\n a:0 "Hello"\n b:0 "World"\n'
 RU = 'l_russian:\n a:0 "Привет"\n b:0 "Мир"\n'
@@ -26,6 +26,17 @@ def game_tree(tmp_path):
         with open(d / f"mod_l_{lang}.yml", "w", encoding="utf-8-sig", newline="\n") as f:
             f.write(text)
     (root / "binaries").mkdir()
+    return root
+
+
+@pytest.fixture
+def pairless_tree(tmp_path):
+    """Дерево, где перевода нет вовсе, — собирать из него нечего."""
+    root = tmp_path / "OnlyEnglish"
+    d = root / "game" / "localization" / "english"
+    d.mkdir(parents=True)
+    with open(d / "mod_l_english.yml", "w", encoding="utf-8-sig", newline="\n") as f:
+        f.write(EN)
     return root
 
 
@@ -56,16 +67,17 @@ def test_find_localization_dirs_missing(tmp_path):
 def test_count_pairs(game_tree):
     loc = game_tree / "game" / "localization"
     assert tm_import.count_pairs(loc / "english", loc / "russian") == (1, 1)
-    # корень игры: файлы находятся, но пар нет — каталог языка в пути не меняется
-    paired, total = tm_import.count_pairs(game_tree, game_tree)
-    assert total == 1 and paired == 0
+    # корень игры тоже годится: каталог языка в пути сопоставляется наравне
+    # с меткой языка в имени файла
+    assert tm_import.count_pairs(game_tree, game_tree) == (1, 1)
 
 
-def test_no_pairs_leaves_no_file(game_tree, tmp_path):
+def test_no_pairs_leaves_no_file(pairless_tree, tmp_path):
     """Главный дефект: раньше оставалась пустая, но с виду рабочая база."""
-    out = tmp_path / "broken.ck3tm"
-    with pytest.raises(ValueError, match="ни одной пары"):
-        tm_import.build_tm_from_dirs(game_tree, game_tree, out, name="Root")
+    out = tmp_path / "broken.pdxtm"
+    with pytest.raises(ValueError, match="pair was found"):
+        tm_import.build_tm_from_dirs(
+            pairless_tree, pairless_tree, out, name="Root")
     assert not out.exists(), "файл пустой базы не должен оставаться на диске"
     assert not out.with_suffix(out.suffix + ".part").exists()
 
@@ -73,13 +85,13 @@ def test_no_pairs_leaves_no_file(game_tree, tmp_path):
 def test_empty_source_dir_reports_clearly(tmp_path):
     empty = tmp_path / "nothing"
     empty.mkdir()
-    with pytest.raises(FileNotFoundError, match="нет файлов локализации"):
-        tm_import.build_tm_from_dirs(empty, empty, tmp_path / "x.ck3tm", name="X")
+    with pytest.raises(FileNotFoundError, match="no localization files"):
+        tm_import.build_tm_from_dirs(empty, empty, tmp_path / "x.pdxtm", name="X")
 
 
 def test_successful_build_from_game_root_dirs(game_tree, tmp_path):
     loc = game_tree / "game" / "localization"
-    out = tmp_path / "vanilla.ck3tm"
+    out = tmp_path / "vanilla.pdxtm"
     report = tm_import.build_tm_from_dirs(
         loc / "english", loc / "russian", out, name="CK3", kind="game")
     assert report.pairs == 2
@@ -94,7 +106,7 @@ def test_game_entries_marked_as_game_source(game_tree, tmp_path):
     import sqlite3
 
     loc = game_tree / "game" / "localization"
-    out = tmp_path / "vanilla.ck3tm"
+    out = tmp_path / "vanilla.pdxtm"
     tm_import.build_tm_from_dirs(
         loc / "english", loc / "russian", out, name="CK3", kind="game")
     conn = sqlite3.connect(f"file:{out.as_posix()}?mode=ro", uri=True)
@@ -106,7 +118,7 @@ def test_game_entries_marked_as_game_source(game_tree, tmp_path):
 def test_cancel_removes_partial_file(game_tree, tmp_path):
     """Прерывание не оставляет недописанную базу."""
     loc = game_tree / "game" / "localization"
-    out = tmp_path / "cancelled.ck3tm"
+    out = tmp_path / "cancelled.pdxtm"
     with pytest.raises(tm_import.TmBuildCancelled):
         tm_import.build_tm_from_dirs(
             loc / "english", loc / "russian", out, name="X",
@@ -115,14 +127,14 @@ def test_cancel_removes_partial_file(game_tree, tmp_path):
     assert not out.with_suffix(out.suffix + ".part").exists()
 
 
-def test_existing_database_survives_failed_rebuild(game_tree, tmp_path):
+def test_existing_database_survives_failed_rebuild(game_tree, pairless_tree, tmp_path):
     """Неудачная пересборка не портит уже работающую базу."""
     loc = game_tree / "game" / "localization"
-    out = tmp_path / "vanilla.ck3tm"
+    out = tmp_path / "vanilla.pdxtm"
     tm_import.build_tm_from_dirs(loc / "english", loc / "russian", out, name="CK3")
     size_before = out.stat().st_size
 
     with pytest.raises(ValueError):
-        tm_import.build_tm_from_dirs(game_tree, game_tree, out, name="CK3")
+        tm_import.build_tm_from_dirs(pairless_tree, pairless_tree, out, name="CK3")
     assert out.stat().st_size == size_before
     assert tm_meta(out)["name"] == "CK3"

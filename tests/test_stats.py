@@ -1,7 +1,7 @@
 """Тесты единой статистики."""
 from __future__ import annotations
 
-from ck3loc.core.stats import file_stats, format_status_bar, project_stats
+from pdxloc.core.stats import file_stats, format_status_bar, project_stats
 
 
 def seed(db):
@@ -58,7 +58,7 @@ def test_pct_decimal(db):
     assert isinstance(s.pct, float)
     text = format_status_bar(s)
     assert "44.4%" in text
-    assert "осталось 5" in text
+    assert "left 5" in text
 
 
 def test_empty_project(db):

@@ -8,13 +8,13 @@ from __future__ import annotations
 
 import pytest
 
-from ck3loc import project as P
-from ck3loc.core import fuzzy, loc_import, tm, tm_import, unit_ops
-from ck3loc.core.exporter import export_project
-from ck3loc.core.models import ExportOptions
-from ck3loc.core.paradox_yaml import parse_file
-from ck3loc.core.scanner import scan_project
-from ck3loc.core.statuses import Status
+from pdxloc import project as P
+from pdxloc.core import fuzzy, loc_import, tm, tm_import, unit_ops
+from pdxloc.core.exporter import export_project
+from pdxloc.core.models import ExportOptions
+from pdxloc.core.paradox_yaml import parse_file
+from pdxloc.core.scanner import scan_project
+from pdxloc.core.statuses import Status
 
 NL = chr(10)
 
@@ -45,7 +45,7 @@ def mod(tmp_path):
     """Проект на дереве мода, пять строк, четыре переведены."""
     en = tmp_path / "mod" / "localization" / "english"
     write(en / "m_l_english.yml", EN_V1)
-    conn = P.create_project(tmp_path / "p.ck3proj", name="Тест",
+    conn = P.create_project(tmp_path / "p.pdxproj", name="Тест",
                             src_root=en, tgt_root=tmp_path / "out")
     scan_project(conn, 1)
     ids = {r["key"]: r["id"] for r in conn.execute("SELECT id, key FROM units")}
@@ -88,7 +88,7 @@ def test_existing_translation_is_picked_up(tmp_path):
     write(en / "m_l_english.yml", 'l_english:\n a:0 "Hello"\n b:0 "World"\n')
     write(ru / "m_l_russian.yml", 'l_russian:\n a:0 "Привет"\n b:0 "World"\n old:0 "Осиротевший"\n')
 
-    conn = P.create_project(tmp_path / "p.ck3proj", name="Готовый", src_root=en, tgt_root=ru)
+    conn = P.create_project(tmp_path / "p.pdxproj", name="Готовый", src_root=en, tgt_root=ru)
     try:
         scan_project(conn, 1)
         got = {r["key"]: r["status"] for r in conn.execute("SELECT key, status FROM units")}
@@ -108,7 +108,7 @@ def test_copy_of_source_is_not_a_translation(tmp_path):
     write(en / "c_l_english.yml", 'l_english:\n a:0 "Hello"\n b:0 "World"\n')
     write(ru / "c_l_russian.yml", 'l_russian:\n a:0 "Hello"\n b:0 "World"\n')
 
-    conn = P.create_project(tmp_path / "p.ck3proj", name="Копия", src_root=en, tgt_root=ru)
+    conn = P.create_project(tmp_path / "p.pdxproj", name="Копия", src_root=en, tgt_root=ru)
     try:
         scan_project(conn, 1)
         statuses = {r["status"] for r in conn.execute("SELECT status FROM units")}
@@ -158,7 +158,7 @@ def test_memory_base_gives_similar_lines(mod, tmp_path):
     best, _ = tm_import.resolve_target_dir(other / "english", tmp_path / "mod2",
                                            "english", "russian")
     assert best == other / "russian"
-    base = tmp_path / "Bdd" / "mod_english-russian.ck3tm"
+    base = tmp_path / "Bdd" / "mod_english-russian.pdxtm"
     assert tm_import.build_tm_from_dirs(other / "english", best, base, name="Мод").pairs == 2
 
     P.attach_tm_sources(conn, [base])

@@ -5,8 +5,8 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from ck3loc.db import register_functions  # noqa: E402
-from ck3loc.gui.units_model import UnitFilters, UnitsTableModel, escape_like  # noqa: E402
+from pdxloc.db import register_functions  # noqa: E402
+from pdxloc.gui.units_model import UnitFilters, UnitsTableModel, escape_like  # noqa: E402
 
 
 def seed(db):

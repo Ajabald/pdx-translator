@@ -12,9 +12,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest  # noqa: E402
 
-from ck3loc import project, settings  # noqa: E402
-from ck3loc.core import tm  # noqa: E402
-from ck3loc.core.scanner import scan_project  # noqa: E402
+from pdxloc import project, settings  # noqa: E402
+from pdxloc.core import tm  # noqa: E402
+from pdxloc.core.scanner import scan_project  # noqa: E402
 
 EN = 'l_english:\n a:0 "Hello"\n b:0 "World"\n'
 RU = 'l_russian:\n a:0 "Привет"\n'
@@ -30,7 +30,7 @@ def conn(tmp_path, make_tree, monkeypatch):
     en = make_tree({"m_l_english.yml": EN}, "en")
     ru = make_tree({"m_l_russian.yml": RU}, "ru")
     c = project.create_project(
-        tmp_path / "p.ck3proj", name="P", src_root=en, tgt_root=ru)
+        tmp_path / "p.pdxproj", name="P", src_root=en, tgt_root=ru)
     scan_project(c, 1)
     tm.upsert(c, "Hello", "Привет")
     c.commit()
@@ -39,26 +39,26 @@ def conn(tmp_path, make_tree, monkeypatch):
 
 
 def all_dialogs(conn):
-    from ck3loc.gui.archive_dialog import ArchiveDialog
-    from ck3loc.gui.concordance_dialog import ConcordanceDialog
-    from ck3loc.gui.export_dialog import ExportDialog
-    from ck3loc.gui.import_dialog import ImportDialog
-    from ck3loc.gui.qa_panel import QaReportDialog
-    from ck3loc.gui.start_screen import ProjectDialog
-    from ck3loc.gui.tm_import_dialog import TmImportDialog
-    from ck3loc.gui.tm_manager_dialog import TmManagerDialog
-    from ck3loc.gui.tm_sources_dialog import TmSourcesDialog
+    from pdxloc.gui.archive_dialog import ArchiveDialog
+    from pdxloc.gui.concordance_dialog import ConcordanceDialog
+    from pdxloc.gui.export_dialog import ExportDialog
+    from pdxloc.gui.import_dialog import ImportDialog
+    from pdxloc.gui.mt_dialog import MtDialog
+    from pdxloc.gui.qa_panel import QaReportDialog
+    from pdxloc.gui.root_dialog import EnRootDialog
+    from pdxloc.gui.start_screen import ProjectDialog
+    from pdxloc.gui.tm_window import TmWindow
 
     return {
         "Новый проект": ProjectDialog(),
-        "Создать базу переводов": TmImportDialog(),
         "Запись перевода в мод": ExportDialog(conn, 1),
         "Загрузить перевод из мода": ImportDialog(conn, 1),
-        "Базы памяти переводов": TmSourcesDialog(conn),
-        "Память переводов": TmManagerDialog(conn),
+        "Память переводов": TmWindow(conn),
         "Конкорданс": ConcordanceDialog(conn, "hello"),
         "Архив": ArchiveDialog(conn),
         "Отчёт проверки": QaReportDialog(conn, 1),
+        "Смена папки оригинала": EnRootDialog(conn, 1),
+        "Машинный перевод": MtDialog(conn, 1, None),
     }
 
 
@@ -93,4 +93,4 @@ def test_browse_buttons_are_consistent(conn, qtbot):
             # поиска); с меню — выпадающие списки, а не вызов проводника
             if not btn.text() or btn.menu() is not None:
                 continue
-            assert btn.text() == "Обзор…", f"{name}: кнопка {btn.text()!r}"
+            assert btn.text() == "Browse…", f"{name}: кнопка {btn.text()!r}"

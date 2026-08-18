@@ -9,9 +9,9 @@ import sqlite3
 
 import pytest
 
-from ck3loc import db as db_module
-from ck3loc import project
-from ck3loc.core import fuzzy, tm, tm_import
+from pdxloc import db as db_module
+from pdxloc import project
+from pdxloc.core import fuzzy, tm, tm_import
 
 SEED = [
     ("I am Targaryen", "Я Таргариен"),
@@ -25,7 +25,7 @@ SEED = [
 def conn(tmp_path):
     """Соединение как у настоящего проекта: ATTACH баз работает только так."""
     c = project.create_project(
-        tmp_path / "p.ck3proj", name="P", src_root=tmp_path / "en", tgt_root=tmp_path / "ru")
+        tmp_path / "p.pdxproj", name="P", src_root=tmp_path / "en", tgt_root=tmp_path / "ru")
     yield c
     c.close()
 
@@ -45,7 +45,7 @@ def _old_schema_base(path, name="Старая", pairs=(("The Bridge Must Be Paid
     conn.executescript(tm_import.TM_DDL)
     conn.executemany(
         "INSERT INTO tm_meta (key, value) VALUES (?, ?)",
-        [("format", "ck3tm"), ("schema_version", "1"), ("name", name),
+        [("format", "pdxtm"), ("schema_version", "1"), ("name", name),
          ("src_lang", "english"), ("tgt_lang", "russian"), ("kind", "import")])
     conn.executemany(
         "INSERT INTO tm_entries (en_hash, en_text, ru_text, source) VALUES (?, ?, ?, 'import')",
@@ -111,8 +111,8 @@ def test_concordance_finds_fragment(memory):
 
 @pytest.fixture
 def base_path(tmp_path):
-    """Готовая база .ck3tm с индексом."""
-    path = tmp_path / "Bdd" / "mod_english-russian.ck3tm"
+    """Готовая база .pdxtm с индексом."""
+    path = tmp_path / "Bdd" / "mod_english-russian.pdxtm"
     conn = tm_import.create_tm_database(
         path, name="Мод", src_lang="english", tgt_lang="russian", kind="import")
     conn.executemany(
@@ -139,7 +139,7 @@ def test_similar_from_attached_base(conn, base_path):
 
 def test_base_without_index_does_not_break_search(conn, base_path, tmp_path):
     """База старой схемы просто не участвует в поиске похожих, а не роняет его."""
-    old = _old_schema_base(tmp_path / "Bdd" / "old_english-russian.ck3tm")
+    old = _old_schema_base(tmp_path / "Bdd" / "old_english-russian.pdxtm")
     project.attach_tm_sources(conn, [old, base_path])
 
     hits = fuzzy.lookup_similar(conn, "The Bridge Must Be Repaid")
@@ -151,7 +151,7 @@ def test_base_without_index_does_not_break_search(conn, base_path, tmp_path):
 
 
 def test_build_index_upgrades_old_base(conn, tmp_path):
-    old = _old_schema_base(tmp_path / "Bdd" / "old_english-russian.ck3tm")
+    old = _old_schema_base(tmp_path / "Bdd" / "old_english-russian.pdxtm")
 
     assert tm_import.build_fts_index(old) == 1
     assert tm_import.build_fts_index(old) == 1      # повторный вызов безвреден

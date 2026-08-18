@@ -8,10 +8,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import pytest  # noqa: E402
 from PySide6.QtCore import Qt  # noqa: E402
 
-from ck3loc.core.scanner import scan_project  # noqa: E402
-from ck3loc.core.statuses import Status  # noqa: E402
-from ck3loc.gui.detail_pane import DetailPane  # noqa: E402
-from ck3loc.gui.units_model import (  # noqa: E402
+from pdxloc.core.scanner import scan_project  # noqa: E402
+from pdxloc.gui.detail_pane import DetailPane  # noqa: E402
+from pdxloc.gui.units_model import (  # noqa: E402
     COL_CHANGE, COL_RU, QUICK_COLS, UnitFilters, UnitsTableModel,
 )
 
@@ -57,7 +56,7 @@ def test_change_column_tooltip_and_color(updated, qtbot):
     model = UnitsTableModel(conn)
     model.reload(pid, UnitFilters(search="mean"))
     idx = model.index(0, COL_CHANGE)
-    assert "смыслу" in model.data(idx, Qt.ToolTipRole)
+    assert "in meaning" in model.data(idx, Qt.ToolTipRole)
     assert model.data(idx, Qt.ForegroundRole) is not None
 
 
@@ -73,7 +72,7 @@ def test_no_mark_for_untouched_rows(db, make_tree, qtbot):
 
 def test_detail_pane_highlights_changes(updated, qtbot):
     """Изменённые куски подсвечены прямо в поле оригинала."""
-    conn, pid = updated
+    conn, _pid = updated
     pane = DetailPane(conn)
     qtbot.addWidget(pane)
     pane.load_unit(get_unit(conn, "mean")["id"])
@@ -102,24 +101,44 @@ def test_no_highlight_for_unchanged_unit(db, make_tree, qtbot):
 
 
 def test_highlight_cleared_when_switching_rows(updated, qtbot):
-    conn, pid = updated
+    conn, _pid = updated
     pane = DetailPane(conn)
     qtbot.addWidget(pane)
     pane.load_unit(get_unit(conn, "mean")["id"])
     assert pane.en_view.extraSelections()
     # актуализируем строку — подсветка должна исчезнуть
-    from ck3loc.core import unit_ops
+    from pdxloc.core import unit_ops
     unit_ops.actualize(conn, [get_unit(conn, "mean")["id"]])
     pane.load_unit(get_unit(conn, "mean")["id"])
     assert pane.en_view.extraSelections() == []
 
 
 def test_cosmetic_label_in_diff_header(updated, qtbot):
-    conn, pid = updated
+    conn, _pid = updated
     pane = DetailPane(conn)
     qtbot.addWidget(pane)
     pane.load_unit(get_unit(conn, "cosm")["id"])
-    assert "косметическая" in pane.diff_label.text()
+    assert "cosmetic" in pane.diff_label.text()
+
+
+def test_editors_start_at_the_same_height(updated, qtbot):
+    """Поля EN и RU стоят на одной линии.
+
+    В шапке слева чекбокс «подсвечивать изменения», он выше подписи справа, и
+    поле оригинала съезжало вниз на несколько пикселей — колонки выглядели
+    перекошенными.
+    """
+    conn, _pid = updated
+    pane = DetailPane(conn)
+    qtbot.addWidget(pane)
+    pane.resize(1200, 500)
+    pane.load_unit(get_unit(conn, "mean")["id"])
+    pane.show()
+    pane.layout().activate()
+
+    en_top = pane.en_view.mapTo(pane, pane.en_view.rect().topLeft()).y()
+    ru_top = pane.ru_edit.mapTo(pane, pane.ru_edit.rect().topLeft()).y()
+    assert en_top == ru_top, f"поля разъехались по высоте: EN {en_top}, RU {ru_top}"
 
 
 def test_quick_columns_shifted_correctly(updated, qtbot):

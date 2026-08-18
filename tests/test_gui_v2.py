@@ -9,10 +9,10 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import Qt  # noqa: E402
 
-from ck3loc.core.scanner import scan_project  # noqa: E402
-from ck3loc.core.stats import ProjectStats, file_stats  # noqa: E402
-from ck3loc.core.statuses import Status  # noqa: E402
-from ck3loc.gui.units_model import (  # noqa: E402
+from pdxloc.core.scanner import scan_project  # noqa: E402
+from pdxloc.core.stats import ProjectStats, file_stats  # noqa: E402
+from pdxloc.core.statuses import Status  # noqa: E402
+from pdxloc.gui.units_model import (  # noqa: E402
     COL_RU, QUICK_COLS, UnitFilters, UnitsTableModel,
 )
 
@@ -93,7 +93,7 @@ def test_file_prefix_filter(scanned, qtbot):
 
 
 def test_file_tree_populate_and_signal(scanned, qtbot):
-    from ck3loc.gui.file_tree import FileTreePanel
+    from pdxloc.gui.file_tree import FileTreePanel
 
     conn, pid = scanned
     panel = FileTreePanel()
@@ -112,7 +112,7 @@ def test_file_tree_populate_and_signal(scanned, qtbot):
 
 
 def test_status_chips(qtbot):
-    from ck3loc.gui.status_chips import StatusChipsBar
+    from pdxloc.gui.status_chips import StatusChipsBar
 
     bar = StatusChipsBar()
     qtbot.addWidget(bar)

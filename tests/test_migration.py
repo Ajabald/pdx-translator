@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from ck3loc.db import SCHEMA_VERSION, get_connection
+from pdxloc.db import SCHEMA_VERSION, get_connection
 
 # DDL версии 1 — литералом, чтобы тест не зависел от текущего db.py
 V1_DDL = """
@@ -133,3 +133,74 @@ def test_fresh_db_is_current(tmp_path):
     conn.commit()
     assert conn.execute("SELECT tgt_lang FROM projects").fetchone()[0] == "russian"
     conn.close()
+
+
+def test_migration_v7_to_8_adds_the_issue_cache(tmp_path):
+    """v7 -> v8: две колонки под замечания, строки не пересобираются.
+
+    Пустые значения и означают «ещё не проверено»: набор правил живёт в
+    настройке приложения и в файле проекта, а миграция идёт до того, как их
+    прочитали, — заполнить кеш здесь просто нечем.
+    """
+    db_path = tmp_path / "v7.sqlite3"
+    conn = get_connection(db_path)
+    conn.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1,'p','e','r')")
+    conn.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1, 1, 'f')")
+    conn.execute("INSERT INTO units (file_id, key, en_text, ru_text, status) "
+                 "VALUES (1, 'k', 'Cost: $V$', 'Цена: $V$', 'translated')")
+    conn.execute("UPDATE units SET qa_hash = 'x', qa_codes = 'dollar_mismatch'")
+    # откатываем схему к v7: колонок кеша ещё нет
+    conn.execute("ALTER TABLE units DROP COLUMN qa_hash")
+    conn.execute("ALTER TABLE units DROP COLUMN qa_codes")
+    conn.execute("UPDATE schema_meta SET value = '7' WHERE key = 'schema_version'")
+    conn.commit()
+    conn.close()
+
+    again = get_connection(db_path)
+    try:
+        cols = {r[1] for r in again.execute("PRAGMA table_info(units)")}
+        assert {"qa_hash", "qa_codes"} <= cols
+        assert again.execute(
+            "SELECT value FROM schema_meta WHERE key='schema_version'"
+        ).fetchone()[0] == str(SCHEMA_VERSION)
+        row = again.execute("SELECT ru_text, qa_hash, qa_codes FROM units").fetchone()
+        assert row[0] == "Цена: $V$"        # перевод на месте
+        assert row[1] is None and row[2] is None
+        # копия файла для этой ступени не нужна: таблица не пересобиралась
+        assert not (tmp_path / "v7.sqlite3.v7.bak").exists()
+    finally:
+        again.close()
+
+
+def test_migration_v8_to_9_adds_the_glossary(tmp_path):
+    """v8 -> v9: таблица глоссария, данные не трогаются.
+
+    Ступень интересна тем, что миграции почти нечего делать: `init_schema`
+    прогоняет DDL до неё, а таблица заведена через `CREATE TABLE IF NOT
+    EXISTS` — к моменту вызова она уже есть и в старом файле. Проверяем именно
+    это: откатив версию и уронив таблицу, получаем её обратно вместе с v9.
+    """
+    db_path = tmp_path / "v8.sqlite3"
+    conn = get_connection(db_path)
+    conn.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1,'p','e','r')")
+    conn.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1, 1, 'f')")
+    conn.execute("INSERT INTO units (file_id, key, en_text, ru_text, status) "
+                 "VALUES (1, 'k', 'A Maester of the Citadel', 'Мейстер Цитадели', 'translated')")
+    # откатываем схему к v8: глоссария ещё нет
+    conn.execute("DROP TABLE glossary")
+    conn.execute("UPDATE schema_meta SET value = '8' WHERE key = 'schema_version'")
+    conn.commit()
+    conn.close()
+
+    again = get_connection(db_path)
+    try:
+        assert again.execute(
+            "SELECT value FROM schema_meta WHERE key='schema_version'"
+        ).fetchone()[0] == str(SCHEMA_VERSION)
+        # таблица вернулась и пуста — глоссарий начинается с нуля
+        assert again.execute("SELECT COUNT(*) FROM glossary").fetchone()[0] == 0
+        # перевод на месте: ступень не пересобирает ни одной существующей таблицы
+        assert again.execute("SELECT ru_text FROM units").fetchone()[0] == "Мейстер Цитадели"
+        assert not (tmp_path / "v8.sqlite3.v8.bak").exists()
+    finally:
+        again.close()

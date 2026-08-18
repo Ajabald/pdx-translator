@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import pytest
 
-from ck3loc import project, settings
-from ck3loc.core import tm, tm_import
-from ck3loc.core.scanner import scan_project
-from ck3loc.core.statuses import Status
+from pdxloc import project, settings
+from pdxloc.core import tm, tm_import
+from pdxloc.core.scanner import scan_project
+from pdxloc.core.statuses import Status
 
 VANILLA_EN = ('l_english:\n'
               ' k_hello:0 "Hello"\n'
@@ -22,7 +22,7 @@ VANILLA_RU = ('l_russian:\n'
 def build_vanilla(tmp_path, make_tree, name="Ваниль CK3"):
     en = make_tree({"vanilla_l_english.yml": VANILLA_EN}, "game_en")
     ru = make_tree({"vanilla_l_russian.yml": VANILLA_RU}, "game_ru")
-    out = tmp_path / "Bdd" / "vanilla_EN-RU.ck3tm"
+    out = tmp_path / "Bdd" / "vanilla_EN-RU.pdxtm"
     report = tm_import.build_tm_from_dirs(en, ru, out, name=name, kind="game")
     return out, report
 
@@ -34,11 +34,14 @@ def test_build_from_dirs(tmp_path, make_tree):
     assert report.pairs == 2          # k_same (== оригиналу) и k_lonely не в счёт
     assert report.skipped == 2
     meta = project.tm_meta(out)
-    assert meta["format"] == "ck3tm"
+    assert meta["format"] == "pdxtm"
     assert meta["kind"] == "game"
     assert meta["name"] == "Ваниль CK3"
     assert meta["src_lang"] == "english" and meta["tgt_lang"] == "russian"
-    assert meta["entries"] == "2"
+    # число записей считается только по просьбе: COUNT(*) идёт полным сканом,
+    # а описание спрашивают в основном ради «это вообще база памяти?»
+    assert "entries" not in meta
+    assert project.tm_meta(out, with_count=True)["entries"] == "2"
 
 
 def test_sibling_dir_autodetect(tmp_path, make_tree):
@@ -50,7 +53,7 @@ def test_sibling_dir_autodetect(tmp_path, make_tree):
                        (root / "russian" / "a_l_russian.yml", VANILLA_RU)):
         with open(path, "w", encoding="utf-8-sig", newline="\n") as f:
             f.write(text)
-    out = tmp_path / "auto.ck3tm"
+    out = tmp_path / "auto.pdxtm"
     report = tm_import.build_tm_from_dirs(root / "english", None, out, name="Авто")
     assert report.pairs == 2
 
@@ -58,7 +61,7 @@ def test_sibling_dir_autodetect(tmp_path, make_tree):
 def test_missing_target_dir(tmp_path, make_tree):
     en = make_tree({"a_l_english.yml": VANILLA_EN}, "en")
     with pytest.raises(FileNotFoundError):
-        tm_import.build_tm_from_dirs(en, None, tmp_path / "x.ck3tm", name="X")
+        tm_import.build_tm_from_dirs(en, None, tmp_path / "x.pdxtm", name="X")
 
 
 def test_attached_db_used_for_lookup(tmp_path, make_tree, monkeypatch):
@@ -69,7 +72,7 @@ def test_attached_db_used_for_lookup(tmp_path, make_tree, monkeypatch):
     en = make_tree({"mod_l_english.yml":
                     'l_english:\n m1:0 "Hello"\n m2:0 "Unique text"\n'}, "en")
     ru = make_tree({}, "ru")
-    proj_path = tmp_path / "p.ck3proj"
+    proj_path = tmp_path / "p.pdxproj"
     conn = project.create_project(proj_path, name="P", src_root=en, tgt_root=ru)
     project.set_tm_sources(conn, [tm_path.name])
     project.attach_tm_sources(conn, project.project_tm_paths(conn))
@@ -89,7 +92,7 @@ def test_attached_db_used_for_lookup(tmp_path, make_tree, monkeypatch):
 def test_own_translation_wins_over_game_db(tmp_path, make_tree, monkeypatch):
     tm_path, _ = build_vanilla(tmp_path, make_tree)
     monkeypatch.setattr(settings, "bdd_dir", lambda: tm_path.parent)
-    proj_path = tmp_path / "p.ck3proj"
+    proj_path = tmp_path / "p.pdxproj"
     conn = project.create_project(proj_path, name="P", src_root="e", tgt_root="r")
     project.set_tm_sources(conn, [tm_path.name])
     project.attach_tm_sources(conn, project.project_tm_paths(conn))
@@ -97,37 +100,45 @@ def test_own_translation_wins_over_game_db(tmp_path, make_tree, monkeypatch):
     tm.upsert(conn, "Hello", "Здравствуйте")     # свой перевод
     conn.commit()
     hits = tm.lookup(conn, "Hello")
-    assert hits[0].ru_text == "Здравствуйте" and hits[0].origin == "Проект"
+    assert hits[0].ru_text == "Здравствуйте" and hits[0].origin == "Project"
     assert {h.ru_text for h in hits} == {"Здравствуйте", "Привет"}
     conn.close()
 
 
-def test_ambiguous_variants_block_autofill(tmp_path, make_tree, monkeypatch):
-    """Если база и проект расходятся в переводе, автозаполнение молчит."""
+def test_ambiguous_variants_are_resolved_by_source_priority(
+        tmp_path, make_tree, monkeypatch):
+    """База и проект расходятся — побеждает свой перевод, а не молчание.
+
+    Приоритет тот же, что у подсказок и у F7: собственная память проекта важнее
+    подключённой базы игры.
+    """
     tm_path, _ = build_vanilla(tmp_path, make_tree)
     monkeypatch.setattr(settings, "bdd_dir", lambda: tm_path.parent)
     en = make_tree({"mod_l_english.yml": 'l_english:\n m1:0 "Hello"\n'}, "en")
     ru = make_tree({}, "ru")
     conn = project.create_project(
-        tmp_path / "p2.ck3proj", name="P", src_root=en, tgt_root=ru)
+        tmp_path / "p2.pdxproj", name="P", src_root=en, tgt_root=ru)
     project.set_tm_sources(conn, [tm_path.name])
     project.attach_tm_sources(conn, project.project_tm_paths(conn))
     tm.upsert(conn, "Hello", "Здравствуйте")
     conn.commit()
     stats = scan_project(conn, 1)
-    assert stats.auto_filled == 0
-    assert conn.execute("SELECT status FROM units WHERE key='m1'").fetchone()[0] == \
-        Status.UNTRANSLATED.value
+
+    assert stats.auto_filled == 1
+    row = conn.execute("SELECT status, ru_text FROM units WHERE key='m1'").fetchone()
+    assert row["status"] == Status.AUTO.value
+    assert row["ru_text"] == "Здравствуйте"
+    assert row["ru_text"] == tm.lookup(conn, "Hello")[0].ru_text
     conn.close()
 
 
 def test_export_project_tm(tmp_path, make_tree):
     en = make_tree({"m_l_english.yml": 'l_english:\n a:0 "Hello"\n b:0 "World"\n'}, "en")
     ru = make_tree({"m_l_russian.yml": 'l_russian:\n a:0 "Привет"\n'}, "ru")
-    conn = project.create_project(tmp_path / "p.ck3proj", name="Мой мод",
+    conn = project.create_project(tmp_path / "p.pdxproj", name="Мой мод",
                                   src_root=en, tgt_root=ru)
     scan_project(conn, 1)
-    out = tmp_path / "share.ck3tm"
+    out = tmp_path / "share.pdxtm"
     report = tm_import.export_project_tm(conn, out, name="Мой мод EN-RU")
     conn.close()
     assert report.pairs == 1
@@ -137,7 +148,7 @@ def test_export_project_tm(tmp_path, make_tree):
 
 def test_list_tm_databases_skips_junk(tmp_path, make_tree, monkeypatch):
     tm_path, _ = build_vanilla(tmp_path, make_tree)
-    (tm_path.parent / "broken.ck3tm").write_bytes(b"not a database")
+    (tm_path.parent / "broken.pdxtm").write_bytes(b"not a database")
     monkeypatch.setattr(settings, "bdd_dir", lambda: tm_path.parent)
     found = project.list_tm_databases()
     assert [p.name for p, _ in found] == [tm_path.name]

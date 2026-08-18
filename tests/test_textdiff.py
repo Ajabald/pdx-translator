@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from ck3loc.core.textdiff import (
+from pdxloc.core.textdiff import (
     COSMETIC, MEANINGFUL, changed_ranges, classify_change, summarize_change, word_diff,
 )
 
@@ -26,6 +26,8 @@ def test_cosmetic(old, new):
     ("Plain text", "#bold Plain text#!"),                      # появилась разметка
     ("Gain $VALUE$", "Gain $AMOUNT$"),                         # другая переменная
     ("Cost £gold£", "Cost £prestige£"),                        # другая иконка
+    ("Cost @gold!", "Cost @prestige!"),                        # иконка CK3
+    ("#indent_newline:2 T", "#indent_newline:4 T"),            # параметр тега
 ])
 def test_meaningful(old, new):
     assert classify_change(old, new) == MEANINGFUL
@@ -71,6 +73,6 @@ def test_word_diff_reconstructs_texts():
 
 
 def test_summarize_change():
-    assert "косметическая" in summarize_change("Text", "Text.")
+    assert "cosmetic" in summarize_change("Text", "Text.")
     text = summarize_change("Winter is coming", "Summer is coming")
-    assert "изменён текст" in text and "Summer" in text
+    assert "the text changed" in text and "Summer" in text

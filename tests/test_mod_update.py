@@ -5,10 +5,10 @@
 """
 from __future__ import annotations
 
-from ck3loc.core import unit_ops
-from ck3loc.core.scanner import scan_project
-from ck3loc.core.statuses import Status
-from ck3loc.core.textdiff import COSMETIC, MEANINGFUL
+from pdxloc.core import unit_ops
+from pdxloc.core.scanner import scan_project
+from pdxloc.core.statuses import Status
+from pdxloc.core.textdiff import COSMETIC, MEANINGFUL
 
 from test_scanner import get_unit, make_project
 
@@ -41,6 +41,28 @@ def test_translations_survive_update(db, make_tree):
     assert u["status"] == Status.STALE.value
     assert u["prev_en_text"] == "The old lord of Winterfell"
     assert u["en_changed_at"] is not None
+
+
+def test_machine_translation_does_not_survive_a_changed_original(db, make_tree):
+    """Машинный перевод прежней редакции не остаётся при новом оригинале.
+
+    Его никто не читал, и относится он к другому тексту. Оставить как есть —
+    значит держать перевод чужой строки под видом почти готового: он и в мод
+    уедет по галке «включая машинный». Ведёт себя как «Авто»: сброс.
+    """
+    pid, tree = setup(db, make_tree)
+    unit_id = get_unit(db, "desc")["id"]
+    unit_ops.save_machine_text(db, unit_id, "Машинный перевод старого текста",
+                               batch_id=unit_ops.new_batch_id())
+    assert get_unit(db, "desc")["status"] == Status.MACHINE.value
+
+    tree({"m_l_english.yml": EN_V1.replace(
+        '"The old lord of Winterfell"', '"The young lord of Winterfell"')}, "en")
+    scan_project(db, pid)
+
+    u = get_unit(db, "desc")
+    assert u["status"] == Status.UNTRANSLATED.value
+    assert u["ru_text"] is None
 
 
 def test_change_kind_cosmetic_vs_meaningful(db, make_tree):
@@ -77,7 +99,7 @@ def test_source_history_accumulates(db, make_tree):
 
 
 def test_repeated_scan_does_not_duplicate_history(db, make_tree):
-    pid, tree = setup(db, make_tree)
+    pid, _tree = setup(db, make_tree)
     scan_project(db, pid)
     scan_project(db, pid)
     unit_id = get_unit(db, "greet")["id"]
@@ -120,7 +142,7 @@ def test_status_change_keeps_previous_source(db, make_tree):
 
 
 def test_history_records_manual_edit_and_undo(db, make_tree):
-    pid, _ = setup(db, make_tree)
+    _pid, _ = setup(db, make_tree)
     unit_id = get_unit(db, "greet")["id"]
     batch = unit_ops.new_batch_id()
     unit_ops.save_ru_text(db, unit_id, "Зима на пороге", batch_id=batch)
@@ -133,7 +155,7 @@ def test_history_records_manual_edit_and_undo(db, make_tree):
 
 
 def test_history_limit(db, make_tree):
-    pid, _ = setup(db, make_tree)
+    _pid, _ = setup(db, make_tree)
     unit_id = get_unit(db, "greet")["id"]
     for i in range(unit_ops.HISTORY_LIMIT + 10):
         unit_ops.save_ru_text(db, unit_id, f"вариант {i}")
@@ -141,7 +163,7 @@ def test_history_limit(db, make_tree):
 
 
 def test_last_batch(db, make_tree):
-    pid, _ = setup(db, make_tree)
+    _pid, _ = setup(db, make_tree)
     ids = [get_unit(db, k)["id"] for k in ("greet", "desc")]
     batch = unit_ops.new_batch_id()
     unit_ops.set_status(db, ids, Status.REVIEWED, batch_id=batch)

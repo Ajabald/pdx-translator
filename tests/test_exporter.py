@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ck3loc.core import paradox_yaml
-from ck3loc.core.exporter import export_project
-from ck3loc.core.models import ExportOptions
-from ck3loc.core.scanner import scan_project
+from pdxloc.core import paradox_yaml
+from pdxloc.core.exporter import export_project
+from pdxloc.core.models import ExportOptions
+from pdxloc.core.scanner import scan_project
 
 from test_scanner import make_project
 
@@ -87,8 +87,12 @@ def test_stale_excluded_when_disabled(db, make_tree, tmp_path):
     report2 = export_project(
         db, pid, ExportOptions(mode="translated_only", include_stale=True),
         out_root=tmp_path / "out2")
-    keys2 = {e.key for e in paradox_yaml.parse_file(tmp_path / "out2" / "mod_l_russian.yml").entries}
+    out2 = tmp_path / "out2" / "mod_l_russian.yml"
+    keys2 = {e.key for e in paradox_yaml.parse_file(out2).entries}
     assert "stale_key" in keys2
+    # отчёт — то, что видит человек после записи; он обязан сходиться с файлом
+    assert report.keys_written == len(keys)
+    assert report2.keys_written == len(keys2) == len(keys) + 1
 
 
 def test_orphans_not_exported(db, make_tree, tmp_path):
@@ -112,6 +116,34 @@ def test_export_respects_en_order(db, make_tree, tmp_path):
     export_project(db, pid, ExportOptions(mode="all_fallback_en"), out_root=out)
     keys = [e.key for e in paradox_yaml.parse_file(out / "mod_l_russian.yml").entries]
     assert keys == ["greet", "bye", "stale_key"]   # порядок EN-файла
+
+
+def test_interrupted_write_leaves_the_previous_file_whole(db, make_tree, tmp_path, monkeypatch):
+    """Сорванная запись не оставляет в моде обрезанный файл.
+
+    Файл локализации перезаписывается на месте, а игра читает из папки все
+    `*.yml` подряд: огрызок она загрузит как настоящий и покажет игроку
+    полперевода. Поэтому пишем рядом и подменяем готовое.
+    """
+    pid = setup_project(db, make_tree)
+    out = tmp_path / "out"
+    export_project(db, pid, ExportOptions(), out_root=out)
+    target = out / "mod_l_russian.yml"
+    before = target.read_bytes()
+
+    db.execute("UPDATE units SET ru_text = 'Здравствуй' WHERE key = 'greet'")
+    db.commit()
+
+    def die(*args, **kwargs):
+        raise OSError("диск отвалился на середине")
+
+    monkeypatch.setattr("pdxloc.core.exporter.os.replace", die)
+    try:
+        export_project(db, pid, ExportOptions(), out_root=out)
+    except OSError:
+        pass
+
+    assert target.read_bytes() == before        # прежняя версия цела
 
 
 # --- резервные копии перезаписываемых файлов ---
@@ -162,7 +194,7 @@ def test_backup_disabled(db, make_tree, tmp_path):
 
 def test_backups_pruned(tmp_path):
     """Держим только последние снимки — бэкап не превращается в архив версий."""
-    from ck3loc.core.exporter import _prune_backups
+    from pdxloc.core.exporter import _prune_backups
 
     project_dir = tmp_path / "test"
     for day in range(1, 9):

@@ -14,7 +14,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest  # noqa: E402
 
-from ck3loc.core import tm_import  # noqa: E402
+from pdxloc.core import tm_import  # noqa: E402
 
 EN = 'l_english:\n a:0 "Hello"\n b:0 "World"\n'
 RU = 'l_russian:\n a:0 "Привет"\n b:0 "Мир"\n'
@@ -87,24 +87,24 @@ def test_resolve_reports_nothing_when_no_pairs(tmp_path):
 
 def test_dialog_substitutes_nested_folder(mods, qtbot):
     """Окно само спускается в папку языка и говорит об этом в строке состояния."""
-    from ck3loc.gui.tm_import_dialog import TmImportDialog
+    from pdxloc.gui.tm_build_tab import TmBuildTab
 
     mod, ru = mods
-    dlg = TmImportDialog()
-    qtbot.addWidget(dlg)
-    dlg.src_edit.setText(str(mod / "localization" / "english"))
-    dlg.tgt_edit.setText(str(ru / "localization"))
-    dlg._on_tgt_edited()
+    tab = TmBuildTab()
+    qtbot.addWidget(tab)
+    tab.src_edit.setText(str(mod / "localization" / "english"))
+    tab.tgt_edit.setText(str(ru / "localization"))
+    tab._on_tgt_edited()
 
-    assert dlg.tgt_edit.text() == str(ru / "localization" / "russian")
-    assert "с парой: 1" in dlg.status.text()
-    assert "вложенная папка" in dlg.status.text()
+    assert tab.tgt_edit.text() == str(ru / "localization" / "russian")
+    assert "with a pair: 1" in tab.status.text()
+    assert "nested translation folder" in tab.status.text()
 
 
 def test_build_from_mod_root(mods, tmp_path):
     """Сборка базы по паре модов даёт пары перевода, а не пустой файл."""
     mod, ru = mods
-    out = tmp_path / "agot.ck3tm"
+    out = tmp_path / "agot.pdxtm"
     src = mod / "localization" / "english"
     best, _ = tm_import.resolve_target_dir(src, ru, "english", "russian")
 

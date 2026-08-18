@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from ck3loc.core import mt
+from pdxloc.core import mt
 
 REAL_STRINGS = [
     "Gain [GetTrait('brave').GetName] and $VALUE$ £gold£",
@@ -11,6 +11,10 @@ REAL_STRINGS = [
     "[GetPlayer.GetDynasty.GetNameNoTooltip]",
     "Cost: $VALUE|=+0$ £prestige£, see [men_at_arms|E]",
     "#high;italic Fancy#! and #weak quiet#!",
+    "@gold! 120 and @warning_icon! danger",
+    "Pay [Select_CString(x,'@gold!','')] now",
+    "#TOOLTIP:CHARACTER,[CHARACTER.GetID] the heir#!",
+    "#indent_newline:2 Indented and #color:{0.8,0.7,0.5};bold red#!",
     "Plain text without any markup",
     "",
 ]
@@ -28,6 +32,15 @@ def test_markup_is_hidden_from_translator():
     assert "[" not in shielded and "$" not in shielded
     assert len(mapping) == 2
     assert "⟦0⟧" in shielded and "⟦1⟧" in shielded
+
+
+def test_at_icon_is_hidden_from_translator():
+    """Настоящая иконка CK3. До появления токена уезжала в переводчик голой."""
+    text = "Gain @gold! and $VALUE$"
+    shielded, mapping = mt.shield_tags(text)
+    assert "@" not in shielded
+    assert len(mapping) == 2
+    assert mt.unshield(shielded, mapping) == text
 
 
 def test_words_remain_translatable():
@@ -73,7 +86,7 @@ def test_translate_reports_broken_markup():
 
     results = mt.translate_texts(
         BrokenProvider(), ["Gain $VALUE$ £gold£"], "english", "russian")
-    text, missing = results[0]
+    _text, missing = results[0]
     assert len(missing) == 2       # обе метки потеряны — строку надо проверить
 
 

@@ -1,2 +1,2 @@
 @echo off
-start "" "%~dp0.venv\Scripts\pythonw.exe" -m ck3loc
+start "" "%~dp0.venv\Scripts\pythonw.exe" -m pdxloc

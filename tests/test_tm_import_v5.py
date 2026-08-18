@@ -1,4 +1,4 @@
-"""Схема .ck3tm версии 2: индекс похожих строк внутри самой базы.
+"""Схема .pdxtm версии 2: индекс похожих строк внутри самой базы.
 
 Индекс живёт в файле базы, а не строится при открытии проекта: над ванильной
 локализацией (244 тыс. записей) постройка занимает полсекунды, а держать такой
@@ -10,8 +10,8 @@ import sqlite3
 
 import pytest
 
-from ck3loc.core import tm, tm_import
-from ck3loc.project import tm_meta
+from pdxloc.core import tm, tm_import
+from pdxloc.project import tm_meta
 
 EN = 'l_english:\n a:0 "The Bridge Must Be Paid"\n b:0 "Winter is coming"\n'
 RU = 'l_russian:\n a:0 "Мост должен быть оплачен"\n b:0 "Зима близко"\n'
@@ -37,7 +37,7 @@ def _fts_rows(path) -> int:
 
 
 def test_new_base_has_index(loc_tree, tmp_path):
-    out = tmp_path / "mod.ck3tm"
+    out = tmp_path / "mod.pdxtm"
     report = tm_import.build_tm_from_dirs(
         loc_tree / "english", loc_tree / "russian", out, name="Мод")
 
@@ -47,7 +47,7 @@ def test_new_base_has_index(loc_tree, tmp_path):
 
 
 def test_index_finds_by_word(loc_tree, tmp_path):
-    out = tmp_path / "mod.ck3tm"
+    out = tmp_path / "mod.pdxtm"
     tm_import.build_tm_from_dirs(loc_tree / "english", loc_tree / "russian", out, name="Мод")
 
     conn = sqlite3.connect(f"file:{out.as_posix()}?mode=ro", uri=True)
@@ -62,7 +62,7 @@ def test_index_finds_by_word(loc_tree, tmp_path):
 
 def test_project_export_base_has_index(db, tmp_path):
     """База, выгруженная из проекта, тоже должна подсказывать похожие."""
-    from ck3loc.core.tm_import import export_project_tm
+    from pdxloc.core.tm_import import export_project_tm
 
     db.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1, 'P', 'e', 'r')")
     db.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1, 1, 'm.yml')")
@@ -72,7 +72,7 @@ def test_project_export_base_has_index(db, tmp_path):
         (tm.en_hash("Winter is coming"),))
     db.commit()
 
-    out = tmp_path / "project.ck3tm"
+    out = tmp_path / "project.pdxtm"
     report = export_project_tm(db, out, name="Проект")
 
     assert report.pairs == 1
@@ -85,7 +85,7 @@ def _v1_base(path):
     conn.executescript(tm_import.TM_DDL)
     conn.executemany(
         "INSERT INTO tm_meta (key, value) VALUES (?, ?)",
-        [("format", "ck3tm"), ("schema_version", "1"), ("name", "Старая"),
+        [("format", "pdxtm"), ("schema_version", "1"), ("name", "Старая"),
          ("src_lang", "english"), ("tgt_lang", "russian"), ("kind", "import")])
     conn.executemany(
         "INSERT INTO tm_entries (en_hash, en_text, ru_text, source) VALUES (?, ?, ?, 'import')",
@@ -98,7 +98,7 @@ def _v1_base(path):
 
 
 def test_build_index_on_old_base(tmp_path):
-    old = _v1_base(tmp_path / "old.ck3tm")
+    old = _v1_base(tmp_path / "old.pdxtm")
     assert tm_meta(old)["schema_version"] == "1"
 
     assert tm_import.build_fts_index(old) == 2
@@ -108,7 +108,7 @@ def test_build_index_on_old_base(tmp_path):
 
 
 def test_build_index_is_idempotent(tmp_path):
-    old = _v1_base(tmp_path / "old.ck3tm")
+    old = _v1_base(tmp_path / "old.pdxtm")
     tm_import.build_fts_index(old)
     size = old.stat().st_size
 
@@ -121,7 +121,7 @@ def test_build_index_is_idempotent(tmp_path):
 def test_index_matches_entries_after_rebuild(loc_tree, tmp_path):
     """Индекс с внешним содержимым не обновляется вставками сам — проверяем,
     что сборка базы не оставляет его отстающим от таблицы."""
-    out = tmp_path / "mod.ck3tm"
+    out = tmp_path / "mod.pdxtm"
     tm_import.build_tm_from_dirs(loc_tree / "english", loc_tree / "russian", out, name="Мод")
     conn = sqlite3.connect(f"file:{out.as_posix()}?mode=ro", uri=True)
     try:

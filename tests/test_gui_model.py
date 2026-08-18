@@ -9,8 +9,10 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import Qt  # noqa: E402
 
-from ck3loc.core.scanner import scan_project  # noqa: E402
-from ck3loc.gui.units_model import COL_EN, COL_RU, COL_STATUS, UnitFilters, UnitsTableModel  # noqa: E402
+from pdxloc.core import statuses as statuses_mod  # noqa: E402
+from pdxloc.core.scanner import scan_project  # noqa: E402
+from pdxloc.core.statuses import Status  # noqa: E402
+from pdxloc.gui.units_model import COL_EN, COL_STATUS, UnitFilters, UnitsTableModel  # noqa: E402
 
 from test_scanner import EN, RU, make_project  # noqa: E402
 
@@ -30,7 +32,10 @@ def test_model_load_and_roles(scanned, qtbot):
     model.reload(pid, UnitFilters())
     assert model.rowCount() == 2
     statuses = {model.data(model.index(i, COL_STATUS), Qt.DisplayRole) for i in range(2)}
-    assert statuses == {"Переведено", "Не переведено"}
+    # подписи берутся из statuses.label(): в тестах переводчик не установлен,
+    # поэтому виден язык оригинала
+    assert statuses == {statuses_mod.label(Status.TRANSLATED),
+                        statuses_mod.label(Status.UNTRANSLATED)}
     # цвет фона есть у любых строк
     assert model.data(model.index(0, COL_EN), Qt.BackgroundRole) is not None
     # UserRole отдаёт unit_id
@@ -62,9 +67,9 @@ def test_model_newline_display(scanned, qtbot):
 
 
 def test_detail_pane_save_flow(scanned, qtbot):
-    from ck3loc.gui.detail_pane import DetailPane
+    from pdxloc.gui.detail_pane import DetailPane
 
-    conn, pid = scanned
+    conn, _pid = scanned
     pane = DetailPane(conn)
     qtbot.addWidget(pane)
     uid = conn.execute("SELECT id FROM units WHERE key = 'bye'").fetchone()["id"]
@@ -75,5 +80,5 @@ def test_detail_pane_save_flow(scanned, qtbot):
     assert row["ru_text"] == "Пока"
     assert row["status"] == "translated"
     # перевод попал в TM
-    from ck3loc.core import tm
+    from pdxloc.core import tm
     assert tm.lookup(conn, "Goodbye")[0].ru_text == "Пока"

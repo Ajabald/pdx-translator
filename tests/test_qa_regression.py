@@ -6,12 +6,11 @@
 """
 from __future__ import annotations
 
-import sqlite3
 
 import pytest
 
-from ck3loc.core.qa import CODES, check_unit, run_qa
-from ck3loc.core.paradox_yaml import parse_file
+from pdxloc.core.qa import CODES, check_unit, run_qa
+from pdxloc.core.paradox_yaml import parse_file
 
 from conftest import REALDATA_EN, REALDATA_RU, realdata_available
 
@@ -101,7 +100,7 @@ def test_typographic_checks_do_not_invent_problems(real_pairs):
 
 def test_ignored_issue_disappears(db):
     """Помеченное как «не ошибка» больше не показывается."""
-    from ck3loc.core import qa
+    from pdxloc.core import qa
 
     db.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1,'p','e','r')")
     db.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1,1,'f_l_english.yml')")
@@ -120,7 +119,7 @@ def test_ignored_issue_disappears(db):
 
 def test_inconsistent_translations_detected(db):
     """Один и тот же оригинал, переведённый по-разному, — реальная проблема."""
-    from ck3loc.core import tm
+    from pdxloc.core import tm
 
     db.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1,'p','e','r')")
     db.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1,1,'f_l_english.yml')")

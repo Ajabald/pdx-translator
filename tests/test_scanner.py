@@ -1,10 +1,10 @@
 """Тесты дифф-автомата сканера: по одному на каждый переход."""
 from __future__ import annotations
 
-import pytest
 
-from ck3loc.core.scanner import en_to_ru_relpath, ru_to_en_relpath, scan_project
-from ck3loc.core.statuses import Status
+from pdxloc.core.paradox_yaml import map_relpath
+from pdxloc.core.scanner import scan_project
+from pdxloc.core.statuses import Status
 
 
 def make_project(conn, en_root, ru_root, name="test") -> int:
@@ -25,9 +25,11 @@ RU = 'l_russian:\n greet:0 "Привет"\n bye:0 "Goodbye" # !!! ТРЕБУЕТ
 
 
 def test_path_mapping_middle_suffix():
-    assert en_to_ru_relpath("modifiers/agot_modifiers_l_english_BLA.yml") == \
+    """Метка языка бывает и в середине имени: agot_modifiers_l_english_BLA.yml."""
+    assert map_relpath("modifiers/agot_modifiers_l_english_BLA.yml",
+                       "english", "russian") == \
         "modifiers/agot_modifiers_l_russian_BLA.yml"
-    assert ru_to_en_relpath("a_l_russian.yml") == "a_l_english.yml"
+    assert map_relpath("a_l_russian.yml", "russian", "english") == "a_l_english.yml"
 
 
 def test_initial_import(db, make_tree):
@@ -41,6 +43,43 @@ def test_initial_import(db, make_tree):
     # маркер старых скриптов + ru==en -> не переведено
     assert get_unit(db, "bye")["status"] == Status.UNTRANSLATED.value
     assert get_unit(db, "bye")["ru_text"] is None
+
+
+def test_empty_original_with_a_real_translation_stays_translated(db, make_tree):
+    """Пустой оригинал уходит в игнор, но не поверх живого перевода.
+
+    Автоигнор не должен забирать строку, в которую человек уже что-то вписал:
+    пустое значение в оригинале — повод не мучить переводчика, а не повод
+    выбросить его работу.
+    """
+    en = make_tree({"mod_l_english.yml": 'l_english:\n k:0 ""\n other:0 "Text"\n'}, "en")
+    ru = make_tree(
+        {"mod_l_russian.yml": 'l_russian:\n k:0 "Живой перевод"\n other:0 "Текст"\n'}, "ru")
+    scan_project(db, make_project(db, en, ru))
+    assert get_unit(db, "k")["status"] == Status.TRANSLATED.value
+    assert get_unit(db, "k")["ru_text"] == "Живой перевод"
+
+
+def test_empty_original_without_a_translation_is_ignored_at_once(db, make_tree):
+    """Первый же скан кладёт заглушку в «игнорировано», а не в непереведённые."""
+    en = make_tree({"mod_l_english.yml": 'l_english:\n k:0 ""\n other:0 "Text"\n'}, "en")
+    stats = scan_project(db, make_project(db, en, make_tree({}, "ru")))
+    assert stats.auto_ignored == 1
+    assert get_unit(db, "k")["status"] == Status.IGNORED.value
+    assert get_unit(db, "other")["status"] == Status.UNTRANSLATED.value
+
+
+def test_original_that_went_empty_keeps_the_ignore(db, make_tree, tmp_path):
+    """Текст в оригинале пропал — строка остаётся игнорируемой, а не «устаревшей»."""
+    en = make_tree({"mod_l_english.yml": 'l_english:\n k:0 "[GetName]"\n'}, "en")
+    pid = make_project(db, en, make_tree({}, "ru"))
+    scan_project(db, pid)
+    assert get_unit(db, "k")["status"] == Status.IGNORED.value
+
+    (en / "mod_l_english.yml").write_text(
+        'l_english:\n k:0 ""\n', encoding="utf-8-sig", newline="\n")
+    scan_project(db, pid)
+    assert get_unit(db, "k")["status"] == Status.IGNORED.value
 
 
 def test_rescan_unchanged(db, make_tree):
@@ -182,8 +221,16 @@ def test_tm_auto_fill_same_text(db, make_tree):
     assert u["ru_text"] == "Одинаковый"
 
 
-def test_tm_no_fill_on_ambiguous(db, make_tree):
-    # два разных перевода одного EN в TM -> auto-заполнения нет
+def test_tm_fills_ambiguous_with_the_same_winner_as_f7(db, make_tree):
+    """Расхождение вариантов больше не глушит подстановку.
+
+    Раньше при двух разных переводах одного оригинала автозаполнение молчало,
+    хотя F7 в той же ситуации уверенно подставляет лучший вариант. Базы
+    расходятся в переводе одной строки постоянно, и молчание стоило процентов
+    заполнения на ровном месте. Теперь оба пути выбирают одного победителя.
+    """
+    from pdxloc.core import tm
+
     en = make_tree({
         "m1_l_english.yml": 'l_english:\n a:0 "Same"\n b:0 "Same"\n c:0 "Same"\n',
     }, "en")
@@ -192,8 +239,11 @@ def test_tm_no_fill_on_ambiguous(db, make_tree):
     }, "ru")
     pid = make_project(db, en, ru)
     stats = scan_project(db, pid)
-    assert stats.auto_filled == 0
-    assert get_unit(db, "c")["status"] == Status.UNTRANSLATED.value
+
+    assert stats.auto_filled == 1
+    unit = get_unit(db, "c")
+    assert unit["status"] == Status.AUTO.value      # «подставлено, проверь»
+    assert unit["ru_text"] == tm.lookup(db, "Same")[0].ru_text
 
 
 def test_en_modified_auto_reset(db, make_tree):

@@ -1,10 +1,11 @@
 """Тесты v3-M3: язык перевода из проекта, trailing, пропуск неизменных файлов."""
 from __future__ import annotations
 
-from ck3loc.core import paradox_yaml
-from ck3loc.core.exporter import export_project
-from ck3loc.core.models import ExportOptions
-from ck3loc.core.scanner import map_relpath, scan_project
+from pdxloc.core import paradox_yaml
+from pdxloc.core.exporter import export_project
+from pdxloc.core.models import ExportOptions
+from pdxloc.core.paradox_yaml import map_relpath
+from pdxloc.core.scanner import scan_project
 
 EN = 'l_english:\n#Заголовок раздела\n a:0 "Hello"\n b:0 "World"\n# хвост файла\n'
 
@@ -21,9 +22,13 @@ def test_map_relpath_any_languages():
     assert map_relpath("a_l_english.yml", "english", "french") == "a_l_french.yml"
     assert map_relpath("dir/x_l_english_MOD.yml", "english", "simp_chinese") == \
         "dir/x_l_simp_chinese_MOD.yml"
-    # каталоги не трогаем
+    # каталог языка тоже меняется: моды мастерской лежат как
+    # localization/<язык>/…, и корнем указывают саму localization
     assert map_relpath("english/x_l_english.yml", "english", "french") == \
-        "english/x_l_french.yml"
+        "french/x_l_french.yml"
+    # но только целым сегментом — english_notes не папка языка
+    assert map_relpath("english_notes/x_l_english.yml", "english", "french") == \
+        "english_notes/x_l_french.yml"
 
 
 def test_french_export_names_and_header(db, make_tree, tmp_path):

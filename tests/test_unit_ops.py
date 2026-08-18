@@ -1,8 +1,28 @@
 """Тесты операций над строками (unit_ops)."""
 from __future__ import annotations
 
-from ck3loc.core import tm, unit_ops
-from ck3loc.core.statuses import Status
+import re
+from pathlib import Path
+
+from pdxloc.core import tm, unit_ops
+from pdxloc.core.statuses import Status
+
+SRC = Path(unit_ops.__file__).resolve().parents[1]
+
+# Кто, кроме unit_ops, вправе трогать перевод строки — и почему.
+#
+#   scanner.py    — обновляет EN-сторону и заполняет пустые строки из файлов
+#                   перевода; правки человека сюда не попадают;
+#   tm.py         — `bulk_apply` заполняет только пустые непереведённые строки,
+#                   затирать ему нечего;
+#   db.py         — миграции схемы, там таблица пересобирается целиком;
+#   loc_import.py — пишет пачкой ради скорости (построчный `save_ru_text` стоил
+#                   одного fsync на строку), но перед записью зовёт
+#                   `record_history` и `status_after_edit` — то есть выполняет
+#                   ровно то требование, ради которого этот сторож заведён.
+_MAY_WRITE_TRANSLATIONS = {"unit_ops.py", "scanner.py", "tm.py", "db.py",
+                           "loc_import.py"}
+_WRITES_RU = re.compile(r"UPDATE units SET[^\"']*ru_text", re.IGNORECASE)
 
 
 def seed(db):
@@ -43,6 +63,42 @@ def test_save_ru_text_transitions(db):
     u = get(db, ids["k5"])
     assert u["status"] == Status.TRANSLATED.value
     assert u["prev_en_text"] is None
+
+
+def test_status_table_is_the_same_for_a_batch_and_for_a_single_edit():
+    """Таблица переходов одна на оба пути записи — построчный и пакетный.
+
+    Импорт перевода из мода пишет пачкой и зовёт ту же `status_after_edit`, что
+    и правка в поле. Разойдись они — импорт оставлял бы строки в состояниях,
+    которых не бывает при ручной правке, и заметить это можно было бы только
+    глазами, на чужом моде.
+    """
+    after = unit_ops.status_after_edit
+
+    # пустой текст сбрасывает всё, чем строка была заполнена
+    for was in (Status.TRANSLATED, Status.REVIEWED, Status.AUTO,
+                Status.MACHINE, Status.CUSTOM):
+        assert after(was.value, None, "было", None, None)[0] == Status.UNTRANSLATED.value
+    # а «игнорируется» стиранием не трогаем: там решение уже принято
+    assert after(Status.IGNORED.value, None, None, None, None)[0] == Status.IGNORED.value
+
+    # правка снимает «машинный» и «авто» — иначе строка не уехала бы в мод
+    for was in (Status.UNTRANSLATED, Status.AUTO, Status.MACHINE, Status.IGNORED):
+        assert after(was.value, "Перевод", None, None, None)[0] == Status.TRANSLATED.value
+
+    # устарело + другой текст = актуализация, дифф больше не нужен
+    status, prev, kind = after(
+        Status.STALE.value, "Новый", "Старый", "Old EN", "cosmetic")
+    assert (status, prev, kind) == (Status.TRANSLATED.value, None, None)
+
+    # тот же текст при «устарело» ничего не актуализирует, дифф остаётся
+    status, prev, kind = after(
+        Status.STALE.value, "Старый", "Старый", "Old EN", "cosmetic")
+    assert (status, prev, kind) == (Status.STALE.value, "Old EN", "cosmetic")
+
+    # «проверено» правка не понижает
+    assert after(Status.REVIEWED.value, "Правка", "Было", None, None)[0] == \
+        Status.REVIEWED.value
 
 
 def test_real_newline_normalized_on_save(db):
@@ -99,6 +155,28 @@ def test_apply_to_same_en(db):
     assert get(db, ids["k4"])["ru_text"] is None
 
 
+def test_apply_to_same_en_is_undoable(db):
+    """Ctrl+Z обязан снимать её целиком: правка задевает сотни строк разом.
+
+    Среди целей есть строки со статусом «Авто» — там перевод уже стоял, и
+    затирать его безвозвратно нельзя.
+    """
+    ids = seed(db)
+    db.execute("UPDATE units SET ru_text = 'Из памяти', status = ? WHERE id = ?",
+               (Status.AUTO.value, ids["k1"]))
+    db.commit()
+
+    batch = unit_ops.new_batch_id()
+    targets = unit_ops.apply_to_same_en(db, ids["k3"], batch_id=batch)
+    assert get(db, ids["k1"])["ru_text"] == "Привет"
+
+    assert unit_ops.last_batch(db)[0] == batch          # операция видна Ctrl+Z
+    assert unit_ops.undo_batch(db, batch) == len(targets)
+    restored = get(db, ids["k1"])
+    assert restored["ru_text"] == "Из памяти"
+    assert restored["status"] == Status.AUTO.value
+
+
 def test_apply_best_tm(db):
     ids = seed(db)
     tm.upsert(db, "World", "Мир из базы")
@@ -109,6 +187,38 @@ def test_apply_best_tm(db):
     assert not unit_ops.apply_best_tm(db, ids["k1"]) or get(db, ids["k1"])["status"] == Status.AUTO.value
 
 
+def test_filling_from_memory_leaves_a_history_record(db):
+    """Подстановка затирает то, что было, — редакция обязана остаться."""
+    ids = seed(db)
+    unit_ops.save_ru_text(db, ids["k4"], "Мой перевод")
+    tm.upsert(db, "World", "Мир из базы")
+
+    assert unit_ops.apply_best_tm(db, ids["k4"])
+
+    texts = [r["ru_text"] for r in unit_ops.unit_history(db, ids["k4"])]
+    assert "Мой перевод" in texts
+
+
+def test_translations_are_written_only_where_history_is_kept():
+    """Перевод правит `unit_ops` — он же кладёт редакцию в историю.
+
+    Ctrl+Z держится на этом: правка мимо `record_history` откатиться не может,
+    и заметить такую мимо-запись можно только когда пользователь попробует
+    отменить массовую операцию и ничего не произойдёт. Так уже случилось с
+    «применить ко всем строкам с таким же оригиналом».
+    """
+    hits = [
+        f"{path.relative_to(SRC).as_posix()}:{n}"
+        for path in sorted(SRC.rglob("*.py"))
+        if path.name not in _MAY_WRITE_TRANSLATIONS
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
+        if _WRITES_RU.search(line)
+    ]
+    assert not hits, (
+        "Перевод записывается мимо unit_ops — Ctrl+Z такую правку не снимет:\n"
+        + "\n".join(hits))
+
+
 def test_is_markup_only():
     assert unit_ops.is_markup_only("[GetPlayer.GetDynasty.GetNameNoTooltip]")
     assert unit_ops.is_markup_only("$VALUE$")
@@ -117,6 +227,22 @@ def test_is_markup_only():
     assert not unit_ops.is_markup_only("Hello")
     assert not unit_ops.is_markup_only("")
     assert not unit_ops.is_markup_only("   ")
+
+
+def test_has_nothing_to_translate():
+    """Пустое значение — та же категория, что голый тег: переводить нечего.
+
+    Отдельный предикат, а не расширение `is_markup_only`: та отвечает на вопрос
+    «строка ИЗ разметки», и пустую строка ею не считает — на этом стоит
+    подсветка. Здесь вопрос другой.
+    """
+    assert unit_ops.has_nothing_to_translate("")
+    assert unit_ops.has_nothing_to_translate("   ")
+    assert unit_ops.has_nothing_to_translate(None)
+    assert unit_ops.has_nothing_to_translate("[GetPlayer.GetDynasty.GetNameNoTooltip]")
+    assert unit_ops.has_nothing_to_translate("$VALUE$ £gold£")
+    assert not unit_ops.has_nothing_to_translate("Hello")
+    assert not unit_ops.has_nothing_to_translate("Hello [GetName]")
 
 
 def test_save_on_ignored_makes_translated(db):
