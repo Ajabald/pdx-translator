@@ -68,7 +68,7 @@ def main() -> int:
     # GUI
     from PySide6.QtWidgets import QApplication
 
-    from pdxloc.gui import language, theme
+    from pdxloc.gui import icons, language, theme
     from pdxloc.gui.main_window import MainWindow
 
     from pdxloc import settings
@@ -76,6 +76,7 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setStyle("Fusion")      # своя палитра ложится только на Fusion
     app.setApplicationName("PDX Translator")
+    app.setWindowIcon(icons.app_icon())
     # Настройки прежнего имени — до всего остального: язык и тема читаются уже
     # из своего куста, и перенимать их после было бы поздно
     settings.adopt_previous_settings()

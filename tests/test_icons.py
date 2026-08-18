@@ -26,6 +26,38 @@ def widget(qtbot):
     return w
 
 
+def test_the_application_has_its_own_icon(qtbot) -> None:
+    """Иконка окна и панели задач — не то же самое, что иконка exe.
+
+    `icon=` в `pdx-translator.spec` задаёт иконку **файла**; окно берёт
+    стандартную иконку Qt, пока `setWindowIcon` не сказал иначе. Из исходников
+    exe нет вовсе, и без этого файла окно всегда безымянное.
+
+    `qtbot` нужен не виджету, а самому `QIcon`: без QApplication Qt валит
+    процесс молча, без единой строки в отчёте.
+    """
+    icon = icons.app_icon()
+    assert not icon.isNull(), "нет gui/icons/app.png — соберите tools/make_icon.py"
+    assert icon.availableSizes(), "иконка пустая"
+
+
+def test_the_spec_points_at_a_real_icon_file() -> None:
+    """Спека обещает `.ico` — файл обязан существовать.
+
+    Иначе PyInstaller упадёт на сборке релиза, а узнаем мы об этом уже по тегу,
+    когда job `build` покраснеет у всех на виду.
+    """
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    spec = (root / "pdx-translator.spec").read_text(encoding="utf-8")
+    found = re.search(r'^\s*icon="([^"]+)"', spec, re.M)
+    assert found, "в спеке не задана иконка"
+    assert (root / found.group(1)).is_file(), (
+        f"спека ссылается на {found.group(1)}, а файла нет")
+
+
 def test_every_declared_icon_has_a_file() -> None:
     """Спека обещает иконку — файл обязан существовать, иначе кнопка пустая."""
     missing = [name for name in declared_icons() if not icons.available(name)]

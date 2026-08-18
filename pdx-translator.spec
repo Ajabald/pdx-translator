@@ -42,7 +42,10 @@ exe = EXE(
     strip=False,
     upx=False,
     console=False,          # оконное приложение, без консоли
-    icon=None,              # TODO: добавить иконку перед публикацией
+    # Иконка самого exe. Иконку окна и панели задач она НЕ задаёт — ту ставит
+    # `app.setWindowIcon` из `gui/icons/app.png`. Оба файла собирает
+    # `tools/make_icon.py` из одного исходника.
+    icon="pdx-translator.ico",
 )
 
 coll = COLLECT(

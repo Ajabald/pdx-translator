@@ -44,3 +44,7 @@ desktop.ini
 # из исходников «рядом» — это корень репозитория (`settings.app_root`).
 /pdx-translator.log
 /pdx-translator.log.*
+
+# Предпросмотр иконки — производная от tools/appicon*.svg, пересобирается
+# командой tools/make_icon.py.
+/tools/appicon-preview.png

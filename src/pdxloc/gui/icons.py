@@ -59,6 +59,25 @@ def _icon_dir():
     return resources.files("pdxloc.gui") / "icons"
 
 
+def app_icon() -> QIcon:
+    """Иконка самого приложения — окно, панель задач, Alt+Tab.
+
+    Отдельно от иконок действий и не перекрашивается: те монохромные и живут
+    цветом темы, а эта цветная и одна на приложение.
+
+    Ставить её обязательно: `icon=` в `pdx-translator.spec` задаёт иконку
+    **файла** exe, а окно берёт стандартную иконку Qt, пока ей не сказали
+    иначе. Из исходников exe нет вовсе, и без этого окно всегда безымянное.
+    """
+    try:
+        path = _icon_dir() / "app.png"
+        if path.is_file():
+            return QIcon(str(path))
+    except (FileNotFoundError, ModuleNotFoundError):
+        pass
+    return QIcon()      # без файла — прежнее поведение, стандартная иконка
+
+
 def available(name: str) -> bool:
     try:
         return (_icon_dir() / f"{name}.svg").is_file()
