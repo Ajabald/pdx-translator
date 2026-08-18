@@ -203,3 +203,48 @@ def test_backups_pruned(tmp_path):
 
     assert [p.name for p in sorted(project_dir.iterdir())] == [
         "2026-08-06_120000", "2026-08-07_120000", "2026-08-08_120000"]
+
+
+def test_pruning_does_not_touch_foreign_folders(tmp_path):
+    """Чужая папка в `backups/<проект>/` — не снимок, и удалять её мы не вправе.
+
+    Раньше снимком считалась любая подпапка, а `rmtree` не спрашивает: папка,
+    положенная человеком руками, уезжала вместе со старыми снимками молча.
+    Отличить своё от чужого можно точно — у снимка строгое имя со временем.
+    """
+    from pdxloc.core.exporter import _prune_backups
+
+    project_dir = tmp_path / "test"
+    for day in range(1, 5):
+        (project_dir / f"2026-08-{day:02d}_120000").mkdir(parents=True)
+    foreign = project_dir / "мои заметки"
+    foreign.mkdir()
+    (foreign / "важное.txt").write_text("не удаляй", encoding="utf-8")
+    # похоже на снимок, но не оно: под шаблон не подходит
+    almost = project_dir / "2026-08-01"
+    almost.mkdir()
+
+    _prune_backups(project_dir, keep=1)
+
+    assert foreign.is_dir(), "чужая папка снесена"
+    assert (foreign / "важное.txt").read_text(encoding="utf-8") == "не удаляй"
+    assert almost.is_dir(), "папка, лишь похожая на снимок, снесена"
+    # а свои старые снимки всё-таки убраны, иначе чистка перестала работать
+    assert [p.name for p in sorted(project_dir.iterdir())
+            if p.name[:4].isdigit() and "_" in p.name] == ["2026-08-04_120000"]
+
+
+def test_a_snapshot_name_matches_what_pruning_looks_for(tmp_path):
+    """Имя снимка и шаблон чистки обязаны сходиться.
+
+    Они в разных концах модуля, и разъехаться им ничего не стоит: поменяй
+    формат имени — чистка перестанет узнавать собственные снимки и будет
+    копить их вечно, ничего при этом не ломая заметно.
+    """
+    from datetime import datetime
+
+    from pdxloc.core import exporter
+
+    name = datetime.now().strftime(exporter.SNAPSHOT_NAME)
+    assert exporter._SNAPSHOT_RE.match(name), (
+        f"снимок называется {name}, а чистка ищет другое")

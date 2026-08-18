@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import sqlite3
 from datetime import datetime
@@ -28,16 +29,30 @@ def _safe_name(name: str) -> str:
     return "".join("_" if c in '<>:"/\\|?*' else c for c in name).strip(" .") or "project"
 
 
+# Имя снимка — время записи; ровно в этом виде его создаёт `write_translation`
+# ниже. Шаблон нужен чистке: без него снимком считается любая подпапка, а
+# `rmtree` не спрашивает.
+SNAPSHOT_NAME = "%Y-%m-%d_%H%M%S"
+_SNAPSHOT_RE = re.compile(r"^\d{4}-\d{2}-\d{2}_\d{6}$")
+
+
 def _prune_backups(project_dir: Path, keep: int | None = None) -> None:
     """Оставить только последние снимки: бэкап страхует запись, а не хранит историю.
 
     Сколько именно — спрашиваем при вызове, а не в значении аргумента по
     умолчанию: то вычислялось бы один раз на импорте модуля, и правка настройки
     не действовала бы до перезапуска.
+
+    **Чужие папки не трогаем.** Раньше снимком считалась любая подпапка, и
+    папка, положенная человеком в `backups/<проект>/` руками, уезжала в
+    `rmtree` вместе со старыми снимками — молча и без подтверждения. Своё имя
+    у снимка строгое (`SNAPSHOT_NAME`), так что отличить его от чужого можно
+    точно; что под шаблон не подошло — не наше, и удалять это мы не вправе.
     """
     if keep is None:
         keep = settings.backup_keep()
-    snapshots = sorted(p for p in project_dir.iterdir() if p.is_dir())
+    snapshots = sorted(p for p in project_dir.iterdir()
+                       if p.is_dir() and _SNAPSHOT_RE.match(p.name))
     for old in snapshots[:-keep] if keep > 0 else snapshots:
         shutil.rmtree(old, ignore_errors=True)
 
@@ -154,7 +169,7 @@ def export_project(
             base = Path(backup_root) if backup_root is not None else settings.backups_dir()
             project_dir = base / _safe_name(proj["name"])
             project_dir.mkdir(parents=True, exist_ok=True)
-            snapshot = project_dir / datetime.now().strftime("%Y-%m-%d_%H%M%S")
+            snapshot = project_dir / datetime.now().strftime(SNAPSHOT_NAME)
             snapshot.mkdir(exist_ok=True)
             report.backup_dir = str(snapshot)
         copy = snapshot / ru_rel

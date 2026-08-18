@@ -135,11 +135,15 @@ def test_backup_keep_is_read_at_call_time(store, tmp_path) -> None:
     store.store["backup/keep"] = 2
     assert settings.backup_keep() == 2
 
+    # имена настоящие: чистка узнаёт снимок по времени в имени, и сокращённое
+    # «2026-08-01» она справедливо считает чужой папкой
     project_dir = tmp_path / "backups" / "P"
-    for stamp in ("2026-08-01", "2026-08-02", "2026-08-03", "2026-08-04"):
+    stamps = ("2026-08-01_120000", "2026-08-02_120000",
+              "2026-08-03_120000", "2026-08-04_120000")
+    for stamp in stamps:
         (project_dir / stamp).mkdir(parents=True)
     exporter._prune_backups(project_dir)
-    assert sorted(p.name for p in project_dir.iterdir()) == ["2026-08-03", "2026-08-04"]
+    assert sorted(p.name for p in project_dir.iterdir()) == list(stamps[-2:])
 
 
 def test_folders_are_saved(window, qtbot, tmp_path, store) -> None:
