@@ -210,7 +210,8 @@ def feed_from_project(conn: sqlite3.Connection, project_id: int) -> int:
     return len(rows)
 
 
-def bulk_apply(conn: sqlite3.Connection, project_id: int) -> int:
+def bulk_apply(conn: sqlite3.Connection, project_id: int,
+               *, batch_id: str | None = None) -> int:
     """Заполнить пустые непереведённые строки точными совпадениями из памяти.
 
     Победитель выбирается так же, как в `lookup`: по приоритету источника, при
@@ -225,10 +226,40 @@ def bulk_apply(conn: sqlite3.Connection, project_id: int) -> int:
 
     Риск невелик: статус остаётся «Авто», то есть «подставлено, проверь».
 
+    **Идёт через историю и откатывается Ctrl+Z.** Трогаются только пустые
+    строки, то есть терять как будто нечего, — но это не довод: отмена, которая
+    молча не охватывает одну операцию из трёх, учит не доверять отмене вообще.
+    А охват тут не маленький: на живом проекте подстановка заполняет тысячи
+    строк разом, и вернуть их к «не переведено» иначе нечем.
+
     Возвращает число заполненных строк.
     """
-    cur = conn.execute(
+    from pdxloc.core import unit_ops
+
+    # Строки отбираются отдельным запросом, а не прямо в UPDATE: историю надо
+    # записать ДО правки, иначе запоминать будет уже нечего.
+    ids = [r["id"] for r in conn.execute(
         """
+        SELECT u.id
+        FROM units u
+        JOIN files f ON f.id = u.file_id
+        WHERE f.project_id = ? AND u.is_deleted = 0
+          AND u.status = ? AND u.ru_text IS NULL AND u.en_hash IS NOT NULL
+          AND EXISTS (
+              SELECT 1 FROM tm_all t
+              WHERE t.en_hash = u.en_hash AND t.ru_text <> ''
+          )
+        """,
+        (project_id, Status.UNTRANSLATED.value),
+    )]
+    if not ids:
+        return 0
+
+    unit_ops.record_history(conn, ids, origin="from_tm",
+                            batch_id=batch_id or unit_ops.new_batch_id())
+    placeholders = ",".join("?" * len(ids))
+    cur = conn.execute(
+        f"""
         UPDATE units SET
             ru_text = (
                 SELECT t.ru_text FROM tm_all t
@@ -238,18 +269,8 @@ def bulk_apply(conn: sqlite3.Connection, project_id: int) -> int:
             ),
             status = ?,
             updated_at = datetime('now')
-        WHERE units.id IN (
-            SELECT u.id
-            FROM units u
-            JOIN files f ON f.id = u.file_id
-            WHERE f.project_id = ? AND u.is_deleted = 0
-              AND u.status = ? AND u.ru_text IS NULL AND u.en_hash IS NOT NULL
-              AND EXISTS (
-                  SELECT 1 FROM tm_all t
-                  WHERE t.en_hash = u.en_hash AND t.ru_text <> ''
-              )
-        )
+        WHERE units.id IN ({placeholders})
         """,
-        (Status.AUTO.value, project_id, Status.UNTRANSLATED.value),
+        (Status.AUTO.value, *ids),
     )
     return cur.rowcount

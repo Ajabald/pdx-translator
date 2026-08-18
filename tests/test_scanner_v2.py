@@ -1,6 +1,7 @@
 """Тесты v2-веток сканера: auto-ignore и рескан ignored/custom."""
 from __future__ import annotations
 
+from pdxloc.core import tm
 from pdxloc.core.scanner import scan_project
 from pdxloc.core.statuses import Status
 from pdxloc.core.unit_ops import set_status
@@ -98,6 +99,47 @@ def test_custom_survives_unchanged_rescan(db, make_tree):
     set_status(db, [get_unit(db, "k")["id"]], Status.CUSTOM)
     scan_project(db, pid)
     assert get_unit(db, "k")["status"] == Status.CUSTOM.value
+
+
+def test_bulk_apply_can_be_undone(db, make_tree):
+    """Массовая подстановка из памяти обязана откатываться Ctrl+Z.
+
+    Трогает она только пустые строки, то есть «терять нечего», — но охват у
+    неё тысячи строк разом, и вернуть их к «не переведено» иначе нечем.
+    Отмена, которая молча не охватывает одну операцию из трёх, учит не
+    доверять отмене вообще.
+    """
+    from pdxloc.core import unit_ops
+
+    en = make_tree({"m_l_english.yml": 'l_english:\n a:0 "Same"\n b:0 "Same"\n'}, "en")
+    ru = make_tree({}, "ru")
+    pid = make_project(db, en, ru)
+    tm.upsert(db, "Same", "Одинаково")
+    scan_project(db, pid)
+
+    assert get_unit(db, "a")["ru_text"] == "Одинаково"
+    assert get_unit(db, "a")["status"] == Status.AUTO.value
+
+    batch = unit_ops.last_batch(db)
+    assert batch is not None, "подстановка не оставила пачки в истории"
+    unit_ops.undo_batch(db, batch[0])
+
+    back = get_unit(db, "a")
+    assert back["ru_text"] is None
+    assert back["status"] == Status.UNTRANSLATED.value
+
+
+def test_bulk_apply_writes_nothing_when_there_is_no_match(db, make_tree):
+    """Пустой отбор не должен заводить пачку: Ctrl+Z предложил бы пустоту."""
+    from pdxloc.core import unit_ops
+
+    en = make_tree({"m_l_english.yml": 'l_english:\n a:0 "Unheard of"\n'}, "en")
+    ru = make_tree({}, "ru")
+    pid = make_project(db, en, ru)
+    scan_project(db, pid)
+
+    assert tm.bulk_apply(db, pid) == 0
+    assert unit_ops.last_batch(db) is None
 
 
 def test_bulk_apply_skips_ignored(db, make_tree):
