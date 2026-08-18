@@ -290,8 +290,12 @@ pdx-translator/
 │                   is left alone)
 ├─ qa_rules.json   the global check configuration
 ├─ pdx-translator.log   the diagnostic log — attach it to a bug report
-└─ run.bat
+└─ pdx-translator.exe
 ```
+
+That is the portable build. Running from source the layout is the same, except
+there is no `.exe`: start it with `run.bat`, a shortcut for
+`.venv\Scripts\pythonw.exe -m pdxloc`.
 
 The project file is the source of truth, not the yml. Manual edits in yml files
 are picked up on a rescan, but on a conflict the project wins (the scan report
@@ -322,17 +326,8 @@ Building the portable version: `pyinstaller pdx-translator.spec`.
 
 ## Licence
 
-Copyright (C) 2026 Ajabald
-
-This program is free software: you can redistribute it and/or modify it under
-the terms of the [GNU General Public License](LICENSE) as published by the Free
-Software Foundation, either version 3 of the License, or (at your option) any
-later version. It is distributed in the hope that it will be useful, but
-**WITHOUT ANY WARRANTY** — without even the implied warranty of merchantability
-or fitness for a particular purpose. See the GNU General Public License for more
-details.
+Copyright (C) 2026 Ajabald · [GNU GPL v3](LICENSE) or later · **no warranty**
 
 Forking and reworking is free; derivative works must stay under the same licence
-with the source open.
-
-Third-party components and their licences — [THIRD-PARTY.md](THIRD-PARTY.md).
+with the source open. Qt comes in through PySide6 under the LGPL —
+[THIRD-PARTY.md](THIRD-PARTY.md).
