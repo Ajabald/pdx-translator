@@ -1,6 +1,6 @@
 # PDX Translator
 
-*[По-русски](README.ru.md)*
+*[По-русски](README.ru.md) · [简体中文](README.zh-CN.md)*
 
 An offline desktop tool for translating the localisation of Paradox game mods —
 a translator's workbench rather than a batch converter: a string table with

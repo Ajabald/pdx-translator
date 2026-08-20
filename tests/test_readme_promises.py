@@ -21,7 +21,8 @@ import pytest
 from pdxloc.core import games, qa_rules
 
 ROOT = Path(__file__).resolve().parents[1]
-READMES = {"en": ROOT / "README.md", "ru": ROOT / "README.ru.md"}
+READMES = {"en": ROOT / "README.md", "ru": ROOT / "README.ru.md",
+           "zh": ROOT / "README.zh-CN.md"}
 
 # сколько чего есть на самом деле
 BUILTIN_RULES = len(qa_rules.BUILTIN_RULES)
@@ -31,17 +32,25 @@ PRESETS = len(qa_rules.PRESETS)
 RULES_RE = {
     "en": re.compile(r"\*\*(\d+) built-in rules"),
     "ru": re.compile(r"\*\*(\d+) встроенных правил"),
+    # По-китайски счётное слово стоит при числе, а не при существительном, и
+    # число пишется цифрами — как во всей технической прозе на этом языке.
+    "zh": re.compile(r"\*\*(\d+) 条内置规则"),
 }
 # «Seven ready-made sets» / «Семь готовых наборов» — число словом
 PRESETS_RE = {
     "en": re.compile(r"\*\*(\w+) ready-made sets"),
     "ru": re.compile(r"\*\*(\w+) готовых наборов"),
+    # Нежадный захват: иероглифы числа и счётного слова стоят вплотную, и
+    # жадный `\w+` съел бы всю связку целиком.
+    "zh": re.compile(r"\*\*(\w+?)套现成的规则集"),
 }
 WORDS = {
     "en": {"three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
            "nine": 9, "ten": 10},
     "ru": {"три": 3, "четыре": 4, "пять": 5, "шесть": 6, "семь": 7, "восемь": 8,
            "девять": 9, "десять": 10},
+    "zh": {"三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8,
+           "九": 9, "十": 10},
 }
 
 
@@ -73,6 +82,7 @@ def test_preset_count_matches_the_registry(lang: str) -> None:
 GAMES_RE = {
     "en": re.compile(r"\*\*(\w+) games of the series"),
     "ru": re.compile(r"\*\*(\w+) игр серии"),
+    "zh": re.compile(r"\*\*系列中的(\w+?)款游戏"),
 }
 
 
