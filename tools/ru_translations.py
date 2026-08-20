@@ -1685,10 +1685,12 @@ RU["QaRules"] = {
         "Эвристика: шумит больше, чем помогает, поэтому выключена",
     # наборы
     "Strict": "Строгий",
-    "CK3 · Russian (recommended)": "CK3 · русский (рекомендуемый)",
+    "CK3 · Russian": "CK3 · русский",
     "HOI4 · Russian": "HOI4 · русский",
     "CK2 · Russian": "CK2 · русский",
     "Stellaris · Russian": "Stellaris · русский",
+    "%1 — recommended for this project":
+        "%1 — рекомендуется для этого проекта",
     "Breakage only": "Только поломки",
     "Own": "Свой",
     "Every rule on, no leniency. For proofreading a finished translation, "

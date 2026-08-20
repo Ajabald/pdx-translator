@@ -1186,14 +1186,16 @@ ZH["QaRules"] = {
         "一条启发式规则：噪声大于价值，因此默认关闭",
     "Strict":
         "严格",
-    "CK3 · Russian (recommended)":
-        "CK3 · 俄语（推荐）",
+    "CK3 · Russian":
+        "CK3 · 俄语",
     "HOI4 · Russian":
         "HOI4 · 俄语",
     "CK2 · Russian":
         "CK2 · 俄语",
     "Stellaris · Russian":
         "Stellaris · 俄语",
+    "%1 — recommended for this project":
+        "%1 — 推荐用于本项目",
     "Breakage only":
         "仅致命问题",
     "Own":

@@ -1176,7 +1176,7 @@ PRESET_ORDER = ("strict", "ck3_ru", "hoi4_ru", "ck2_ru", "stellaris_ru",
                 "quiet", CUSTOM)
 PRESET_LABELS = {
     "strict": QT_TRANSLATE_NOOP("QaRules", "Strict"),
-    "ck3_ru": QT_TRANSLATE_NOOP("QaRules", "CK3 · Russian (recommended)"),
+    "ck3_ru": QT_TRANSLATE_NOOP("QaRules", "CK3 · Russian"),
     "hoi4_ru": QT_TRANSLATE_NOOP("QaRules", "HOI4 · Russian"),
     "ck2_ru": QT_TRANSLATE_NOOP("QaRules", "CK2 · Russian"),
     "stellaris_ru": QT_TRANSLATE_NOOP("QaRules", "Stellaris · Russian"),
@@ -1213,6 +1213,43 @@ PRESET_NOTES = {
     CUSTOM: QT_TRANSLATE_NOOP(
         "QaRules", "Built-in values without a preset — tuned by hand from here."),
 }
+
+# Какой пресет чей. Пара «игра + язык перевода», потому что пресет отвечает
+# сразу за обе стороны: приёмы задаёт язык, а имена функций, которыми он их
+# исполняет, даёт игра. Пары в таблице нет — рекомендации нет: назвать наугад
+# хуже, чем промолчать.
+PRESET_FOR: dict[tuple[str, str], str] = {
+    ("ck3", "ru"): "ck3_ru",
+    ("hoi4", "ru"): "hoi4_ru",
+    ("ck2", "ru"): "ck2_ru",
+    ("stellaris", "ru"): "stellaris_ru",
+}
+
+# «(recommended)» стояло прямо внутри ярлыка `ck3_ru`, то есть обещалось всем —
+# включая переводчика HOI4, которому рекомендован соседний набор. Пометка
+# отдельная затем, чтобы приклеиваться к тому пресету, который подходит
+# открытому проекту, и ни к какому при закрытом.
+RECOMMENDED_MARK = QT_TRANSLATE_NOOP(
+    "QaRules", "%1 — recommended for this project")
+
+
+def recommended(game: str, locale: str) -> str | None:
+    """Пресет под игру и язык перевода. `None` — такой пары нет."""
+    return PRESET_FOR.get((game, locale))
+
+
+def display_order(game: str = "", locale: str = "") -> tuple[str, ...]:
+    """Порядок пресетов на витрине: подходящий проекту — первым.
+
+    Без открытого проекта (и для пары, которой нет в таблице) остаётся
+    `PRESET_ORDER`: тасовать список, не зная, чей он, значило бы менять
+    привычное расположение ни на чём.
+    """
+    first = recommended(game, locale)
+    if first is None:
+        return PRESET_ORDER
+    return (first, *(name for name in PRESET_ORDER if name != first))
+
 
 # Головы вызовов, которыми переводчик оборачивает подстановку ради склонения.
 # Не опечатка, а штатный приём: 59% всех расхождений по скобкам — замена

@@ -578,6 +578,90 @@ def test_ignored_issue_can_be_returned_to_the_check(window, conn) -> None:
 # --- окно без проекта ----------------------------------------------------
 
 
+def _hoi4_project(tmp_path, make_tree):
+    """Проект чужой игры: у него рекомендуемый набор не тот, что у CK3."""
+    en = make_tree({"m_l_english.yml": EN}, "en")
+    ru = make_tree({"m_l_russian.yml": RU}, "ru")
+    path = tmp_path / "hoi4.pdxproj"
+    conn = project.create_project(path, name="H", game="hoi4",
+                                  src_root=en, tgt_root=ru)
+    scan_project(conn, 1)
+    conn.close()
+    return path
+
+
+def test_the_recommended_preset_leads_the_list(qtbot, tmp_path, make_tree) -> None:
+    """Витрина обязана показать, какой из четырёх игровых наборов твой.
+
+    До 0.1.1 «(recommended)» было вписано прямо в ярлык `ck3_ru`, то есть
+    стояло у всех сразу: переводчик HOI4 читал совет к чужому набору, а свой —
+    снятый на его же ванильном переводе — видел безо всякой пометки.
+    """
+    path = _hoi4_project(tmp_path, make_tree)
+    conn = project.open_project(path, [])
+    rules_state.open_project(conn)
+    try:
+        win = RulesWindow(conn, path)
+        qtbot.addWidget(win)
+        win.rules_tab._debounce.stop()
+        combo = win.rules_tab.preset_combo
+
+        assert combo.itemData(0) == "hoi4_ru"
+        assert "recommended for this project" in combo.itemText(0)
+        assert combo.itemData(1) is None                  # разделитель
+        others = [combo.itemText(i) for i in range(2, combo.count())]
+        assert others and not any("recommended" in text for text in others)
+        # ни один набор не потерялся и не удвоился
+        chosen = [combo.itemData(i) for i in range(combo.count())
+                  if combo.itemData(i)]
+        assert sorted(chosen) == sorted(qa_rules.PRESET_ORDER)
+        win.rules_tab.shutdown()
+    finally:
+        rules_state.close_project()
+        conn.close()
+
+
+def test_the_menu_marks_the_recommended_preset_and_lets_it_go(
+        qtbot, monkeypatch, tmp_path, make_tree) -> None:
+    """Пометка приходит с проектом и уходит вместе с ним.
+
+    Меню живёт всю сессию, поэтому пункты не пересоздаются, а переставляются;
+    иначе радиогруппа копила бы их с каждой сменой проекта.
+    """
+    monkeypatch.setattr(settings, "recent_projects", lambda: [])
+    monkeypatch.setattr(settings, "last_project_path", lambda: None)
+    monkeypatch.setattr(settings, "remember_project", lambda *a, **k: None)
+    monkeypatch.setattr(settings, "set_last_project_path", lambda p: None)
+    monkeypatch.setattr(settings, "bdd_dir", lambda: tmp_path / "Bdd")
+
+    from pdxloc.gui.main_window import MainWindow
+
+    path = _hoi4_project(tmp_path, make_tree)
+    win = MainWindow()
+    qtbot.addWidget(win)
+
+    def shown():
+        """Пресеты в том порядке, в каком они стоят в меню."""
+        name_of = {action: name for name, action in win.qa_preset_actions.items()}
+        return [name_of[a] for a in win._qa_preset_menu.actions()
+                if not a.isSeparator()]
+
+    before = shown()
+    assert not any("recommended" in a.text()
+                   for a in win._qa_preset_menu.actions())
+
+    win.open_project(path)
+    labels = {a.text() for a in win._qa_preset_menu.actions()}
+    assert any("recommended for this project" in text for text in labels)
+    assert win.qa_preset_actions["hoi4_ru"].text().startswith("HOI4 · Russian")
+    assert shown()[0] == "hoi4_ru"
+
+    win.show_start()
+    assert shown() == before          # пунктов ровно столько же, и порядок прежний
+    assert not any("recommended" in a.text()
+                   for a in win._qa_preset_menu.actions())
+
+
 def test_preset_from_the_menu_changes_the_issues_column(
         qtbot, monkeypatch, tmp_path, project_file) -> None:
     """Сквозная проверка: меню → набор правил → колонка «!» таблицы.

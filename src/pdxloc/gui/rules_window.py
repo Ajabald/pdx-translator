@@ -152,9 +152,18 @@ class RulesTab(QWidget):
         row = QHBoxLayout()
         row.addWidget(QLabel(translate("RulesWindow", "Preset:")))
         self.preset_combo = QComboBox()
-        for name in qa_rules.PRESET_ORDER:
-            self.preset_combo.addItem(
-                translate("QaRules", qa_rules.PRESET_LABELS[name]), name)
+        # Порядок и пометка — те же, что в меню главного окна: подходящий
+        # проекту набор стоит первым, остальные за разделителем. Витрин две, и
+        # расходиться им нельзя — человек выбирает набор то там, то тут.
+        game, locale = rules_state.game(), rules_state.locale()
+        best = qa_rules.recommended(game, locale)
+        for name in qa_rules.display_order(game, locale):
+            label = translate("QaRules", qa_rules.PRESET_LABELS[name])
+            if name == best:
+                label = fill(translate("QaRules", qa_rules.RECOMMENDED_MARK), label)
+            self.preset_combo.addItem(label, name)
+            if name == best:
+                self.preset_combo.insertSeparator(self.preset_combo.count())
         self.preset_combo.currentIndexChanged.connect(self._on_preset)
         row.addWidget(self.preset_combo)
 

@@ -230,8 +230,21 @@ class MainWindow(QMainWindow):
                 for name, label in theme.THEME_LABELS.items()]
 
     def _qa_preset_items(self):
-        return [(name, translate("QaRules", qa_rules.PRESET_LABELS[name]))
-                for name in qa_rules.PRESET_ORDER]
+        """Пресеты в порядке витрины: подходящий проекту — первым и с пометкой.
+
+        Пометка вычисляется, а не стоит в ярлыке: раньше «(recommended)» было
+        вписано в `ck3_ru` и обещалось всем подряд, в том числе переводчику
+        HOI4, которому рекомендован соседний набор.
+        """
+        game, locale = rules_state.game(), rules_state.locale()
+        best = qa_rules.recommended(game, locale)
+        items = []
+        for name in qa_rules.display_order(game, locale):
+            label = translate("QaRules", qa_rules.PRESET_LABELS[name])
+            if name == best:
+                label = fill(translate("QaRules", qa_rules.RECOMMENDED_MARK), label)
+            items.append((name, label))
+        return items
 
     def _column_items(self):
         return [(col, translate("UnitsTable", label)) for col, label in DATA_COLUMNS]
@@ -397,6 +410,12 @@ class MainWindow(QMainWindow):
         правил живёт в окне Shift+F6 и умеет писать в слой проекта.
         """
         menu = parent.addMenu(translate("MainWindow", "Rule preset"))
+        self._qa_preset_menu = menu
+        # Разделитель отделяет рекомендуемый набор от остальных. Родитель у
+        # него окно, а не меню: из меню он уходит и возвращается при каждой
+        # смене проекта, и умереть вместе с ним ему нельзя.
+        self._qa_preset_separator = QAction(self)
+        self._qa_preset_separator.setSeparator(True)
         self.qa_preset_actions = self.actions.radio_group(
             menu, menu, self._qa_preset_items(), self._set_qa_preset)
         for name, action in self.qa_preset_actions.items():
@@ -415,6 +434,29 @@ class MainWindow(QMainWindow):
                 "%1", translate("QaRules", qa_rules.PRESET_LABELS[name])), 5000)
 
     def _sync_qa_preset_menu(self) -> None:
+        """Отметить действующий набор и поднять рекомендуемый наверх.
+
+        Пункты переставляются `removeAction`/`addAction`, а не пересборкой
+        меню. `QMenu.clear()` здесь нельзя: он **удаляет** действия, у которых
+        меню же и родитель, — а пересоздавать их значило бы копить пункты в
+        радиогруппе, ровно как предупреждает `_populate_menus`.
+
+        Зовётся по сигналу `rules_state`, а тот приходит и при открытии, и при
+        закрытии проекта, — поэтому пометка появляется и исчезает сама.
+        """
+        menu = self._qa_preset_menu
+        for action in list(menu.actions()):
+            menu.removeAction(action)
+        best = qa_rules.recommended(rules_state.game(), rules_state.locale())
+        for name, label in self._qa_preset_items():
+            action = self.qa_preset_actions.get(name)
+            if action is None:
+                continue
+            action.setText(label)
+            menu.addAction(action)
+            if name == best:
+                menu.addAction(self._qa_preset_separator)
+
         action = self.qa_preset_actions.get(rules_state.preset())
         if action is not None:
             action.setChecked(True)

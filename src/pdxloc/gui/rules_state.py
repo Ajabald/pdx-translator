@@ -32,6 +32,7 @@ notifier = _Notifier()
 _global: dict = {}
 _project: dict = {}
 _locale: str = ""          # язык перевода открытого проекта
+_game: str = ""            # и его игра — вдвоём они выбирают рекомендуемый пресет
 _ruleset: RuleSet = qa_rules.default_ruleset()
 
 
@@ -66,6 +67,16 @@ def preset() -> str:
 def locale() -> str:
     """Язык перевода открытого проекта — по нему гасятся языковые правила."""
     return _locale
+
+
+def game() -> str:
+    """Игра открытого проекта. Пусто — проекта нет.
+
+    Нужна витринам пресетов: рекомендуемый набор выбирается парой «игра плюс
+    язык», и спрашивать её у соединения на каждую перерисовку меню незачем —
+    здесь она уже прочитана.
+    """
+    return _game
 
 
 def _rebuild() -> None:
@@ -111,19 +122,21 @@ def save_global(overlay: dict) -> None:
 # --- слой проекта ---
 
 def open_project(conn: sqlite3.Connection) -> None:
-    global _project, _locale
+    global _project, _locale, _game
     try:
         _project = project_module.get_qa_overlay(conn)
         _locale = project_module.languages(conn).tgt_locale
+        _game = project_module.game(conn)
     except sqlite3.Error:
-        _project, _locale = {}, ""
+        _project, _locale, _game = {}, "", ""
     _rebuild()
 
 
 def close_project() -> None:
-    global _project, _locale
+    global _project, _locale, _game
     _project = {}
     _locale = ""
+    _game = ""
     _rebuild()
 
 

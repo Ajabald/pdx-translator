@@ -76,6 +76,38 @@ def test_every_preset_is_applicable_and_described(name: str) -> None:
     assert qa_rules.PRESET_NOTES[name]
 
 
+def test_the_recommended_preset_follows_the_game_and_the_language() -> None:
+    """Раньше «(recommended)» стояло в ярлыке `ck3_ru` и обещалось всем.
+
+    Переводчик HOI4 читал рекомендацию к чужому набору — а свой, снятый на его
+    же ванильном переводе, стоял рядом безо всякой пометки.
+    """
+    assert qa_rules.recommended("hoi4", "ru") == "hoi4_ru"
+    assert qa_rules.recommended("ck3", "ru") == "ck3_ru"
+    # игра без замера и закрытый проект: молчание честнее выдумки
+    assert qa_rules.recommended("vic3", "ru") is None
+    assert qa_rules.recommended("ck3", "de") is None
+    assert qa_rules.recommended("", "") is None
+
+
+@pytest.mark.parametrize("game,locale", [("hoi4", "ru"), ("vic3", "ru"), ("", "")])
+def test_display_order_is_a_permutation_of_the_registry(game, locale) -> None:
+    """Витрина переставляет пресеты, а не теряет и не двоит их."""
+    order = qa_rules.display_order(game, locale)
+    assert sorted(order) == sorted(qa_rules.PRESET_ORDER)
+    best = qa_rules.recommended(game, locale)
+    if best is not None:
+        assert order[0] == best
+    else:
+        assert order == qa_rules.PRESET_ORDER
+
+
+def test_every_preset_of_the_table_is_a_real_one() -> None:
+    """Опечатка в паре «игра + язык» иначе молча ничего бы не рекомендовала."""
+    for pair, name in qa_rules.PRESET_FOR.items():
+        assert name in qa_rules.PRESETS, f"{pair}: нет набора {name}"
+
+
 def test_preset_deltas_name_only_existing_rules_and_params() -> None:
     """Опечатка в пресете иначе молча ничего бы не делала."""
     for name, delta in qa_rules.PRESETS.items():
