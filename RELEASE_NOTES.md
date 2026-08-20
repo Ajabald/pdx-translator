@@ -2,7 +2,25 @@ An offline desktop workbench for translating the localisation of Paradox game
 mods — a string table with statuses, translation memory, a term glossary,
 mod-version diffing and configurable markup checks.
 
-First public release.
+A hotfix over 0.1.0 — the whole of 0.1.0 is below, unchanged.
+
+## 🔧 Fixed in 0.1.1
+
+* **The first-run wizard could not build the first database.** «Build a
+  database…» did nothing at all: the memory window wanted an open project, and
+  on a fresh install there is none. The built application has no console, so
+  the error had nowhere to go and the button simply looked dead. Without a
+  project the window now opens on the one tab it was called for — building a
+  database — and the wizard notices the database it has just built.
+* **«Recommended» is no longer promised to everyone.** The word sat inside the
+  name of the «CK3 · Russian» set, so a translator of HOI4 read a
+  recommendation for somebody else's rules. The matching set is now chosen by
+  the game and the translation language of the open project: it stands first in
+  «Checks → Rule preset» and in the Shift+F6 window, and it carries the mark.
+  With no project open nothing is recommended — naming a set at random is worse
+  than saying nothing. What the checks actually do has not changed.
+* **A README in Chinese**, next to the English and the Russian one — the
+  interface has been translated for a while, the description had not.
 
 ## ✨ What it does
 
@@ -38,8 +56,8 @@ First public release.
 
 **Windows 10/11, 64-bit** — no Python needed either way.
 
-* [**pdx-translator-setup-0.1.0.exe**](https://github.com/Ajabald/pdx-translator/releases/download/v0.1.0/pdx-translator-setup-0.1.0.exe) — installer *(recommended)*
-* [**pdx-translator-v0.1.0.zip**](https://github.com/Ajabald/pdx-translator/releases/download/v0.1.0/pdx-translator-v0.1.0.zip) — portable, 50 MB
+* [**pdx-translator-setup-0.1.1.exe**](https://github.com/Ajabald/pdx-translator/releases/download/v0.1.1/pdx-translator-setup-0.1.1.exe) — installer *(recommended)*
+* [**pdx-translator-v0.1.1.zip**](https://github.com/Ajabald/pdx-translator/releases/download/v0.1.1/pdx-translator-v0.1.1.zip) — portable, 50 MB
 
 The installer asks for no administrator rights and installs for the current
 user. That is not laziness: the application keeps `Bdd`, `Projects` and

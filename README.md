@@ -10,7 +10,7 @@ configurable markup checks.
 Eight games of the series are supported, plus a custom one under any name. Pick
 the game and the languages when creating a project.
 
-> Version 0.1.0. The interface is available in English, Russian and Simplified
+> Version 0.1.1. The interface is available in English, Russian and Simplified
 > Chinese — pick the language in «File → Preferences», it applies immediately.
 
 ## Features
