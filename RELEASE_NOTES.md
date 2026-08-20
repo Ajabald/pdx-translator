@@ -19,6 +19,11 @@ A hotfix over 0.1.0 — the whole of 0.1.0 is below, unchanged.
   «Checks → Rule preset» and in the Shift+F6 window, and it carries the mark.
   With no project open nothing is recommended — naming a set at random is worse
   than saying nothing. What the checks actually do has not changed.
+* **The wizard no longer contradicts itself about the language.** Its list
+  stood on the language of the system while the window itself was drawn in the
+  saved one, so an installation carrying settings over from the previous name
+  of the application could greet you with Chinese headings above a list that
+  said «Russian».
 * **A README in Chinese**, next to the English and the Russian one — the
   interface has been translated for a while, the description had not.
 
