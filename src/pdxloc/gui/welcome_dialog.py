@@ -126,12 +126,23 @@ class WelcomeDialog(QDialog):
 
         row = QHBoxLayout()
         self.db_btn = QPushButton(translate("Welcome", "Build a database…"))
-        self.db_btn.clicked.connect(self.buildDatabaseRequested)
+        self.db_btn.clicked.connect(self._on_build_database)
         row.addWidget(self.db_btn)
         row.addStretch(1)
         box.addLayout(row)
         box.addStretch(1)
         return page
+
+    def _on_build_database(self) -> None:
+        """Собрать базу — и перечитать страницу.
+
+        Окно сборки модально, поэтому управление возвращается сюда уже после
+        него. Не перечитав текст, мастер оставил бы на экране «баз памяти пока
+        нет» сразу после того, как база собрана, — и следующий шаг человек
+        проходил бы, не веря ни одному слову.
+        """
+        self.buildDatabaseRequested.emit()
+        self._refresh_databases_page()
 
     def _project_page(self) -> QWidget:
         page = QWidget()

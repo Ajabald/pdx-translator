@@ -23,7 +23,16 @@ from pdxloc.gui.tm_sources_tab import TmSourcesTab
 
 
 class TmWindow(QDialog):
-    def __init__(self, conn: sqlite3.Connection, parent=None):
+    """Вкладки памяти переводов. Проект нужен не всем — без него остаётся сборка.
+
+    Мастер первого запуска зовёт это окно **до** того, как заведён хоть один
+    проект: первую базу памяти собирают раньше первого перевода. Раньше окно
+    этого не переживало — `languages(None)` падал прямо в слоте кнопки, а у
+    собранного приложения консоли нет (`console=False` в спеке), поэтому
+    трейсбек уходил в никуда и кнопка выглядела мёртвой.
+    """
+
+    def __init__(self, conn: sqlite3.Connection | None, parent=None):
         super().__init__(parent)
         self.conn = conn
         self.setWindowTitle(translate("TmWindow", "Translation memory"))
@@ -31,16 +40,25 @@ class TmWindow(QDialog):
 
         from pdxloc import project as project_mod
 
-        langs = project_mod.languages(conn)
-        src_lang, tgt_lang = langs.src_lang, langs.tgt_lang
+        # Без проекта языки взять неоткуда — берём те же умолчания, что и сама
+        # вкладка сборки: папки на ней всё равно указываются руками.
+        src_lang, tgt_lang = "english", "russian"
+        if conn is not None:
+            langs = project_mod.languages(conn)
+            src_lang, tgt_lang = langs.src_lang, langs.tgt_lang
 
         layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
-        self.entries = TmEntriesTab(conn)
-        self.sources = TmSourcesTab(conn)
+        # «Записи» — собственная память проекта, «Базы» — подключённые к нему.
+        # Без проекта обе показывали бы пустоту, объяснить которую нечем, —
+        # поэтому их просто нет, а не «есть, но выключены».
+        self.entries = TmEntriesTab(conn) if conn is not None else None
+        self.sources = TmSourcesTab(conn) if conn is not None else None
         self.build = TmBuildTab(src_lang=src_lang, tgt_lang=tgt_lang, conn=conn)
-        self.tabs.addTab(self.entries, translate("TmWindow", "Entries"))
-        self.tabs.addTab(self.sources, translate("TmWindow", "Databases"))
+        if self.entries is not None:
+            self.tabs.addTab(self.entries, translate("TmWindow", "Entries"))
+        if self.sources is not None:
+            self.tabs.addTab(self.sources, translate("TmWindow", "Databases"))
         self.tabs.addTab(self.build, translate("TmWindow", "Build a database"))
         layout.addWidget(self.tabs, 1)
 
@@ -57,7 +75,8 @@ class TmWindow(QDialog):
             tab.statusChanged.connect(self._on_tab_status)
         self.tabs.currentChanged.connect(lambda _: self._show_status())
         # собранная база должна сразу появиться в списке подключаемых
-        self.build.databasesChanged.connect(self.sources.reload)
+        if self.sources is not None:
+            self.build.databasesChanged.connect(self.sources.reload)
         self._show_status()
 
     def show_build_tab(self) -> None:
@@ -65,7 +84,13 @@ class TmWindow(QDialog):
         self.tabs.setCurrentWidget(self.build)
 
     def _tabs(self):
-        return (self.entries, self.sources, self.build)
+        """Только заведённые вкладки: без проекта их одна.
+
+        Через этот же список ходят подписка на `statusChanged` и гашение
+        таймеров, поэтому отсутствующую вкладку достаточно не вернуть отсюда.
+        """
+        return tuple(tab for tab in (self.entries, self.sources, self.build)
+                     if tab is not None)
 
     # --- нижняя полоса ---
 

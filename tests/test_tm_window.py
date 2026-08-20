@@ -130,6 +130,27 @@ def test_build_tab_works_without_a_project(qtbot) -> None:
     assert tab.mode_dirs.isChecked()
 
 
+def test_the_window_opens_without_a_project(qtbot, tmp_path, monkeypatch) -> None:
+    """Мастер первого запуска зовёт это окно, когда проекта нет ни одного.
+
+    Раньше здесь падал `languages(None)` — прямо в слоте кнопки мастера. У
+    собранного приложения консоли нет, трейсбек уходил в никуда, и кнопка
+    «Собрать базу…» выглядела мёртвой: нажатие не делало ровно ничего.
+    """
+    monkeypatch.setattr(settings, "bdd_dir", lambda: tmp_path / "Bdd")
+    win = TmWindow(None)
+    qtbot.addWidget(win)
+    # «Записи» и «Базы» без проекта показывали бы пустоту, объяснить которую
+    # нечем: первая — его собственная память, вторая — подключённые к нему базы
+    assert [win.tabs.tabText(i) for i in range(win.tabs.count())] == [
+        "Build a database"]
+    assert win.entries is None and win.sources is None
+    assert not win.build.mode_project.isEnabled()
+    win.show_build_tab()
+    assert win.tabs.currentWidget() is win.build
+    win.done(0)         # закрытие ходит по тем же вкладкам — и не спотыкается
+
+
 def test_close_is_blocked_while_a_build_is_running(window, monkeypatch) -> None:
     """Уйти на другую вкладку и закрыть окно посреди сборки не должно молча."""
     from PySide6.QtWidgets import QMessageBox

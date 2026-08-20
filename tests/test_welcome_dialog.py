@@ -158,6 +158,51 @@ def test_database_step_tells_the_truth_about_what_is_there(qtbot, store,
     assert "2" in dlg.db_text.text()
 
 
+# --- «Собрать базу…» доводит до окна сборки ---
+
+def test_building_the_first_database_needs_no_project(window, shown,
+                                                      monkeypatch) -> None:
+    """Главная жалоба на 0.1.0: кнопка мастера не делала ровно ничего.
+
+    Окно памяти требовало открытого проекта, а на первом запуске его нет ни
+    одного, и `languages(None)` падал прямо в слоте. У собранного приложения
+    консоли нет, поэтому наружу не выходило даже сообщения об ошибке.
+
+    Проверяем путь целиком, от главного окна: подменяется только `exec()` —
+    он модален и в offscreen-режиме тоже блокирует.
+    """
+    from pdxloc.gui.tm_window import TmWindow
+
+    opened: list[TmWindow] = []
+    monkeypatch.setattr(TmWindow, "exec", lambda self: (opened.append(self), 0)[1])
+
+    win = window()
+    assert win.conn is None                 # проекта нет — за этим сюда и шли
+    win._build_tm_database()
+
+    assert len(opened) == 1
+    tabs = opened[0].tabs
+    assert [tabs.tabText(i) for i in range(tabs.count())] == ["Build a database"]
+
+
+def test_the_database_step_notices_the_database_it_just_built(
+        qtbot, store, monkeypatch) -> None:
+    """Иначе мастер уверял бы, что баз нет, сразу после сборки одной."""
+    built: list[str] = []
+    monkeypatch.setattr(project, "all_tm_databases", lambda: built)
+
+    dlg = WelcomeDialog()
+    qtbot.addWidget(dlg)
+    dlg.buildDatabaseRequested.connect(lambda: built.append("ck3.pdxtm"))
+    dlg._go(1)
+    assert "no translation memory databases" in dlg.db_text.text().lower()
+
+    dlg.db_btn.click()
+    assert built == ["ck3.pdxtm"]
+    assert "1" in dlg.db_text.text()
+    assert dlg.db_btn.text() == "Build one more…"
+
+
 # --- напоминания замолкают навсегда и отвечают «нет» ---
 
 def _answer(monkeypatch, checked: bool, button=QMessageBox.Yes):
