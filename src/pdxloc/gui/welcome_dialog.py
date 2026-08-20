@@ -103,8 +103,14 @@ class WelcomeDialog(QDialog):
         self.language_combo = QComboBox()
         for code, label in language.available().items():
             self.language_combo.addItem(label, code)
+        # The language in effect, not the system one. The window is already
+        # drawn in whatever apply_saved() picked, so offering a different one
+        # makes the wizard contradict itself — Chinese headings above a list
+        # that says "Russian". Reachable without any trickery: a hive adopted
+        # from the previous application name carries a language over, while
+        # first_run_done is absent from the new hive by definition.
         self.language_combo.setCurrentIndex(
-            max(self.language_combo.findData(language.system_default()), 0))
+            max(self.language_combo.findData(language.current()), 0))
         self.language_combo.currentIndexChanged.connect(self._apply_language)
         row.addWidget(self.language_combo)
         row.addStretch(1)

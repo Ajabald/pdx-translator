@@ -158,6 +158,35 @@ def test_database_step_tells_the_truth_about_what_is_there(qtbot, store,
     assert "2" in dlg.db_text.text()
 
 
+# --- мастер не противоречит сам себе ---
+
+def test_the_language_list_shows_the_language_in_effect(qtbot, store,
+                                                        monkeypatch) -> None:
+    """Список обязан стоять на том языке, на котором нарисовано окно.
+
+    Стоял на языке системы, а окно рисуется на языке из `apply_saved`. Разойдись
+    эти двое — и первое, что делает мастер, это врёт о том, что показывает:
+    заголовки по-китайски над списком, где выбран «Русский». Достижимо без
+    подтасовки: куст прежнего имени приложения приносит язык через
+    `adopt_previous_settings`, а `first_run_done` в новом кусте нет по
+    определению.
+
+    Подменяется только `current`: подмени заодно и `system_default`, и тест
+    перестал бы падать на старом коде там, где локаль машины совпала.
+    """
+    from pdxloc.gui import language
+
+    others = [code for code in language.available()
+              if code != language.system_default()]
+    assert others, "не с чем сравнивать: в сборке один язык"
+    in_effect = others[0]
+    monkeypatch.setattr(language, "current", lambda: in_effect)
+
+    dlg = WelcomeDialog()
+    qtbot.addWidget(dlg)
+    assert dlg.language_combo.currentData() == in_effect
+
+
 # --- «Собрать базу…» доводит до окна сборки ---
 
 def test_building_the_first_database_needs_no_project(window, shown,
