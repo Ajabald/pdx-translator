@@ -1,8 +1,8 @@
-"""Удаление файла проекта вместе со спутниками WAL.
+"""Deleting a project file together with its WAL companions.
 
-Проект — это месяцы работы в одном файле SQLite. Соединение открывается в
-режиме WAL, поэтому рядом живут `-wal` и `-shm`: удалить только основной файл
-мало — следующий проект с тем же именем подхватит чужой журнал.
+A project is months of work in one SQLite file. The connection is opened in WAL
+mode, so `-wal` and `-shm` live next to it: deleting only the main file is not
+enough — the next project with the same name would pick up a foreign journal.
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ RU = 'l_russian:\n a:0 "Привет"\n'
 
 @pytest.fixture
 def made(tmp_path, make_tree, monkeypatch):
-    monkeypatch.setattr(trash, "available", lambda: False)   # в тестах без корзины
+    monkeypatch.setattr(trash, "available", lambda: False)   # in the tests without the recycle bin
     en = make_tree({"m_l_english.yml": EN}, "en")
     ru = make_tree({"m_l_russian.yml": RU}, "ru")
     path = tmp_path / "p.pdxproj"
@@ -47,7 +47,7 @@ def test_delete_removes_the_whole_set(made) -> None:
 
 
 def test_backups_are_kept_unless_asked(made) -> None:
-    """Копия перед миграцией схемы — последняя линия обороны, по умолчанию цела."""
+    """A copy made before a schema migration is the last line of defence, by default it is intact."""
     backup = made.with_name(f"{made.name}.v3.bak")
     backup.touch()
     project.delete_project_file(made)
@@ -63,14 +63,15 @@ def test_missing_file_is_not_an_error(tmp_path) -> None:
 
 
 def test_deletion_past_the_recycle_bin_is_reported(made, monkeypatch) -> None:
-    """Корзина взяла не всё — вызывающий обязан узнать об этом.
+    """The recycle bin did not take everything — the caller is obliged to learn of it.
 
-    Windows не кладёт в корзину файл, который не влезает в её квоту, а проект
-    перевода весит сотни мегабайт. Диалог удаления обещает корзину, поэтому
-    отказ обязан дойти до человека, а не потеряться внутри.
+    Windows does not put a file into the recycle bin if it does not fit its quota,
+    and a translation project weighs hundreds of megabytes. The delete dialog
+    promises the recycle bin, so the refusal is obliged to reach the human instead
+    of getting lost inside.
     """
     monkeypatch.setattr(trash, "available", lambda: True)
-    monkeypatch.setattr(trash, "_shell_delete", lambda path: False)   # корзина отказала
+    monkeypatch.setattr(trash, "_shell_delete", lambda path: False)   # the recycle bin refused
 
     report = project.delete_project_file(made)
 
@@ -80,7 +81,7 @@ def test_deletion_past_the_recycle_bin_is_reported(made, monkeypatch) -> None:
 
 
 def test_the_recycle_bin_leaves_nothing_to_report(made, monkeypatch) -> None:
-    """Файл ушёл в корзину — предупреждать не о чем."""
+    """The file went into the recycle bin — there is nothing to warn about."""
     taken: list = []
     monkeypatch.setattr(trash, "available", lambda: True)
     monkeypatch.setattr(trash, "_shell_delete",
@@ -94,7 +95,7 @@ def test_the_recycle_bin_leaves_nothing_to_report(made, monkeypatch) -> None:
 
 
 def test_open_project_cannot_be_deleted(made) -> None:
-    """Занятый файл обязан поднять ошибку, а не удалиться наполовину."""
+    """A busy file is obliged to raise an error, not to be deleted by halves."""
     conn = project.open_project(made)
     try:
         with pytest.raises(OSError):
@@ -105,7 +106,7 @@ def test_open_project_cannot_be_deleted(made) -> None:
 
 
 def test_deleted_project_stops_being_openable(made) -> None:
-    """Файла нет — соединение на чтение не открывается вовсе."""
+    """The file is gone — a read-only connection does not open at all."""
     project.delete_project_file(made)
     with pytest.raises(sqlite3.OperationalError):
         sqlite3.connect(f"file:{made.as_posix()}?mode=ro", uri=True)

@@ -1,11 +1,12 @@
-"""Корень проекта — папка `localization`, а не папка языка внутри неё.
+"""The root of a project is the `localization` folder, not the language folder inside it.
 
-Так устроены моды в мастерской: `.../<id>/localization/english/...` и
-`.../<id>/localization/russian/...`. Указать корнем именно `localization` —
-самое естественное действие, и раньше в этом случае не находилось ни одной
-пары: сопоставление меняло метку языка только в имени файла, а каталог
-`english/` оставляло как есть и искало `english/agot/foo_l_russian.yml`.
-Результат — проект на 138 тысяч строк с нулём переводов.
+That is how the mods in the workshop are built: `.../<id>/localization/english/...`
+and `.../<id>/localization/russian/...`. Pointing the root at `localization`
+itself is the most natural thing to do, and in that case not a single pair used to
+be found: the matching changed the language mark only in the name of the file
+while leaving the `english/` directory as it was, and looked for
+`english/agot/foo_l_russian.yml`. The result was a project of 138 thousand rows
+with zero translations.
 """
 from __future__ import annotations
 
@@ -34,7 +35,7 @@ def write(path, text: str) -> None:
         f.write(text)
 
 
-# --- сопоставление путей ------------------------------------------------
+# --- the matching of paths ----------------------------------------------
 
 
 def test_language_folder_is_mapped_too() -> None:
@@ -50,31 +51,31 @@ def test_mapping_is_reversible() -> None:
 
 
 def test_nested_replace_folder_is_mapped(tmp_path) -> None:
-    """У русификаторов рядом лежит `localization/replace/<lang>`."""
+    """The Russian packs have a `localization/replace/<lang>` lying next to it."""
     assert map_relpath(
         "replace/english/agot/foo_l_english.yml", "english", "russian"
     ) == "replace/russian/agot/foo_l_russian.yml"
 
 
 def test_flat_layout_still_works() -> None:
-    """Корень уже указан на папку языка — в пути языка нет, менять нечего."""
+    """The root already points at a language folder — there is no language in the path, nothing to change."""
     assert map_relpath("agot/foo_l_english.yml", "english", "russian") == \
         "agot/foo_l_russian.yml"
 
 
 def test_only_whole_segments_are_replaced() -> None:
-    """Папка `english_notes` — не папка языка, трогать её нельзя."""
+    """The folder `english_notes` is no language folder, it must not be touched."""
     assert map_relpath(
         "english_notes/foo_l_english.yml", "english", "russian"
     ) == "english_notes/foo_l_russian.yml"
 
 
-# --- живое сканирование -------------------------------------------------
+# --- a live scan --------------------------------------------------------
 
 
 @pytest.fixture
 def mods(tmp_path):
-    """Два мода мастерской: оригинал и отдельный мод-русификатор."""
+    """Two workshop mods: the original and a separate Russian-pack mod."""
     en_root = tmp_path / "2962333032" / "localization"
     ru_root = tmp_path / "2962803371" / "localization"
     write(en_root / "english" / "agot" / "00_glossary_l_english.yml", EN)
@@ -102,7 +103,7 @@ def test_scan_finds_translations_when_root_is_the_localization_folder(mods, tmp_
 
 
 def test_translated_rows_feed_the_project_memory(mods, tmp_path):
-    """Без этого пустует память переводов, и автоподстановка молчит."""
+    """Without this the translation memory stands empty and the auto-substitution keeps quiet."""
     from pdxloc.core import tm
 
     en_root, ru_root = mods
@@ -114,7 +115,7 @@ def test_translated_rows_feed_the_project_memory(mods, tmp_path):
 
 
 def test_no_orphans_when_the_pair_is_found(mods, tmp_path):
-    """Раньше каждый RU-файл считался осиротевшим и попадал в архив."""
+    """Every RU file used to count as orphaned and land in the archive."""
     en_root, ru_root = mods
     conn = project.create_project(
         tmp_path / "p.pdxproj", name="AGOT", src_root=en_root, tgt_root=ru_root)

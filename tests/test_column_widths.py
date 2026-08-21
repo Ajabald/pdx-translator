@@ -1,8 +1,8 @@
-"""Ширины колонок переживают перезапуск.
+"""The column widths survive a restart.
 
-Мелочь, которую замечают ежедневно: человек подгоняет таблицу под свой экран, а
-следующий запуск возвращает всё к умолчаниям. В EET это `ColumnsSizes`, у нас
-не было.
+A small thing noticed daily: a human fits the table to their screen, and the next
+start brings everything back to the defaults. In EET that is `ColumnsSizes`, and
+we had none.
 """
 from __future__ import annotations
 
@@ -19,10 +19,10 @@ from pdxloc.gui.units_model import (  # noqa: E402
 
 
 def make_table(conn, qtbot) -> UnitsTableView:
-    """Таблица с моделью.
+    """A table with a model.
 
-    Без модели у представления нет колонок вовсе, и любая ширина читается
-    нулём — проверять было бы нечего.
+    Without a model the view has no columns at all, and any width reads as zero —
+    there would be nothing to check.
     """
     view = UnitsTableView()
     qtbot.addWidget(view)
@@ -41,17 +41,18 @@ def test_a_dragged_width_comes_back(table, db, qtbot) -> None:
     table.setColumnWidth(COL_FILE, 111)
     table.save_column_widths()
 
-    fresh = make_table(db, qtbot)   # configure_columns он же и восстанавливает
+    fresh = make_table(db, qtbot)   # configure_columns restores them as well
 
     assert fresh.columnWidth(COL_KEY) == 333
     assert fresh.columnWidth(COL_FILE) == 111
 
 
 def test_only_resizable_columns_are_remembered(table) -> None:
-    """Записывать `Stretch` и `Fixed` нельзя.
+    """Writing `Stretch` and `Fixed` down will not do.
 
-    У растянутой колонки ширина считается по окну; сохрани её один раз — и
-    следующий запуск на другом экране получит вчерашнее число вместо расчёта.
+    The width of a stretched column is computed from the window; save it once —
+    and the next start on another screen gets yesterday's number instead of a
+    calculation.
     """
     header = table.horizontalHeader()
     assert header.sectionResizeMode(COL_EN) == QHeaderView.Stretch
@@ -63,10 +64,10 @@ def test_only_resizable_columns_are_remembered(table) -> None:
 
 
 def test_a_zero_width_is_ignored(table, qtbot) -> None:
-    """Нулевая ширина прячет колонку насовсем — восстанавливать такое нельзя.
+    """A zero width hides a column for good — restoring such a thing will not do.
 
-    Прятать колонки — дело «Вид → Колонки», и там это обратимо галкой. Ширина
-    в ноль обратной дороги не оставляет: тянуть будет не за что.
+    Hiding columns is the business of «View → Columns», and there it is reversible
+    by a tick. A width of zero leaves no way back: there would be nothing to pull by.
     """
     from pdxloc import settings
 
@@ -77,7 +78,7 @@ def test_a_zero_width_is_ignored(table, qtbot) -> None:
 
 
 def test_a_broken_setting_does_not_break_the_table(table) -> None:
-    """Куст настроек правят руками; мусор оттуда не повод остаться без таблицы."""
+    """The settings hive gets edited by hand; rubbish out of it is no reason to be left without a table."""
     from pdxloc import settings
 
     settings.qsettings().setValue("view/column_widths", "мусор|Key=|=7|Key=abc")
@@ -90,4 +91,4 @@ def test_nothing_saved_means_defaults(table, db, qtbot) -> None:
 
     settings.qsettings().remove("view/column_widths")
     fresh = make_table(db, qtbot)
-    assert fresh.columnWidth(COL_KEY) == 260      # умолчание из configure_columns
+    assert fresh.columnWidth(COL_KEY) == 260      # the default out of configure_columns

@@ -1,4 +1,4 @@
-"""GUI-тесты v4: колонка Δ и подсветка изменений в поле оригинала."""
+"""GUI tests of v4: the Δ column and the highlighting of changes in the source field."""
 from __future__ import annotations
 
 import os
@@ -26,14 +26,14 @@ RU_V1 = ('l_russian:\n'
 
 @pytest.fixture
 def updated(db, make_tree):
-    """Проект после обновления мода: одна косметическая правка, одна смысловая."""
+    """A project after an update of the mod: one cosmetic edit, one meaningful."""
     en = make_tree({"m_l_english.yml": EN_V1}, "en")
     ru = make_tree({"m_l_russian.yml": RU_V1}, "ru")
     pid = make_project(db, en, ru)
     scan_project(db, pid)
     make_tree({"m_l_english.yml": (
         'l_english:\n'
-        ' cosm:0 "The lord of Winterfell"\n'          # убрана точка
+        ' cosm:0 "The lord of Winterfell"\n'          # a full stop removed
         ' mean:0 "The young lord of Winterfell"\n')}, "en")
     scan_project(db, pid)
     return db, pid
@@ -47,8 +47,8 @@ def test_change_column_marks(updated, qtbot):
     for i in range(model.rowCount()):
         key = model.row_data(i)["key"]
         marks[key] = model.data(model.index(i, COL_CHANGE), Qt.DisplayRole)
-    assert marks["cosm"] == "·"        # косметическая
-    assert marks["mean"] == "!"        # смысловая
+    assert marks["cosm"] == "·"        # cosmetic
+    assert marks["mean"] == "!"        # meaningful
 
 
 def test_change_column_tooltip_and_color(updated, qtbot):
@@ -71,7 +71,7 @@ def test_no_mark_for_untouched_rows(db, make_tree, qtbot):
 
 
 def test_detail_pane_highlights_changes(updated, qtbot):
-    """Изменённые куски подсвечены прямо в поле оригинала."""
+    """The changed pieces are highlighted right in the source field."""
     conn, _pid = updated
     pane = DetailPane(conn)
     qtbot.addWidget(pane)
@@ -83,8 +83,8 @@ def test_detail_pane_highlights_changes(updated, qtbot):
     highlighted = [
         text[s.cursor.selectionStart():s.cursor.selectionEnd()] for s in selections]
     assert "young" in " ".join(highlighted)
-    # isVisible() в offscreen-режиме всегда False: окно не показано на экране,
-    # поэтому спрашиваем видимость относительно родителя
+    # isVisible() in the offscreen mode is always False: the window is not shown on
+    # a screen, so we ask about the visibility relative to the parent
     assert pane.diff_view.isVisibleTo(pane)
 
 
@@ -106,7 +106,7 @@ def test_highlight_cleared_when_switching_rows(updated, qtbot):
     qtbot.addWidget(pane)
     pane.load_unit(get_unit(conn, "mean")["id"])
     assert pane.en_view.extraSelections()
-    # актуализируем строку — подсветка должна исчезнуть
+    # we actualise the row — the highlighting has to vanish
     from pdxloc.core import unit_ops
     unit_ops.actualize(conn, [get_unit(conn, "mean")["id"]])
     pane.load_unit(get_unit(conn, "mean")["id"])
@@ -122,11 +122,11 @@ def test_cosmetic_label_in_diff_header(updated, qtbot):
 
 
 def test_editors_start_at_the_same_height(updated, qtbot):
-    """Поля EN и RU стоят на одной линии.
+    """The EN and RU fields stand on one line.
 
-    В шапке слева чекбокс «подсвечивать изменения», он выше подписи справа, и
-    поле оригинала съезжало вниз на несколько пикселей — колонки выглядели
-    перекошенными.
+    In the header on the left there is a «highlight the changes» checkbox, it is
+    taller than the label on the right, and the source field slid down by a few
+    pixels — the columns looked askew.
     """
     conn, _pid = updated
     pane = DetailPane(conn)
@@ -142,7 +142,7 @@ def test_editors_start_at_the_same_height(updated, qtbot):
 
 
 def test_quick_columns_shifted_correctly(updated, qtbot):
-    """Колонка Δ вставлена перед quick-колонками — проверяем, что они не разъехались."""
+    """The Δ column is inserted before the quick columns — we check that they have not come apart."""
     conn, pid = updated
     model = UnitsTableModel(conn)
     model.reload(pid, UnitFilters())

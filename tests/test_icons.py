@@ -1,4 +1,4 @@
-"""Иконки действий: свои SVG, перекраска под тему, мягкая деградация."""
+"""The icons of the actions: our own SVG, recolouring for the theme, soft degradation."""
 from __future__ import annotations
 
 import os
@@ -27,14 +27,15 @@ def widget(qtbot):
 
 
 def test_the_application_has_its_own_icon(qtbot) -> None:
-    """Иконка окна и панели задач — не то же самое, что иконка exe.
+    """The icon of the window and of the taskbar is not the same as the icon of the exe.
 
-    `icon=` в `pdx-translator.spec` задаёт иконку **файла**; окно берёт
-    стандартную иконку Qt, пока `setWindowIcon` не сказал иначе. Из исходников
-    exe нет вовсе, и без этого файла окно всегда безымянное.
+    `icon=` in `pdx-translator.spec` sets the icon of the **file**; the window
+    takes the standard Qt icon until `setWindowIcon` says otherwise. From the
+    sources there is no exe at all, and without this file the window is always
+    nameless.
 
-    `qtbot` нужен не виджету, а самому `QIcon`: без QApplication Qt валит
-    процесс молча, без единой строки в отчёте.
+    `qtbot` is needed not by a widget but by `QIcon` itself: without a QApplication
+    Qt brings the process down silently, without a single line in the report.
     """
     icon = icons.app_icon()
     assert not icon.isNull(), "нет gui/icons/app.png — соберите tools/make_icon.py"
@@ -42,14 +43,14 @@ def test_the_application_has_its_own_icon(qtbot) -> None:
 
 
 def test_every_declared_icon_has_a_file() -> None:
-    """Спека обещает иконку — файл обязан существовать, иначе кнопка пустая."""
+    """The spec promises an icon — the file is obliged to exist, otherwise the button is empty."""
     missing = [name for name in declared_icons() if not icons.available(name)]
     assert not missing, f"нет файлов иконок: {missing}"
 
 
 @pytest.mark.parametrize("name", declared_icons())
 def test_icon_draws_something(name: str, widget) -> None:
-    """Пустой пиксмап выглядит как отсутствующая кнопка, а не как ошибка."""
+    """An empty pixmap looks like a missing button, not like an error."""
     glyph = icons.icon(widget, name)
     pixmap = glyph.pixmap(SIZE)
     assert not pixmap.isNull()
@@ -62,8 +63,8 @@ def test_icon_draws_something(name: str, widget) -> None:
 
 
 def test_icon_follows_the_theme(widget) -> None:
-    """Ради этого и заведён свой QIconEngine: QIcon внутри QAction — значение,
-    и переустанавливать его по всем местам пришлось бы вручную."""
+    """That is what our own QIconEngine was set up for: a QIcon inside a QAction is a
+    value, and resetting it in every place would have to be done by hand."""
     glyph = icons.icon(widget, "validate")
     light = glyph.pixmap(SIZE).toImage()
     theme.apply_theme(None, theme.DARK, save=False)
@@ -75,8 +76,8 @@ def test_icon_follows_the_theme(widget) -> None:
 
 
 def test_unknown_name_falls_back_to_the_qt_style(widget) -> None:
-    """Пока своей иконки нет, кнопка берёт стандартную — набор можно
-    дорисовывать по одной, ничего не ломая."""
+    """While there is no icon of our own, a button takes the standard one — the set can
+    be drawn one by one without breaking anything."""
     assert not icons.available("нет-такой-иконки")
     assert icons.icon(widget, "scan") is not None
     icons.STANDARD_FALLBACK["выдуманное"] = "SP_FileIcon"
@@ -91,7 +92,7 @@ def test_no_icon_name_means_no_icon(widget) -> None:
 
 
 def test_toolbar_buttons_all_carry_an_icon(qtbot, tmp_path, monkeypatch) -> None:
-    """Кнопка панели без иконки — пустое место, по которому нечего узнать."""
+    """A toolbar button without an icon is an empty spot there is nothing to recognise by."""
     from pdxloc import settings
 
     monkeypatch.setattr(settings, "recent_projects", lambda: [])
