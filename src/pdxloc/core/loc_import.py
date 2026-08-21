@@ -1,34 +1,34 @@
-"""Загрузка перевода из готового дерева локализации — отдельной командой.
+"""Loading a translation from a ready localisation tree, as its own command.
 
-У ESP/ESM Translator это `Перевод → Загрузка перевода из переведённого мода`
-со своим окном правил. У нас до сих пор перевод затягивался только внутри
-сканирования и только в пустые строки: если у ключа уже был перевод, версия с
-диска молча игнорировалась (сканер лишь считал её расхождением). Поэтому не было
-способа принять чужой перевод мода или свои же правки, сделанные в файлах.
+In ESP/ESM Translator this is `Translation → Load translation from a translated
+mod`, with a rules window of its own. Here a translation used to be pulled in
+only inside a scan and only into empty rows: if a key already had a translation,
+the version on disk was silently ignored — the scanner merely counted it as a
+divergence. So there was no way to take somebody else's translation of a mod, or
+one's own edits made in the files.
 
-**Работа разделена на три шага, и это не украшение.**
+**The work is split into three steps, and that is not decoration.**
 
-    read_tree   — только диск: разобрать файлы перевода
-    build_plan  — только сравнение: что и на что менять
-    apply_plan  — только запись: одна транзакция на всю пачку
+    read_tree   — the disk only: parse the translation files
+    build_plan  — the comparison only: what changes into what
+    apply_plan  — the write only: one transaction for the whole batch
 
-Раньше всё это делал один проход, и окно звало его три-четыре раза за импорт:
-предпросмотр при открытии, предпросмотр на каждую галку, ещё раз ради числа в
-вопросе «взять N строк?» и только потом по-настоящему. Между тем **галки на
-разбор файлов не влияют** — они меняют правила отбора, а файлы читаются одни и
-те же. Теперь дерево разбирается один раз, а переключение галки пересчитывает
-только сравнение, в памяти.
+All of it used to be one pass, and the window called it three or four times per
+import: a preview when it opened, a preview on every checkbox, one more for the
+number in «take N rows?», and only then for real. Meanwhile **the checkboxes do
+not affect the parsing** — they change the selection rules, while the files read
+are the same ones. Now the tree is parsed once, and toggling a checkbox
+recomputes only the comparison, in memory.
 
-Запись идёт пачкой, а не построчно, и это вторая половина той же истории. Замер
-на 20 000 строк: построчно 16,7 с, пачкой 0,53 с — тридцатидвухкратная разница.
-Причина не в SQL, а в `commit` на каждую строку: база живёт в WAL с
-`synchronous=FULL`, то есть каждая строка стоила одного fsync. Побочный
-результат важен не меньше: пачка либо применяется целиком, либо не применяется
-вовсе, тогда как прежний путь при ошибке на середине оставлял половину строк
-записанной.
+The write goes as a batch rather than row by row, and that is the second half of
+the same story. Measured over 20 000 rows: row by row 16.7 s, as a batch 0.53 s —
+a thirty-two-fold difference. The cause is not the SQL but a `commit` per row: the
+database lives in WAL with `synchronous=FULL`, so every row cost one fsync. The
+side effect matters no less: a batch is either applied whole or not applied at
+all, whereas the old path left half the rows written when it failed halfway.
 
-Историю и переходы статусов пакетный путь ведёт теми же средствами, что и
-ручная правка: `unit_ops.record_history` и `unit_ops.status_after_edit`.
+The batch path keeps the history and the status transitions by the same means as a
+manual edit: `unit_ops.record_history` and `unit_ops.status_after_edit`.
 """
 from __future__ import annotations
 
@@ -46,34 +46,34 @@ ProgressCb = Callable[[int, int, str], None]
 
 
 class ImportCancelled(Exception):
-    """Чтение прервано пользователем — в базу ничего не ушло."""
+    """Reading was interrupted by the user; nothing reached the database."""
 
 
 @dataclass
 class ImportOptions:
-    """Правила приёма строк — те же, что в окне Import у EET."""
+    """The rules for taking rows, the same as in EET's Import window."""
 
-    overwrite: bool = False              # перезаписывать существующие переводы
-    skip_equal_to_source: bool = True    # пропускать строки, где перевод = оригинал
-    only_files: set[str] | None = None   # ограничить набором rel_path оригинала
+    overwrite: bool = False              # overwrite existing translations
+    skip_equal_to_source: bool = True    # skip rows where the translation equals the original
+    only_files: set[str] | None = None   # limit to a set of original rel_paths
 
 
 @dataclass
 class ImportReport:
     files_found: int = 0
     imported: int = 0
-    unchanged: int = 0              # на диске то же, что в проекте
-    skipped_existing: int = 0       # перевод уже есть, перезапись выключена
-    skipped_equal: int = 0          # перевод совпадает с оригиналом
-    skipped_marked: int = 0         # помечено маркером «требует перевода»
-    unknown_keys: int = 0           # ключей нет в проекте — чужой или старый мод
+    unchanged: int = 0              # the disk holds the same as the project
+    skipped_existing: int = 0       # a translation is already there and overwriting is off
+    skipped_equal: int = 0          # the translation equals the original
+    skipped_marked: int = 0         # marked with the «needs translation» marker
+    unknown_keys: int = 0           # the project has no such keys: another mod, or an old one
     warnings: list[str] = field(default_factory=list)
-    samples: list[tuple[str, str, str]] = field(default_factory=list)  # ключ, было, стало
+    samples: list[tuple[str, str, str]] = field(default_factory=list)  # key, before, after
 
     SAMPLE_LIMIT = 200
 
     def summary(self) -> str:
-        """Итог загрузки перевода из файлов мода."""
+        """The outcome of loading a translation from the mod files."""
         lines = [
             fill(translate("LocImport", "Translation files found: %1"),
                  self.files_found),
@@ -102,25 +102,26 @@ class ImportReport:
 
 @dataclass(frozen=True)
 class ParsedTree:
-    """Разобранное дерево перевода: то, что прочитано с диска.
+    """The parsed translation tree: what was read from disk.
 
-    Живёт в окне импорта, пока не сменили папку: правила приёма его не меняют.
+    It lives in the import window until the folder changes: the import rules do
+    not alter it.
     """
 
     tgt_dir: Path
-    files: dict[str, dict[str, LocEntry]]      # rel_path оригинала -> {ключ: запись}
+    files: dict[str, dict[str, LocEntry]]      # rel_path of the original -> {key: entry}
     warnings: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class Change:
-    """Одна строка, которую примет импорт."""
+    """One row the import will take."""
 
     unit_id: int
     key: str
     en_text: str | None
     old_text: str | None
-    new_text: str          # уже приведён к формату Paradox
+    new_text: str          # already brought into the Paradox form
     status: str
     prev_en_text: str | None
     change_kind: str | None
@@ -128,7 +129,8 @@ class Change:
 
 @dataclass
 class ImportPlan:
-    """Что произойдёт при импорте. Ничего не записано — можно показать и передумать."""
+    """What the import will do. Nothing is written, so it can be shown and thought
+    better of."""
 
     changes: list[Change] = field(default_factory=list)
     report: ImportReport = field(default_factory=ImportReport)
@@ -145,10 +147,11 @@ def read_tree(
     progress_cb: ProgressCb | None = None,
     should_cancel: Callable[[], bool] | None = None,
 ) -> ParsedTree:
-    """Разобрать файлы перевода. Только чтение — база не участвует.
+    """Parse the translation files. Reading only; the database takes no part.
 
-    `rel_paths` — пути файлов **оригинала**: имена файлов перевода получаются из
-    них подстановкой языка, и брать с диска что-то сверх проекта незачем.
+    `rel_paths` are the paths of the **original** files: the names of the
+    translation files follow from them by substituting the language, and there is
+    no reason to take anything from disk beyond what the project has.
     """
     tgt_dir = Path(tgt_dir)
     fmt = fmt or loc_formats.get(loc_formats.DEFAULT)
@@ -168,7 +171,7 @@ def read_tree(
             continue
         lf = fmt.parse_file(path, language=tgt_lang, encoding=encoding)
         warnings.extend(lf.warnings)
-        # последний побеждает, как в игре
+        # the last one wins, as in the game
         files[rel] = {e.key: e for e in lf.entries}
 
     if progress_cb:
@@ -184,15 +187,17 @@ def build_plan(
     *,
     fmt: loc_formats.LocFormat | None = None,
 ) -> ImportPlan:
-    """Сравнить разобранное дерево с проектом. Ничего не пишет и диска не трогает."""
+    """Compare the parsed tree with the project. Writes nothing and never touches
+    the disk."""
     fmt = fmt or loc_formats.get(loc_formats.DEFAULT)
     options = options or ImportOptions()
     plan = ImportPlan()
     report = plan.report
     report.warnings.extend(tree.warnings)
 
-    # Один запрос на проект вместо запроса на каждый файл: строк бывают сотни
-    # тысяч, а файлов — сотни, и лишние сотни обращений к базе тут ни к чему.
+    # One query per project instead of a query per file: rows run to hundreds of
+    # thousands and files to hundreds, and hundreds of extra trips to the database
+    # serve nothing here.
     units_by_file: dict[int, dict[str, sqlite3.Row]] = {}
     for row in conn.execute(
         """SELECT u.id, u.key, u.file_id, u.en_text, u.ru_text, u.status,
@@ -236,9 +241,9 @@ def build_plan(
                 report.skipped_existing += 1
                 continue
 
-            # Текст приводим к формату Paradox здесь же, а не при записи: план
-            # показывают человеку, и показывать надо то, что действительно ляжет
-            # в базу.
+            # The text is brought into the Paradox form right here rather than at write
+            # time: the plan is shown to a person, and what is shown must be what actually
+            # lands in the database.
             new_text = fmt.escape_value(entry.text)
             status, prev_en, change_kind = unit_ops.status_after_edit(
                 unit["status"], new_text, unit["ru_text"],
@@ -260,11 +265,11 @@ def apply_plan(
     *,
     batch_id: str | None = None,
 ) -> ImportReport:
-    """Записать план одной транзакцией.
+    """Write the plan in a single transaction.
 
-    Либо применяется всё, либо ничего: прежний путь коммитил каждую строку
-    отдельно, и ошибка на середине оставляла половину принятой — без способа
-    понять, какую именно.
+    Either all of it is applied or none: the old path committed every row on its
+    own, and a failure halfway left half of it taken — with no way to tell which
+    half.
     """
     changes = plan.changes
     if not changes:
@@ -279,16 +284,17 @@ def apply_plan(
             [(c.new_text, c.status, c.prev_en_text, c.change_kind, c.unit_id)
              for c in changes],
         )
-        # Принятое пополняет память переводов — как и при ручной правке: перевод
-        # чужого мода тем и ценен, что подскажет в своём.
+        # What is taken feeds the translation memory, as a manual edit does: the
+        # translation of somebody else's mod is valuable precisely because it will
+        # prompt you in your own.
         tm.upsert_many(conn, [(c.en_text, c.new_text, c.key) for c in changes
                               if c.en_text and c.new_text])
         conn.commit()
     except BaseException:
         conn.rollback()
         raise
-    # пачка бывает на десятки тысяч строк — журнал сбрасываем сразу, как и
-    # после сканирования (см. project.checkpoint)
+    # a batch can run to tens of thousands of rows, so the journal is flushed at
+    # once, as after a scan (see project.checkpoint)
     from pdxloc.project import checkpoint
 
     checkpoint(conn)
@@ -306,10 +312,10 @@ def import_translations(
     progress_cb: ProgressCb | None = None,
     should_cancel: Callable[[], bool] | None = None,
 ) -> ImportReport:
-    """Принять переводы из дерева `tgt_dir` — все три шага разом.
+    """Take the translations from the `tgt_dir` tree — all three steps at once.
 
-    `dry_run` считает то же самое, но ничего не пишет: массовая операция без
-    показа «что именно изменится» опасна.
+    `dry_run` computes the same thing but writes nothing: a mass operation with
+    no «here is exactly what will change» is dangerous.
     """
     proj = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
     if proj is None:
