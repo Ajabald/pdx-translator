@@ -1,4 +1,4 @@
-"""Панель проверки качества: список проблем, клик — переход к строке."""
+"""The quality panel: a list of issues; a click jumps to the row."""
 from __future__ import annotations
 
 import sqlite3
@@ -69,14 +69,14 @@ class QaIssuesModel(QAbstractTableModel):
 
 
 class QaReportDialog(QDialog):
-    """Полная проверка проекта — отдельным отчётом, а не панелью на экране.
+    """A full check of the project, as a separate report rather than a panel.
 
-    Повседневные замечания видны в колонке «!» основной таблицы; сюда ходят,
-    когда нужно пройтись по всему проекту разом.
+    Day-to-day issues are visible in the «!» column of the main table; people
+    come here when they want to walk the whole project in one go.
     """
 
     jumpToUnit = Signal(int)
-    configureRule = Signal(str)     # «настроить это правило» — код правила
+    configureRule = Signal(str)     # «configure this rule» — the rule id
 
     def __init__(self, conn: sqlite3.Connection, project_id: int | None = None, parent=None):
         super().__init__(parent)
@@ -125,8 +125,9 @@ class QaReportDialog(QDialog):
                       "Mark the selected issue as false — do not show it again"))
         self.ignore_btn.clicked.connect(self._ignore_selected)
         bottom.addWidget(self.ignore_btn)
-        # Замечание бывает ложным не в одной строке, а во всех сразу — тогда
-        # чинить надо правило, а не помечать тысячу строк по одной
+        # An issue can be false not in one row but in all of them at once, and
+        # then the rule is what needs fixing — not a thousand rows marked one by
+        # one
         self.configure_btn = QPushButton(translate("QaPanel", "Configure this rule…"))
         self.configure_btn.setToolTip(
             translate("QaPanel",

@@ -1,12 +1,12 @@
 """Yandex Cloud Translate (v2).
 
-Не путать с `translate.yandex.net/api/v1.5`, на котором сидит ESP/ESM
-Translator: тот выключен.
+Not to be confused with `translate.yandex.net/api/v1.5`, the one ESP/ESM
+Translator sits on: that endpoint is switched off.
 
-**Одного ключа не хватает — нужен ещё идентификатор каталога.** Без него сервис
-отвечает отказом авторизации, и человек ищет ошибку в ключе, которого не
-касался. Поэтому поле заведено отдельным и объяснено прямо в «Параметрах», а не
-спрятано в `extra`.
+**A key alone is not enough — a folder id is needed too.** Without it the service
+answers with an authorisation refusal, and the person starts hunting for a
+mistake in a key they never touched. That is why the field is a separate one,
+explained right in «Preferences» rather than buried in `extra`.
 """
 from __future__ import annotations
 
@@ -42,8 +42,8 @@ class YandexProvider:
                         src_locale: str, tgt_locale: str) -> list[str]:
         folder_id = (self.config.extra.get("folder_id") or "").strip()
         if not folder_id:
-            # Отказываем до запроса: иначе сервис ответит «неверный ключ», и
-            # человек будет искать ошибку там, где её нет.
+            # Refuse before the request: otherwise the service answers «bad
+            # key» and the person hunts for a fault that is not there.
             raise MtAuthError(fill(translate(
                 "Mt", "%1 also needs a folder id — fill it in "
                       "«File → Preferences → Machine translation»."), self.label))

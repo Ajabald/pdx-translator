@@ -1,11 +1,11 @@
-"""Обращения к проводнику Windows — все в одном месте.
+"""Calls into Windows Explorer, all in one place.
 
-Здесь ровно одна нетривиальная вещь, ради которой модуль и заведён:
-`explorer /select,` нельзя вызывать списком аргументов. Python склеивает
-список через `subprocess.list2cmdline`, тот вставляет пробел после запятой, и
-получается `explorer /select, "D:\\путь"` — такую строку проводник не
-разбирает и молча открывает папку по умолчанию вместо нужного файла. Именно
-поэтому «Открыть оригинал в проводнике» показывало «Документы».
+There is exactly one non-obvious thing here, and the module exists for it:
+`explorer /select,` must not be called with a list of arguments. Python joins a
+list through `subprocess.list2cmdline`, which inserts a space after the comma,
+so the command becomes `explorer /select, "D:\\path"` — Explorer cannot parse
+that and silently opens the default folder instead of the file. That is exactly
+why «Show original in Explorer» used to land on «Documents».
 """
 from __future__ import annotations
 
@@ -15,21 +15,21 @@ from pathlib import Path
 
 
 def reveal(path: Path) -> None:
-    """Показать файл в проводнике, выделив его.
+    """Show a file in Explorer with the file selected.
 
-    Если файла нет — открываем хотя бы его папку: молчать в ответ на нажатие
-    кнопки хуже, чем показать не совсем то.
+    If the file is gone, open its folder at least: saying nothing in answer to a
+    button press is worse than showing not quite the right thing.
     """
     target = Path(path)
     if target.exists():
         native = os.path.normpath(str(target))
-        subprocess.Popen(f'explorer /select,"{native}"')     # строкой, не списком
+        subprocess.Popen(f'explorer /select,"{native}"')     # a string, not a list
     else:
         open_dir(target.parent)
 
 
 def open_dir(path: Path) -> None:
-    """Открыть папку в проводнике, создав её при необходимости."""
+    """Open a folder in Explorer, creating it if it is not there yet."""
     target = Path(path)
     target.mkdir(parents=True, exist_ok=True)
     subprocess.Popen(["explorer", os.path.normpath(str(target))])

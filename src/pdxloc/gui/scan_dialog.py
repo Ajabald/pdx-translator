@@ -1,7 +1,7 @@
-"""Сканирование проекта: прогресс с возможностью прервать и наглядная сводка.
+"""Scanning a project: progress that can be interrupted, and a readable summary.
 
-ScanWorker открывает СВОЁ соединение с БД — соединения sqlite нельзя делить
-между потоками.
+ScanWorker opens a connection of ITS OWN: sqlite connections must not be shared
+between threads.
 """
 from __future__ import annotations
 
@@ -39,8 +39,8 @@ class ScanWorker(QObject):
             from pdxloc.core.scanner import ScanCancelled, scan_project
             from pdxloc.project import open_project
 
-            # своё соединение: подключённые базы и temp-представления живут
-            # в пределах соединения и не переносятся между потоками
+            # a connection of its own: attached databases and temp views live
+            # within a connection and do not travel between threads
             conn = open_project(self.project_path, self.tm_paths)
             try:
                 stats = scan_project(conn, 1, self.progress.emit, lambda: self._cancel)
@@ -51,12 +51,12 @@ class ScanWorker(QObject):
             finally:
                 conn.close()
             self.finished.emit(stats)
-        except Exception as e:  # noqa: BLE001 — показываем пользователю любую ошибку
+        except Exception as e:  # noqa: BLE001 — every error is shown to the user
             self.failed.emit(str(e))
 
 
 class ScanProgressDialog(QDialog):
-    """Модальный прогресс; сам запускает поток и закрывается по завершении."""
+    """Modal progress: it starts the thread itself and closes when the work ends."""
 
     def __init__(self, project_path: Path, tm_paths: list[Path] | None = None, parent=None):
         super().__init__(parent)
@@ -92,9 +92,9 @@ class ScanProgressDialog(QDialog):
         self._worker.finished.connect(self._on_finished)
         self._worker.failed.connect(self._on_failed)
         self._worker.cancelled.connect(self._on_cancelled)
-        # Останавливаем поток его же сигналом: сообщение о завершении приходит
-        # раньше, чем run() отдаёт управление, и wait() из основного потока
-        # вешал окно намертво.
+        # The thread is stopped by its own signal: the finished message arrives
+        # before run() gives control back, and wait() from the main thread used
+        # to hang the window for good.
         self._worker.finished.connect(self._thread.quit)
         self._worker.failed.connect(self._thread.quit)
         self._worker.cancelled.connect(self._thread.quit)
@@ -105,7 +105,7 @@ class ScanProgressDialog(QDialog):
         self._bar.setValue(done)
         self._label.setText(fill(translate("ScanDialog", "File %1 of %2: %3"),
                                  done + 1, total, name))
-        if name and name != "done":   # маркер сканера, не подпись
+        if name and name != "done":   # a scanner marker, not a label
             self._files.addItem(name)
             self._files.scrollToBottom()
 
@@ -129,19 +129,19 @@ class ScanProgressDialog(QDialog):
 
     def closeEvent(self, event) -> None:
         if self._thread.isRunning() and not self._worker._cancel:
-            self._on_cancel()      # закрытие окна = просьба прервать
+            self._on_cancel()      # closing the window means «interrupt»
             event.ignore()
             return
-        # даём потоку договорить, но не виснем, если он застрял
+        # let the thread finish speaking, but do not hang if it is stuck
         self._thread.quit()
         self._thread.wait(3000)
         super().closeEvent(event)
 
 
 class ScanSummaryDialog(QDialog):
-    """Итоги сканирования: что изменилось и как это посмотреть."""
+    """The scan results: what changed, and how to go and look at it."""
 
-    # (подпись, значение из ScanStats, статус для фильтра)
+    # (label, the ScanStats field, the status to filter by)
     ROWS = (
         (QT_TRANSLATE_NOOP("ScanDialog", "New rows"),
          "new", Status.UNTRANSLATED.value),
@@ -159,7 +159,7 @@ class ScanSummaryDialog(QDialog):
         (QT_TRANSLATE_NOOP("ScanDialog", "Unchanged"), "unchanged", None),
     )
 
-    showRequested = Signal(str)     # статус для фильтра
+    showRequested = Signal(str)     # the status to filter by
 
     def __init__(self, stats: ScanStats, parent=None):
         super().__init__(parent)
@@ -216,8 +216,8 @@ class ScanSummaryDialog(QDialog):
     def _details_text(stats: ScanStats) -> list[str]:
         lines: list[str] = []
         if stats.ru_conflict_list:
-            # сканер оставляет версию проекта; принять дисковую можно только
-            # осознанно — через «Проект → Загрузить перевод из мода…»
+            # the scan keeps the project's version; taking the one on disk is a
+            # deliberate act — «Project → Load translation from mod…»
             lines.append(translate(
                 "ScanDialog",
                 "The discrepancies below were left as they are: the project has "

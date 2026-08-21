@@ -1,11 +1,11 @@
-"""Статусы переводимых строк: значения в БД и названия для показа.
+"""Statuses of translatable rows: the database values and the labels shown.
 
-Цвета живут в gui/theme.py — их два набора (светлый и тёмный), и ядру,
-которое работает без интерфейса, они не нужны.
+The colours live in gui/theme.py — there are two sets of them, light and dark,
+and the core, which runs without an interface at all, has no use for either.
 
-Названия помечены `QT_TRANSLATE_NOOP`, а не переведены на месте: таблица
-вычисляется на импорте, когда переводчик ещё не установлен. Переводит их
-`label()` в момент показа — через неё и надо ходить, а не через словарь.
+The labels are marked with `QT_TRANSLATE_NOOP` rather than translated in place:
+the table is built at import time, when no translator is installed yet. `label()`
+translates them at the moment of display — go through it, not through the dict.
 """
 from __future__ import annotations
 
@@ -18,19 +18,19 @@ CTX = "Statuses"
 
 class Status(StrEnum):
     UNTRANSLATED = "untranslated"
-    MACHINE = "machine"          # машинный перевод, не проверен человеком
-    AUTO = "auto"                # подставлено из памяти переводов, требует проверки
+    MACHINE = "machine"          # machine translation, unseen by a human
+    AUTO = "auto"                # filled from memory, needs review
     TRANSLATED = "translated"
     REVIEWED = "reviewed"
-    STALE = "stale"              # EN изменился после перевода
-    IGNORED = "ignored"          # перевод не нужен (например, строка из одних тегов)
-    CUSTOM = "custom"            # пользовательская пометка (аналог статуса 150 в EET)
+    STALE = "stale"              # the source changed after the translation
+    IGNORED = "ignored"          # nothing to translate (a row of bare tags, say)
+    CUSTOM = "custom"            # the user's own mark (status 150 in EET)
 
 
 STATUS_LABELS: dict[Status, str] = {
     Status.UNTRANSLATED: QT_TRANSLATE_NOOP("Statuses", "Not translated"),
-    # «не проверен» в подписи обязательно: «Машинный» в одиночку читается как
-    # законченное состояние, а это ровно то, чем машинный перевод не является
+    # «unchecked» has to stay in the label: «Machine» on its own reads as a
+    # finished state, which is exactly what machine translation is not
     Status.MACHINE: QT_TRANSLATE_NOOP("Statuses", "Machine (unchecked)"),
     Status.AUTO: QT_TRANSLATE_NOOP("Statuses", "Auto (from memory)"),
     Status.TRANSLATED: QT_TRANSLATE_NOOP("Statuses", "Translated"),
@@ -42,21 +42,22 @@ STATUS_LABELS: dict[Status, str] = {
 
 
 def label(status: Status | str) -> str:
-    """Название статуса на текущем языке интерфейса."""
+    """The status label in the current interface language."""
     try:
         key = Status(status)
     except ValueError:
         return str(status)
     return translate("Statuses", STATUS_LABELS[key])
 
-# Порядок работы переводчика, а не алфавит значений: по нему идут чипы в
-# статус-баре, пункты фильтра и сортировка колонки «Статус». Список один на
-# всё приложение — иначе три места разъезжаются при добавлении статуса.
+# The translator's working order, not the alphabet of the values: the status-bar
+# chips, the filter entries and the sorting of the «Status» column all follow it.
+# One list for the whole application — otherwise the three drift apart the moment
+# a status is added.
 #
-# «Машинный» стоит перед «Авто» намеренно: подстановка из памяти — это точное
-# совпадение с переводом, который кто-то однажды сделал руками, а машинный
-# перевод не видел человек вообще. Порядок рабочий, и наименее достоверное
-# идёт первым.
+# «Machine» stands before «Auto» on purpose: a fill from memory is an exact match
+# with a translation somebody once made by hand, while machine translation was
+# never seen by a human at all. The order is a working one, and the least
+# trustworthy comes first.
 STATUS_ORDER: tuple[Status, ...] = (
     Status.UNTRANSLATED, Status.MACHINE, Status.AUTO, Status.TRANSLATED,
     Status.REVIEWED, Status.STALE, Status.CUSTOM, Status.IGNORED,

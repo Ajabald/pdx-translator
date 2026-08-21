@@ -1,9 +1,9 @@
-"""Мелкие виджеты, общие для окон.
+"""Small widgets shared between windows.
 
-Заведены ради одного: цвет здесь берётся из `theme.py` и меняется вместе с
-темой. Раньше подписи красились литералом цвета в `setStyleSheet` прямо в
-диалогах — на тёмной теме такой текст становился нечитаемым, а найти все места
-можно было только грепом.
+They exist for one reason: the colour comes from `theme.py` and follows the
+theme. Labels used to hard-code a colour in `setStyleSheet` inside the dialogs
+themselves — on the dark theme such text turned unreadable, and the only way to
+find every offender was to grep for it.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from pdxloc.gui import theme
 
 
 class _ThemedLabel(QLabel):
-    """Подпись, знающая своё имя цвета в палитре."""
+    """A label that knows its own colour name in the palette."""
 
     COLOR_KEY = "text"
 
@@ -28,12 +28,12 @@ class _ThemedLabel(QLabel):
 
 
 class HintLabel(_ThemedLabel):
-    """Приглушённая поясняющая подпись."""
+    """A muted explanatory label."""
 
     COLOR_KEY = "hint"
 
 
 class WarningLabel(_ThemedLabel):
-    """Предупреждение: заметно, но не паникёрски."""
+    """A warning: noticeable, but not alarmist."""
 
     COLOR_KEY = "warning.text"

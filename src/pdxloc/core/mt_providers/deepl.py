@@ -1,13 +1,14 @@
 """DeepL.
 
-Единственный из классических сервисов, у кого многострочный запрос устроен
-по-человечески: `text` повторяется, и ответ приходит массивом в том же порядке.
-Разделители не нужны вовсе — а значит, отпадает и весь класс ошибок, где
-перевод приземляется на чужой ключ.
+The only one of the classic services with a sane multi-row request: `text` is
+repeated and the answer arrives as an array in the same order. No separators are
+needed at all — and with them goes the whole class of faults where a translation
+lands on somebody else's key.
 
-Free и Pro — **разные адреса**, а не тариф на одном. Ключ от одного на другом
-не работает, и ошибка при этом приходит как «неверный ключ», что сбивает с
-толку; поэтому переключатель в «Параметрах» назван адресом, а не тарифом.
+Free and Pro are **different addresses**, not a plan on one. A key for one does
+not work on the other, and the error that comes back reads as «bad key», which
+misleads; that is why the switch in «Preferences» is named after the address
+rather than the plan.
 """
 from __future__ import annotations
 
@@ -20,9 +21,10 @@ from pdxloc.core.mt_providers._http import request_json
 FREE_URL = "https://api-free.deepl.com/v2"
 PRO_URL = "https://api.deepl.com/v2"
 
-# Исходный язык — простой код, целевой у части языков требует региона.
-# Это правило DeepL, и живёт оно здесь, а не в общей таблице: общая матрица
-# «язык × сервис» протухла бы на первом же изменении чужого API.
+# The source language is a plain code; for some languages the target one needs a
+# region as well. This is DeepL's own rule and it lives here rather than in a
+# shared table: a general «language × service» matrix would go stale on the first
+# change to somebody else's API.
 _SOURCE = {
     "en": "EN", "ru": "RU", "de": "DE", "fr": "FR", "es": "ES", "it": "IT",
     "pt": "PT", "pl": "PL", "tr": "TR", "uk": "UK", "cs": "CS", "ja": "JA",
@@ -35,8 +37,8 @@ class DeepLProvider:
     name = "deepl"
     label = "DeepL"
     needs_key = True
-    # Документированный предел запроса — 128 КиБ; берём с запасом на служебные
-    # поля, чтобы отказ приходил от нашего планировщика, а не от сервиса.
+    # The documented request limit is 128 KiB; we leave room for the service
+    # fields so that a refusal comes from our own planner, not from DeepL.
     char_limit = 100_000
 
     def __init__(self, config: ProviderConfig | None = None):
@@ -71,18 +73,18 @@ class DeepLProvider:
             headers=self._headers(),
             timeout=self.config.timeout,
             service=self.label,
-            # 456 — исчерпанная квота: у DeepL это не 429
+            # 456 is an exhausted quota: with DeepL that is not a 429
             quota_codes=(429, 456),
             opener=self.config.extra.get("opener"),
         )
         return [item.get("text", "") for item in answer.get("translations", [])]
 
     def usage(self) -> tuple[int, int] | None:
-        """(израсходовано, предел) символов за период — или None.
+        """(used, limit) characters for the period — or None.
 
-        Показывается только у DeepL, потому что только он это отдаёт. У
-        остальных в «Параметрах» на этом месте пусто: выдуманное число хуже
-        отсутствующего.
+        Shown for DeepL alone, because DeepL alone reports it. For the others the
+        same spot in «Preferences» stays empty: an invented number is worse than
+        a missing one.
         """
         answer = request_json(
             f"{self.base_url}/usage",

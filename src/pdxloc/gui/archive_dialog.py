@@ -1,7 +1,8 @@
-"""Архив переводов: ключи, которых больше нет в оригинале.
+"""The translation archive: keys the original no longer has.
 
-Сюда попадают переводы удалённых из мода строк и опечаток в ключах. В экспорт
-они не идут, но и не пропадают — отсюда их можно скопировать обратно.
+Translations of rows the mod dropped end up here, and so do translations of keys
+that were once mistyped. They are not written to the mod, but they are not lost
+either — from here they can be copied back.
 """
 from __future__ import annotations
 

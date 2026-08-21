@@ -1,15 +1,15 @@
-"""Напоминания, у которых есть постоянный выход.
+"""Reminders that always have a way out.
 
-Приём снят с ESP/ESM Translator. У него на каждую принудительную модалку есть
-парная настройка «всегда так делать, без подтверждения»
+The trick is taken from ESP/ESM Translator. Every forced modal there has a
+matching «always do this, without asking» setting
 (`Options.Toujours ouvrir cette langue`, `Options.Toujours traduire dans cette
-langue`, `Message.ToujoursOuvrirCetteLangue`). Без такого выхода модалка,
-показанная в третий раз, перестаёт читаться: её закрывают не глядя, и первое же
-важное предупреждение уезжает вместе с ней.
+langue`, `Message.ToujoursOuvrirCetteLangue`). Without such a way out a modal
+shown for the third time stops being read: people dismiss it unseen, and the
+first genuinely important warning leaves with it.
 
-Поэтому в приложении нет напоминаний «просто так»: каждое либо задаётся один
-раз за жизнь (мастер первого запуска), либо проходит через `ask_once` и умеет
-замолчать навсегда.
+So the application has no reminders «just because»: each one is either asked once
+in the lifetime of the install (the first-run wizard) or goes through `ask_once`
+and can be silenced for good.
 """
 from __future__ import annotations
 
@@ -26,12 +26,12 @@ def _key(name: str) -> str:
 
 
 def muted(name: str) -> bool:
-    """Просил ли пользователь больше не спрашивать об этом."""
+    """Whether the user asked not to be bothered about this again."""
     return bool(prefs.get_flag(_key(name)))
 
 
 def unmute(name: str) -> None:
-    """Вернуть напоминание. Нужно «Параметрам»: заглушённое молча — навсегда."""
+    """Bring a reminder back. «Preferences» needs it: silenced quietly is forever."""
     prefs.set_flag(_key(name), False)
 
 
@@ -41,17 +41,18 @@ def unmute_all() -> None:
 
 
 def any_muted() -> bool:
-    """Есть ли что возвращать. «Параметрам» — чтобы не показывать мёртвую галку."""
+    """Whether there is anything to bring back, so «Preferences» can hide a dead
+    checkbox."""
     return any(muted(name) for name in KNOWN)
 
 
 def ask_once(parent, name: str, title: str, text: str,
              *, buttons=QMessageBox.Yes | QMessageBox.No) -> int:
-    """Спросить, если не просили молчать. Возвращает нажатую кнопку.
+    """Ask, unless asked not to. Returns the button that was pressed.
 
-    Заглушённый вопрос отвечает `No` — «ничего не делаем». Умолчание выбрано
-    осторожным намеренно: галка «больше не спрашивать» ставится, чтобы от
-    предложения отвязались, а не чтобы оно исполнялось само.
+    A silenced question answers `No` — «do nothing». The default is deliberately
+    the cautious one: the «do not ask again» box is ticked to be left alone by an
+    offer, not to have it carried out unattended.
     """
     if muted(name):
         return QMessageBox.No
@@ -65,8 +66,9 @@ def ask_once(parent, name: str, title: str, text: str,
     return answer
 
 
-# Имена напоминаний. Список нужен «Параметрам»: без него вернуть заглушённое
-# было бы нечем, а настройка, которую невозможно отменить, — ловушка.
+# The names of the reminders. «Preferences» needs the list: without it there
+# would be nothing to bring a silenced reminder back with, and a setting that
+# cannot be undone is a trap.
 NO_TM_DATABASES = "no_tm_databases"
 
 KNOWN: tuple[str, ...] = (NO_TM_DATABASES,)

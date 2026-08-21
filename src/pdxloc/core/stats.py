@@ -1,7 +1,8 @@
-"""Единая статистика проекта — одно определение «переведено» для всех экранов.
+"""Project statistics in one place — one definition of «translated» for every screen.
 
-done = translated + reviewed + (custom с непустым ru_text).
-total НЕ включает orphaned и ignored (они вне знаменателя процента).
+done = translated + reviewed + (custom with a non-empty ru_text).
+total does NOT include orphaned and ignored rows: they stay out of the
+denominator of the percentage.
 """
 from __future__ import annotations
 
@@ -21,7 +22,7 @@ _EXCLUDED_FROM_TOTAL = (Status.IGNORED.value,)
 class ProjectStats:
     total: int = 0
     done: int = 0
-    counts: dict[str, int] = field(default_factory=dict)   # по каждому статусу
+    counts: dict[str, int] = field(default_factory=dict)   # per status
 
     @property
     def remaining(self) -> int:
@@ -58,7 +59,7 @@ def project_stats(conn: sqlite3.Connection, project_id: int) -> ProjectStats:
 
 
 def file_stats(conn: sqlite3.Connection, project_id: int) -> list[FileStats]:
-    """Счётчики по файлам (для дерева слева). Порядок — по rel_path."""
+    """Counters per file, for the tree on the left. Ordered by rel_path."""
     result: dict[str, FileStats] = {}
     rows = conn.execute(
         f"""SELECT f.rel_path, u.status, COUNT(*) AS n, SUM({DONE_SQL}) AS done

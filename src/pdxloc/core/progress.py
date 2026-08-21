@@ -1,8 +1,8 @@
-"""Сообщения о ходе длительных операций.
+"""Progress reports for long operations.
 
-Без ограничения частоты тысяча с лишним обновлений подряд забивает очередь
-событий окна, и оно перестаёт отвечать — Windows помечает его «Не отвечает»,
-хотя работа идёт в фоновом потоке.
+Without a rate limit a thousand-odd updates in a row flood the window event
+queue and the window stops responding — Windows marks it «Not responding» even
+though the work itself runs in a background thread.
 """
 from __future__ import annotations
 
@@ -11,12 +11,16 @@ from collections.abc import Callable
 
 ProgressCb = Callable[[int, int, str], None]
 
-# Чаще двадцати раз в секунду обновлять экран нет смысла — человек не увидит.
+# More than twenty updates a second is pointless: nobody can read them.
 PROGRESS_INTERVAL_SEC = 0.05
 
 
 def throttled(progress_cb: ProgressCb | None) -> ProgressCb:
-    """Обёртка, пропускающая частые вызовы. Первый и последний доходят всегда."""
+    """A wrapper that drops calls coming too fast.
+
+    The first and the last one always get through: without them the bar would
+    never appear at the start nor reach the end.
+    """
     if progress_cb is None:
         return lambda done, total, name: None
     last = [0.0]

@@ -1,4 +1,4 @@
-"""Панель-дерево файлов проекта со счётчиками перевода (как левая панель EET)."""
+"""A tree of the project files with translation counters, like EET's left panel."""
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
@@ -11,12 +11,12 @@ from pdxloc.gui import theme
 
 CTX = "FileTree"
 
-_ROLE_FILE = Qt.UserRole          # rel_path файла (None у папок)
-_ROLE_PREFIX = Qt.UserRole + 1    # префикс папки (None у файлов)
+_ROLE_FILE = Qt.UserRole          # rel_path of the file (None for folders)
+_ROLE_PREFIX = Qt.UserRole + 1    # folder prefix (None for files)
 
 
 class FileTreePanel(QWidget):
-    # (file_rel | None, file_prefix | None); (None, None) = все
+    # (file_rel | None, file_prefix | None); (None, None) means everything
     filterSelected = Signal(object, object)
 
     def __init__(self, parent=None):
@@ -31,9 +31,10 @@ class FileTreePanel(QWidget):
         self._dir_items: dict[str, QTreeWidgetItem] = {}
         self._root: QTreeWidgetItem | None = None
         self._silent = False
-        # последние счётчики: цвета подписей зависят от темы, а пересчитывать
-        # их из базы ради перекраски незачем — соединение к тому же может быть
-        # уже закрыто (проект закрыли, а тему переключили)
+        # the last counters: label colours follow the theme, and recomputing
+        # them from the database just to repaint would be pointless — besides,
+        # the connection may already be closed (the project was closed and then
+        # the theme switched)
         self._stats: list[FileStats] = []
         theme.on_change(self._on_theme_changed)
 
@@ -42,11 +43,11 @@ class FileTreePanel(QWidget):
             self.update_counts(self._stats)
 
     def retranslate(self) -> None:
-        """Единственная переводимая подпись дерева — корневой «ВСЕ»."""
+        """The only translatable label of the tree: the root «ALL»."""
         if self._root is not None:
             self.update_counts(self._stats)
 
-    # --- построение ---
+    # --- building ---
 
     def populate(self, stats: list[FileStats]) -> None:
         self._silent = True
@@ -85,7 +86,7 @@ class FileTreePanel(QWidget):
         self._silent = False
 
     def update_counts(self, stats: list[FileStats]) -> None:
-        """Обновить счётчики без пересборки дерева."""
+        """Refresh the counters without rebuilding the tree."""
         self._stats = stats
         total_all = done_all = 0
         by_path = {fs.rel_path: fs for fs in stats}
@@ -97,7 +98,7 @@ class FileTreePanel(QWidget):
             done_all += fs.done
             name = rel_path.rsplit("/", 1)[-1]
             self._set_label(item, name, fs.done, fs.total)
-        # папки — суммой по детям
+        # folders are the sum over their children
         for prefix, item in self._dir_items.items():
             done = total = 0
             for fs in stats:
@@ -118,7 +119,7 @@ class FileTreePanel(QWidget):
         font.setBold(complete or (item.data(0, _ROLE_FILE) is None and item.data(0, _ROLE_PREFIX) is None))
         item.setFont(0, font)
 
-    # --- выбор ---
+    # --- selection ---
 
     def _on_selection(self) -> None:
         if self._silent:

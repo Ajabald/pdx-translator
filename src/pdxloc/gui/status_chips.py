@@ -1,6 +1,7 @@
-"""Цветные чипы-счётчики статусов в статус-баре (как в ESP-ESM Translator).
+"""Coloured status counters in the status bar, as in ESP-ESM Translator.
 
-Клик по чипу фильтрует таблицу по статусу; повторный клик — сброс фильтра.
+Clicking a chip filters the table by that status; clicking it again clears the
+filter.
 """
 from __future__ import annotations
 
@@ -15,11 +16,13 @@ from pdxloc.gui import theme
 
 CTX = "StatusChips"
 
-# порядок чипов слева направо — общий с фильтрами и сортировкой колонки «Статус»
+# the left-to-right order is shared with the filters and with the sorting of
+# the «Status» column
 _CHIP_ORDER = STATUS_ORDER
 
-# Чип замечаний стоит особняком: замечание — не статус, строка с ним имеет свой
-# собственный. Отсюда и отдельное значение, и подпись со знаком.
+# The issues chip stands apart: an issue is not a status, and a row carrying one
+# still has a status of its own. Hence both the separate value and the label with
+# a mark on it.
 ISSUES = "!"
 
 
@@ -28,7 +31,7 @@ class _Chip(QLabel):
 
     def __init__(self, value: str, parent=None):
         super().__init__(parent)
-        self.value = value          # значение Status или ISSUES
+        self.value = value          # a Status value, or ISSUES
         self.active = False
         self.count = 0
         self.setAlignment(Qt.AlignCenter)
@@ -63,8 +66,9 @@ class _Chip(QLabel):
         )
 
     def set_count(self, n: int) -> None:
-        # Число хранится отдельно от подписи: у чипа замечаний в ней ещё и знак,
-        # и разбирать её обратно значило бы ронять чип на собственном тексте.
+        # The count is kept apart from the label: on the issues chip the label
+        # also carries a mark, and parsing it back would mean breaking the chip
+        # on its own text.
         self.count = n
         self.setText(f"! {n}" if self.value == ISSUES else str(n))
         self._restyle()
@@ -80,8 +84,8 @@ class _Chip(QLabel):
 
 
 class StatusChipsBar(QWidget):
-    chipClicked = Signal(str)     # значение Status или '' при сбросе
-    issuesClicked = Signal()      # чип «!» — переключить фильтр по замечаниям
+    chipClicked = Signal(str)     # a Status value, or '' when cleared
+    issuesClicked = Signal()      # the «!» chip toggles the issues filter
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -96,7 +100,7 @@ class StatusChipsBar(QWidget):
             layout.addWidget(chip)
             self._chips[status.value] = chip
 
-        layout.addSpacing(6)      # замечание не статус — и стоит отдельно
+        layout.addSpacing(6)      # an issue is not a status, and stands apart
         self.issues_chip = _Chip(ISSUES)
         self.issues_chip.clicked.connect(lambda _: self.issuesClicked.emit())
         layout.addWidget(self.issues_chip)
@@ -106,12 +110,13 @@ class StatusChipsBar(QWidget):
             chip.set_count(stats.counts.get(status_value, 0))
 
     def set_issues(self, count: int, active: bool) -> None:
-        """Замечаний столько **среди загруженных строк**, а не по проекту.
+        """That many issues **among the loaded rows**, not across the project.
 
-        Проверка не хранится в базе: колонка «!» считается по строкам, которые
-        уже отобраны фильтрами. Пересчитывать её по всему проекту на каждое
-        сохранение — секунды на большом моде, и ради числа в статус-баре это
-        слишком дорого. Без фильтров загружен весь проект, и число совпадает.
+        The check is not stored in the database: the «!» column is computed over
+        the rows the filters have already selected. Recomputing it across the
+        whole project on every save costs seconds on a large mod, which is far
+        too much for a number in the status bar. With no filters the whole
+        project is loaded and the two numbers agree.
         """
         self.issues_chip.set_count(count)
         self.issues_chip.set_active(active)

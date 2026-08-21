@@ -1,7 +1,8 @@
-"""Как этот кусок текста переводили раньше.
+"""How this piece of text was translated before.
 
-Точное совпадение строки целиком помогает редко, а вот «как мы уже переводили
-Kingsguard» — постоянно. Ищем подстроку по памяти проекта и подключённым базам.
+An exact match of a whole row helps rarely; «how did we translate Kingsguard
+already» helps all the time. The search runs over a substring, across the
+project's own memory and every attached database.
 """
 from __future__ import annotations
 
@@ -66,7 +67,7 @@ class ConcordanceDialog(QDialog):
         self._reload()
 
     def closeEvent(self, event) -> None:
-        self._debounce.stop()      # отложенный поиск не должен пережить окно
+        self._debounce.stop()      # a pending search must not outlive the window
         super().closeEvent(event)
 
     def done(self, result: int) -> None:

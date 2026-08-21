@@ -1,8 +1,9 @@
-"""Вкладка «Базы»: какие базы памяти подключены к проекту.
+"""The «Databases» tab: which memory databases are attached to the project.
 
-Кнопок ОК/Отмена здесь нет: во вкладке они бессмысленны (закрывать нечего), а
-семантика «изменил, но ещё не сохранил» только запутывала — в шапке окна те же
-базы переключаются одним кликом и применяются сразу. Теперь так же и здесь.
+There are no OK/Cancel buttons here: inside a tab they mean nothing (there is
+nothing to close), and «changed but not saved yet» only confused people — in the
+window header the very same databases are toggled with one click and apply at
+once. Now it works the same way here.
 """
 from __future__ import annotations
 
@@ -31,8 +32,9 @@ class TmSourcesTab(QWidget):
         self._status = ""
         self._syncing = False
 
-        # базы памяти сверяются по папке языка, а не по языку текста: в самой
-        # базе записаны именно они (см. tm_import.create_tm_database)
+        # memory databases are matched by language folder, not by text locale:
+        # the folder is what the database itself records
+        # (see tm_import.create_tm_database)
         langs = project.languages(conn)
         self.src_lang, self.tgt_lang = langs.src_lang, langs.tgt_lang
         self.game = project.game(conn)
@@ -42,7 +44,7 @@ class TmSourcesTab(QWidget):
             "TmSources", "Checked databases provide suggestions and autofill "
                          "(%1 → %2). Changes apply immediately."),
             self.src_lang, self.tgt_lang))
-        intro.setWordWrap(True)     # иначе подпись растягивает окно на весь экран
+        intro.setWordWrap(True)     # otherwise the label stretches the window across the screen
         layout.addWidget(intro)
 
         self.list = QListWidget()
@@ -71,12 +73,12 @@ class TmSourcesTab(QWidget):
         self.reload()
 
     def shutdown(self) -> None:
-        """Своих таймеров нет — метод есть ради единого протокола вкладок."""
+        """No timers of its own; the method exists for the shared tab protocol."""
 
     def status_text(self) -> str:
         return self._status
 
-    # --- данные ---
+    # --- data ---
 
     def reload(self) -> None:
         self._syncing = True
@@ -87,7 +89,7 @@ class TmSourcesTab(QWidget):
                 game=project.game(self.conn))
             for path, meta in databases:
                 self.list.addItem(self._make_item(path, meta, enabled))
-            # включённые, но пропавшие с диска
+            # enabled, but gone from the disk
             known = {p.name for p, _ in databases}
             for name in sorted(enabled - known):
                 missing = translate(
@@ -125,8 +127,9 @@ class TmSourcesTab(QWidget):
             item.setToolTip(translate("TmSources",
                       "The database languages do not match the project languages"))
         elif meta.get("game") and meta["game"] != self.game:
-            # База без пометки игры молчит: собранные до появления игр ничего о
-            # себе не говорят, а неизвестно — не то же самое, что неверно.
+            # A database with no game recorded stays silent: the ones built
+            # before games existed say nothing about themselves, and unknown is
+            # not the same as wrong.
             item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
             item.setToolTip(fill(translate(
                 "TmSources", "The database is of another game — %1"),
@@ -150,7 +153,7 @@ class TmSourcesTab(QWidget):
                if total else ""))
         self.statusChanged.emit(self._status)
 
-    # --- действия ---
+    # --- actions ---
 
     def _on_item_changed(self, _item) -> None:
         if self._syncing:
@@ -166,10 +169,10 @@ class TmSourcesTab(QWidget):
         self.sourcesChanged.emit()
 
     def _build_index(self) -> None:
-        """Достроить индекс похожих строк в выбранной базе.
+        """Build the similar-rows index in the selected database.
 
-        Базы подключены к проекту только на чтение, поэтому индекс строится
-        отдельным соединением и только по явной команде.
+        Databases are attached to the project read-only, so the index is built
+        through a connection of its own and only on an explicit command.
         """
         item = self.list.currentItem()
         if item is None:
@@ -177,7 +180,7 @@ class TmSourcesTab(QWidget):
                 translate("TmSources", "Choose a database in the list."))
             return
         path = settings.bdd_pen(self.game) / item.data(Qt.UserRole)
-        if not path.is_file():        # база из времён до загонов
+        if not path.is_file():        # a database from before the per-game pens
             path = settings.bdd_dir() / item.data(Qt.UserRole)
         if not path.is_file():
             QMessageBox.warning(self, translate("TmSources", "Index"),

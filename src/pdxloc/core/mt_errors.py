@@ -1,22 +1,23 @@
-"""Ошибки машинного перевода — по одной на то, что человек должен сделать.
+"""Machine translation errors — one per thing the person has to do about it.
 
-Разбиение не по коду HTTP, а по действию: неверный ключ правят в «Параметрах»,
-исчерпанную квоту ждут, сеть проверяют, а нечитаемый ответ — повод повторить
-или сменить провайдера. Один общий `MtError` со строкой внутри заставил бы
-разбирать текст, чтобы понять, что делать.
+The split follows the action, not the HTTP code: a wrong key is fixed in
+«Preferences», an exhausted quota is waited out, the network is checked, and an
+unreadable answer is a reason to retry or to switch providers. A single `MtError`
+with a string inside would force every caller to parse that text to know what to
+do.
 
-Сообщение переводится **в момент возбуждения**, а не при показе: ядро работает
-и без окна (`--scan-cli`), и там `translate` честно вернёт английский.
+The message is translated **when the error is raised**, not when it is shown: the
+core also runs without a window (`--scan-cli`), and there `translate` honestly
+returns English.
 
-**Ключ в сообщение не попадает никогда.** Ни в текст, ни в `repr`, ни в лог:
-исключения показываются пользователю, пересказываются в отчётах об ошибках и
-копируются в переписку.
+**The key never reaches the message.** Not the text, not the `repr`, not the log:
+exceptions are shown to the user, quoted in bug reports and pasted into chats.
 """
 from __future__ import annotations
 
 
 class MtError(Exception):
-    """Общий предок. Ловить стоит его, различать — потомков."""
+    """The common ancestor. Catch this one; tell the descendants apart."""
 
     def __init__(self, message: str):
         super().__init__(message)
@@ -24,14 +25,14 @@ class MtError(Exception):
 
 
 class MtAuthError(MtError):
-    """Ключ не принят: не введён, испорчен, отозван или не от того сервиса."""
+    """The key was refused: missing, mistyped, revoked, or for another service."""
 
 
 class MtQuotaError(MtError):
-    """Лимит запросов или объёма исчерпан.
+    """The request or volume limit is used up.
 
-    `retry_after` — через сколько секунд сервис разрешил повторить, если сказал
-    (заголовок `Retry-After`). Пусто — значит решать нам.
+    `retry_after` is how many seconds the service allowed before a retry, if it
+    said so at all (the `Retry-After` header). Empty means the decision is ours.
     """
 
     def __init__(self, message: str, retry_after: float | None = None):
@@ -40,16 +41,17 @@ class MtQuotaError(MtError):
 
 
 class MtNetworkError(MtError):
-    """До сервиса не достучались: нет сети, не разрешилось имя, вышло время."""
+    """The service was not reached: no network, no DNS answer, or a timeout."""
 
 
 class MtResponseError(MtError):
-    """Ответ пришёл, но прочитать его нельзя: не JSON, нет поля, не то число строк."""
+    """An answer arrived but cannot be read: not JSON, a field missing, the wrong
+    number of rows."""
 
 
 class MtCancelled(Exception):
-    """Пользователь нажал «Прервать».
+    """The user pressed «Interrupt».
 
-    Не наследник `MtError` намеренно: это не сбой, и обрабатывается отдельно —
-    как `ScanCancelled` и `TmBuildCancelled` в соседних модулях.
+    Deliberately not an `MtError`: this is not a failure, and it is handled apart
+    — the same way `ScanCancelled` and `TmBuildCancelled` are next door.
     """

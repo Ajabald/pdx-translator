@@ -1,34 +1,35 @@
-"""Удаление файлов в корзину.
+"""Deleting files into the recycle bin.
 
-Проект — это месяцы работы переводчика в одном файле. Кнопка, стирающая его
-безвозвратно, страшна настолько, что ею не пользуются: проще открыть
-проводник. Корзина снимает вопрос — ошибся, достал обратно.
+A project is months of a translator's work in a single file. A button that wipes
+it beyond recovery is frightening enough that nobody uses it: opening Explorer is
+easier. The recycle bin settles the question — misclick, take it back.
 
-Windows умеет это через оболочку (`SHFileOperationW` с флагом `FOF_ALLOWUNDO`),
-поэтому обходимся `ctypes` и не тянем зависимость ради двадцати строк.
-Там, где вызов недоступен или не удался, честно откатываемся на обычное
-удаление — но сообщаем об этом вызывающему, чтобы тот мог предупредить.
+Windows does this through the shell (`SHFileOperationW` with the `FOF_ALLOWUNDO`
+flag), so `ctypes` is enough and no dependency is pulled in for twenty lines.
+Where the call is unavailable or fails we fall back to a plain delete, honestly —
+but we say so to the caller, so it can warn.
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-# Флаги SHFileOperationW (shellapi.h)
+# SHFileOperationW flags (shellapi.h)
 _FO_DELETE = 3
-_FOF_SILENT = 0x0004            # без окна прогресса
-_FOF_NOCONFIRMATION = 0x0010    # своё подтверждение уже показали
-_FOF_ALLOWUNDO = 0x0040         # в корзину, а не насмерть
-_FOF_NOERRORUI = 0x0400         # об ошибке скажем сами, своим текстом
+_FOF_SILENT = 0x0004            # no progress window
+_FOF_NOCONFIRMATION = 0x0010    # our own confirmation was already shown
+_FOF_ALLOWUNDO = 0x0040         # to the bin, not to oblivion
+_FOF_NOERRORUI = 0x0400         # we report the error ourselves, in our own words
 
 
 def available() -> bool:
-    """Есть ли системная корзина."""
+    """Whether the system recycle bin is there."""
     return sys.platform == "win32"
 
 
 def _shell_delete(path: Path) -> bool:
-    """Отдать файл оболочке Windows. False — не вышло, решать вызывающему."""
+    """Hand the file to the Windows shell. False means it did not work and the
+    caller decides what to do."""
     import ctypes
     from ctypes import wintypes
 
@@ -44,8 +45,9 @@ def _shell_delete(path: Path) -> bool:
             ("lpszProgressTitle", wintypes.LPCWSTR),
         ]
 
-    # Список путей завершается ДВОЙНЫМ нулём: один — конец строки, второй —
-    # конец списка. Без второго функция читает за границей буфера.
+    # The list of paths ends with a DOUBLE null: one closes the string, the
+    # other closes the list. Without the second the function reads past the end
+    # of the buffer.
     op = SHFILEOPSTRUCTW(
         hwnd=None,
         wFunc=_FO_DELETE,
@@ -64,10 +66,10 @@ def _shell_delete(path: Path) -> bool:
 
 
 def remove(path: Path) -> str:
-    """Удалить файл. Возвращает «trash», «unlink» или «missing».
+    """Delete a file. Returns «trash», «unlink» or «missing».
 
-    Исключение не глушим: вызывающий должен уметь сказать пользователю, что
-    файл занят другой программой, — это самая частая причина отказа.
+    Exceptions are not swallowed: the caller has to be able to tell the user that
+    another program is holding the file, which is the commonest reason to fail.
     """
     path = Path(path)
     if not path.exists():

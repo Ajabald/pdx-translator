@@ -1,7 +1,7 @@
-"""Вкладка «Помеченные „не ошибка“»: возврат заглушённых замечаний.
+"""The «Marked „not an error“» tab: bringing silenced issues back.
 
-Вынесено из `rules_window.py` — вкладка самостоятельна и с настройкой правил
-пересекается только тем, что живёт в одном окне.
+Split out of `rules_window.py` — the tab stands on its own and overlaps with the
+rule settings only in that the two share a window.
 """
 from __future__ import annotations
 
@@ -19,11 +19,11 @@ from pdxloc.gui import rules_state
 
 
 class IgnoresTab(QWidget):
-    """Заглушённые замечания и возврат их в проверку.
+    """Silenced issues, and the way back into the check.
 
-    `qa.unignore_issue` существовал с самого начала, но из интерфейса не
-    вызывался нигде: пометив замечание ложным по ошибке, вернуть его было
-    нельзя иначе как правкой базы руками.
+    `qa.unignore_issue` had existed from the start but was called from nowhere in
+    the interface: mark an issue as false by mistake, and the only way back was
+    editing the database by hand.
     """
 
     changed = Signal()
@@ -33,10 +33,10 @@ class IgnoresTab(QWidget):
         self.conn = conn
         layout = QVBoxLayout(self)
 
-        # Пустой список ничего не сообщает о том, что это за вкладка и как сюда
-        # что-то попадает, — а попадает оно из другого окна, из отчёта F6.
-        # Пустое состояние обязано отвечать на вопрос «что это», иначе его
-        # задают вслух.
+        # An empty list says nothing about what this tab is or how anything
+        # gets here — and it gets here from another window, from the F6 report.
+        # An empty state has to answer the question «what is this», or people
+        # ask it out loud.
         self.empty_label = QLabel(translate(
             "RulesWindow",
             "Nothing has been silenced yet.\n\n"
@@ -46,7 +46,7 @@ class IgnoresTab(QWidget):
             "put back into the check."))
         self.empty_label.setWordWrap(True)
         self.empty_label.setAlignment(Qt.AlignCenter)
-        self.empty_label.setEnabled(False)      # приглушённый, это не ошибка
+        self.empty_label.setEnabled(False)      # muted: this is not an error
         layout.addWidget(self.empty_label, 1)
 
         self.list = QListWidget()
@@ -86,8 +86,9 @@ class IgnoresTab(QWidget):
             self.list.addItem(item)
         self.return_btn.setEnabled(bool(rows))
         self.return_all_btn.setEnabled(bool(rows))
-        # Список и объяснение делят одно место: пустой список показывать не за
-        # чем, а объяснение при непустом только мешало бы
+        # The list and the explanation share one spot: there is no point showing
+        # an empty list, and the explanation would only be in the way once the
+        # list has something in it
         self.list.setVisible(bool(rows))
         self.empty_label.setVisible(not rows)
 

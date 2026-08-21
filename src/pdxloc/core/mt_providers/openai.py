@@ -1,9 +1,9 @@
 """OpenAI.
 
-Второй провайдер с языковой моделью; общая часть — договор о формате, разбор и
-деградация — в `_llm.py`. Схема ответа передаётся через `response_format`
-(`json_schema` со `strict`), поэтому форма гарантирована сервисом, а не
-уговорами в промпте.
+The second provider backed by a language model; the shared part — the format
+contract, the parsing and the fallback — lives in `_llm.py`. The response schema
+is passed through `response_format` (`json_schema` with `strict`), so the shape
+is guaranteed by the service rather than by pleading in the prompt.
 """
 from __future__ import annotations
 

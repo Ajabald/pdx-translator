@@ -1,4 +1,4 @@
-"""Подсветка CK3-разметки в текстах локализации."""
+"""Highlighting of CK3 markup inside localisation text."""
 from __future__ import annotations
 
 import re
@@ -8,15 +8,19 @@ from PySide6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
 from pdxloc.core import markup
 from pdxloc.gui import theme
 
-# Что и каким цветом подсвечивать — в core/markup.py. Порядок значим: позднее
-# правило перекрывает раннее на пересекающихся кусках.
+# What is highlighted and in which colour lives in core/markup.py. The order
+# matters: a later rule overrides an earlier one where the two overlap.
 RULE_SPECS: tuple[tuple[re.Pattern, str, bool], ...] = markup.highlight_rules()
 
 _cache: dict[str, list[tuple[re.Pattern, QTextCharFormat]]] = {}
 
 
 def _rules() -> list[tuple[re.Pattern, QTextCharFormat]]:
-    """Форматы текущей темы. Кэш по теме — их пересоздание на каждый блок дорого."""
+    """Formats of the current theme, cached per theme.
+
+    Rebuilding them for every block is expensive, and a block is every visible
+    line of the editor.
+    """
     name = theme.current()
     if name not in _cache:
         rules = []

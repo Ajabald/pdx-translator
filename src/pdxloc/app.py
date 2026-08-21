@@ -1,4 +1,4 @@
-"""Точка входа: GUI по умолчанию, headless-режим --scan-cli для отладки/скриптов."""
+"""Entry point: the GUI by default, headless --scan-cli for debugging and scripts."""
 from __future__ import annotations
 
 import argparse
@@ -6,7 +6,7 @@ import sys
 
 
 def _scan_cli(args: argparse.Namespace) -> int:
-    """Скан без Qt: открыть (или создать) файл проекта и просканировать."""
+    """A scan without Qt: open (or create) the project file and scan it."""
     from pathlib import Path
 
     from pdxloc import project
@@ -44,8 +44,9 @@ def _scan_cli(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    # Подсказки командной строки не переводятся: режим отладочный, переводчик
-    # к моменту разбора аргументов ещё не установлен, а Qt может не быть вовсе.
+    # Command-line help is not translated: the mode is a debugging one, no
+    # translator is installed by the time the arguments are parsed, and Qt may
+    # not be present at all.
     parser = argparse.ArgumentParser(prog="pdx-translator")
     parser.add_argument("--project", help="Path to the project file (*.pdxproj)")
     parser.add_argument("--scan", action="store_true",
@@ -56,8 +57,9 @@ def main() -> int:
     parser.add_argument("--tgt-lang", default="russian", help="Translation language")
     args = parser.parse_args()
 
-    # Лог заводится до ветвления: он нужен обоим режимам, а `logs` намеренно не
-    # тянет Qt — иначе `--scan-cli` перестал бы работать там, где PySide6 нет.
+    # The log is set up before the branch: both modes need it, and `logs`
+    # deliberately does not pull in Qt — otherwise `--scan-cli` would stop
+    # working anywhere PySide6 is missing.
     from pdxloc import logs
 
     logs.setup()
@@ -74,14 +76,15 @@ def main() -> int:
     from pdxloc import settings
 
     app = QApplication(sys.argv)
-    app.setStyle("Fusion")      # своя палитра ложится только на Fusion
+    app.setStyle("Fusion")      # our palette only sits on Fusion
     app.setApplicationName("PDX Translator")
     app.setWindowIcon(icons.app_icon())
-    # Настройки прежнего имени — до всего остального: язык и тема читаются уже
-    # из своего куста, и перенимать их после было бы поздно
+    # Settings of the previous application name come first: the language and the
+    # theme are then read from our own hive, and adopting them later would be too
+    # late
     settings.adopt_previous_settings()
-    # язык до создания окна: иначе меню соберётся на языке оригинала и его
-    # придётся перерисовывать ещё до первого показа
+    # language before the window: otherwise the menu is built in the source
+    # language and has to be redrawn before it is ever shown
     language.apply_saved(app)
     theme.apply_saved(app)
     window = MainWindow()

@@ -1,14 +1,14 @@
 """Google Cloud Translation v2.
 
-Официальный эндпоинт с ключом. Недокументированный `translate_a/single`, на
-котором сидит ESP/ESM Translator, здесь не используется намеренно: он не
-предусмотрен условиями использования, и инструмент, который переводчики ставят
-себе надолго, не должен зависеть от чужой недосмотренной лазейки.
+The official endpoint, the one that takes a key. The undocumented
+`translate_a/single` that ESP/ESM Translator sits on is deliberately not used
+here: the terms of service do not provide for it, and a tool translators install
+for the long haul should not depend on somebody else's overlooked loophole.
 
-**Ответ обязательно проходит через HTML-развёртку.** v2 отдаёт `&#39;` вместо
-апострофа и `&amp;` вместо амперсанда даже при `format=text`. Без этого шага
-апостроф в английском тексте превращается в мусор, а перевод выглядит рабочим —
-ошибка, на которую натыкаются все и по одному разу.
+**The answer always goes through HTML unescaping.** v2 returns `&#39;` for an
+apostrophe and `&amp;` for an ampersand even with `format=text`. Skip that step
+and an apostrophe in English text turns into rubbish while the translation still
+looks fine — a mistake everyone runs into exactly once.
 """
 from __future__ import annotations
 
@@ -53,10 +53,11 @@ class GoogleProvider:
             headers={"Content-Type": "application/json"},
             timeout=self.config.timeout,
             service=self.label,
-            # У Google исчерпанный лимит приходит тем же 403, что и неверный
-            # ключ; различить их можно только по телу, а тела при ошибке у нас
-            # нет. Считаем 403 отказом по ключу — это чаще и чинится человеком,
-            # а по лимиту сервис обычно отвечает 429.
+            # With Google an exhausted quota arrives as the same 403 as a bad
+            # key; the two are told apart by the body alone, and on an error we
+            # have no body. We read 403 as a key refusal: that is the commoner
+            # case and a person can fix it, while for a quota the service
+            # usually answers 429.
             quota_codes=(429,),
             auth_codes=(401, 403),
             opener=self.config.extra.get("opener"),

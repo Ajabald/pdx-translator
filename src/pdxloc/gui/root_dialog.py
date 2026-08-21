@@ -1,8 +1,9 @@
-"""Смена папки оригинала у существующего проекта.
+"""Changing the original folder of an existing project.
 
-Предпросмотр обязателен по той же причине, что и в загрузке перевода: ошибка
-в пути тихо превращает весь перевод в архив на ближайшем сканировании. До
-нажатия кнопки должно быть видно, сколько файлов базы нашлось в новой папке.
+The preview is mandatory for the same reason as in loading a translation: a
+mistake in the path quietly turns the whole translation into archive on the next
+scan. Before the button is pressed it must be visible how many of the files the
+database knows were found in the new folder.
 """
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ from pdxloc.core import relocate
 
 
 class EnRootDialog(QDialog):
-    rootChanged = Signal()      # путь записан — проекту нужно сканирование
+    rootChanged = Signal()      # the path is written; the project needs a scan
 
     def __init__(self, conn: sqlite3.Connection, project_id: int, parent=None):
         super().__init__(parent)
@@ -39,7 +40,7 @@ class EnRootDialog(QDialog):
             "The folder the original is read from. It needs changing if the mod "
             "was re-downloaded elsewhere, the game library was moved, or the "
             "project came from another person."))
-        intro.setWordWrap(True)      # иначе окно растягивается на всю ширину экрана
+        intro.setWordWrap(True)      # otherwise the window stretches across the whole screen
         layout.addWidget(intro)
 
         now_label = QLabel(fill(translate("RootDialog", "Now: %1"), current))
@@ -70,7 +71,7 @@ class EnRootDialog(QDialog):
 
         self._refresh()
 
-    # --- служебное ---
+    # --- internals ---
 
     def _browse(self) -> None:
         path = QFileDialog.getExistingDirectory(
