@@ -1,8 +1,9 @@
-"""Механика перевода: ядро без Qt, файлы переводов, живая смена языка.
+"""The mechanics of translation: the core without Qt, the files, the live switch.
 
-Главное свойство, которое здесь стережётся: **ядро работает без PySide6**.
-Режим `--scan-cli` и проверки качества гоняются без окна, и стоит `core/i18n`
-потянуть за собой Qt — упадёт всё ядро разом, а заметят это не сразу.
+The main property watched over here: **the core works without PySide6**. The
+`--scan-cli` mode and the quality checks are driven without a window, and should
+`core/i18n` drag Qt along with it, the whole core would fall over at once — and
+that would not be noticed at once.
 """
 from __future__ import annotations
 
@@ -26,12 +27,12 @@ SRC = Path(__file__).resolve().parents[1] / "src"
 TRANSLATIONS = SRC / "pdxloc" / "gui" / "translations"
 TOOLS = Path(__file__).resolve().parents[1] / "tools"
 
-# язык -> (модуль с парами, имя словаря); то же, что в tools/seed_ts.py
+# language -> (the module with the pairs, the name of the dictionary); as in tools/seed_ts.py
 PAIR_SOURCES = {"ru": ("ru_translations", "RU"), "zh_CN": ("zh_translations", "ZH")}
 
 
 def pairs(code: str) -> dict[str, dict[str, str]]:
-    """Словарь «контекст → {оригинал: перевод}» из tools/."""
+    """The dictionary «context → {original: translation}» out of tools/."""
     import importlib.util
 
     module_name, table = PAIR_SOURCES[code]
@@ -51,14 +52,15 @@ def ts_sources(code: str) -> set[tuple[str, str]]:
             for message in context.findall("message")}
 
 
-# --- ядро без Qt --------------------------------------------------------
+# --- the core without Qt ------------------------------------------------
 
 
 def test_core_i18n_works_without_pyside(tmp_path) -> None:
-    """Импорт ядра при недоступном PySide6 не должен падать.
+    """Importing the core with PySide6 unavailable must not fall over.
 
-    Проверяем в отдельном процессе: PySide6 уже загружен в этом, и подменить
-    его на месте — значит проверить не то, что происходит на машине без Qt.
+    We check in a separate process: PySide6 is already loaded in this one, and
+    substituting it in place would mean checking something other than what
+    happens on a machine without Qt.
     """
     script = textwrap.dedent(f"""
         import sys
@@ -99,22 +101,22 @@ def test_core_i18n_works_without_pyside(tmp_path) -> None:
 
 
 def test_noop_returns_the_source_text() -> None:
-    """Пометка — не перевод: она обязана вернуть строку нетронутой."""
+    """A mark is not a translation: it is obliged to return the string untouched."""
     assert i18n.QT_TRANSLATE_NOOP("Ctx", "Scan") == "Scan"
 
 
 def test_status_labels_go_through_the_translating_helper() -> None:
-    """Обращаться к словарю напрямую нельзя — он не переведён."""
+    """Going to the dictionary directly will not do — it is not translated."""
     for status in Status:
         assert statuses_mod.label(status)
     assert statuses_mod.label("такого статуса нет") == "такого статуса нет"
 
 
-# --- файлы переводов ----------------------------------------------------
+# --- the translation files ----------------------------------------------
 
 
 def test_every_declared_language_is_either_source_or_has_a_file() -> None:
-    """Пункт меню без .qm — обещание, которого приложение не выполнит."""
+    """A menu item without a .qm is a promise the application will not keep."""
     for code in language.LANGUAGES:
         if code == language.SOURCE:
             continue
@@ -135,7 +137,7 @@ def test_available_lists_only_compiled_languages() -> None:
     "ts", sorted(TRANSLATIONS.glob("pdxloc_*.ts")) or [None],
     ids=lambda p: p.name if p else "нет-файлов")
 def test_compiled_translation_is_not_older_than_its_source(ts) -> None:
-    """`.qm` собран из `.ts`: забыть пересобрать — значит показать старый текст."""
+    """The `.qm` is built out of the `.ts`: forgetting to rebuild means showing the old text."""
     if ts is None:
         pytest.skip("файлы переводов ещё не заведены")
     qm = ts.with_suffix(".qm")
@@ -146,11 +148,12 @@ def test_compiled_translation_is_not_older_than_its_source(ts) -> None:
 
 @pytest.mark.parametrize("code", sorted(PAIR_SOURCES))
 def test_no_pair_is_left_without_an_original(code) -> None:
-    """Перевод, которому в `.ts` не нашлось оригинала, — потерянный перевод.
+    """A translation for which no original was found in the `.ts` is a lost translation.
 
-    Так это и происходит: английскую строку правят в коде, а пару в `tools/`
-    забывают. Ошибки при этом нет ни одной — перевод просто перестаёт
-    подставляться, и заметно это лишь на чужом языке.
+    That is exactly how it happens: the English string is edited in the code and
+    the pair in `tools/` is forgotten. There is not a single error at that — the
+    translation simply stops being substituted, and that shows only in a foreign
+    language.
     """
     known = ts_sources(code)
     orphans = [(context, source)
@@ -163,7 +166,7 @@ def test_no_pair_is_left_without_an_original(code) -> None:
 
 @pytest.mark.parametrize("code", sorted(PAIR_SOURCES))
 def test_every_original_has_a_pair(code) -> None:
-    """Непереведённая строка молча остаётся английской посреди чужого языка."""
+    """An untranslated string silently stays English in the middle of another language."""
     table = pairs(code)
     missing = [(context, source) for context, source in ts_sources(code)
                if source not in table.get(context, {})]
@@ -172,12 +175,12 @@ def test_every_original_has_a_pair(code) -> None:
 
 
 def test_the_checked_mark_counts_the_rows_it_was_given() -> None:
-    """Пометка о вычитке обязана расходиться, когда строк прибавилось.
+    """The proofreading mark is obliged to diverge once strings have been added.
 
-    Иначе она молча распространилась бы на строку, которой человек не видел, —
-    а смысл пометки ровно в том, чтобы отличать проверенное от собранного
-    машиной. Расхождение возвращает контексту `unfinished` целиком: лучше
-    спросить лишний раз.
+    Otherwise it would silently spread onto a string a human has not seen — and
+    the point of the mark is exactly to tell the checked from the machine-made. A
+    divergence returns `unfinished` to the whole context: better to ask once too
+    often.
     """
     import importlib.util
 
@@ -195,7 +198,7 @@ def test_the_checked_mark_counts_the_rows_it_was_given() -> None:
     assert not unknown, f"вычитан контекст, которого нет: {unknown}"
 
 
-# --- выбор языка --------------------------------------------------------
+# --- choosing the language ----------------------------------------------
 
 
 def test_system_language_is_picked_when_nothing_is_saved(monkeypatch) -> None:
@@ -215,7 +218,7 @@ def test_unknown_language_falls_back_to_the_source(qtbot) -> None:
 
 
 def test_switching_to_the_same_language_is_not_an_event(qtbot) -> None:
-    """Перерисовка стоит дорого, и на пустом месте её быть не должно."""
+    """A redraw is expensive, and there must be none of it for nothing."""
     from PySide6.QtWidgets import QApplication
 
     app = QApplication.instance()
@@ -229,23 +232,23 @@ def test_switching_to_the_same_language_is_not_an_event(qtbot) -> None:
         language.notifier.changed.disconnect()
 
 
-# --- строки в коде ------------------------------------------------------
+# --- the strings in the code --------------------------------------------
 
 
 def test_translation_context_is_always_a_literal() -> None:
-    """Контекст переменной lupdate не разрешает — и молча теряет строку.
+    """A variable context lupdate does not allow — and it loses the string silently.
 
-    Ровно на этом обжигались: `CTX = "Actions"` рядом и `translate(CTX, …)` в
-    коде выглядят безупречно, а сборщик нашёл 1 строку из 55. Ошибка не
-    проявляется никак — просто перевода не будет, и заметит это переводчик,
-    а не разработчик.
+    This is exactly what burned us: `CTX = "Actions"` next to it and
+    `translate(CTX, …)` in the code look impeccable, while the builder found 1
+    string out of 55. The error shows in no way at all — there simply will be no
+    translation, and it is the translator who notices it, not the developer.
     """
     import ast
 
     bad = []
     for path in sorted((SRC / "pdxloc").rglob("*.py")):
         if path.name == "i18n.py":
-            continue        # там сама реализация: контекст приходит аргументом
+            continue        # there lies the implementation itself: the context comes as an argument
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call) or not node.args:
@@ -261,10 +264,11 @@ def test_translation_context_is_always_a_literal() -> None:
 
 
 def test_translation_calls_are_never_nested_in_an_fstring() -> None:
-    """`f"{translate(…)}"` lupdate не разбирает и строку теряет.
+    """`f"{translate(…)}"` lupdate does not parse, and it loses the string.
 
-    Третья по счёту тихая потеря того же рода: код работает, перевод просто
-    не появляется. Вычислять надо в отдельной переменной перед подстановкой.
+    The third silent loss of the same kind: the code works, the translation simply
+    does not appear. It has to be computed in a variable of its own before the
+    substitution.
     """
     import ast
 
@@ -286,10 +290,10 @@ def test_translation_calls_are_never_nested_in_an_fstring() -> None:
 
 
 def test_marked_strings_actually_reach_the_translation_file() -> None:
-    """Собранный .ts не должен быть пустее, чем разметка в коде.
+    """The assembled .ts must not be emptier than the marking in the code.
 
-    Грубая, но действенная сверка: если очередная таблица разметится мимо
-    сборщика, число в .ts перестанет расти, и тест это покажет.
+    A crude but effective reconciliation: should the next table get marked past
+    the builder, the number in the .ts will stop growing, and the test will show it.
     """
     import xml.etree.ElementTree as ET
 
@@ -304,10 +308,11 @@ def test_marked_strings_actually_reach_the_translation_file() -> None:
 
 
 def test_no_module_defines_a_function_named_tr() -> None:
-    """`tr(a, b)` lupdate читает как (текст, уточнение), а не (контекст, текст).
+    """`tr(a, b)` lupdate reads as (text, disambiguation), not as (context, text).
 
-    Такая функция молча увела бы контекст в комментарий, и переводы разъехались
-    бы по безымянному контексту. Проверка грепом дешевле, чем разбор .ts глазами.
+    Such a function would silently take the context off into a comment, and the
+    translations would come apart over a nameless context. A check by grep is
+    cheaper than reading a .ts by eye.
     """
     bad = []
     for path in sorted((SRC / "pdxloc").rglob("*.py")):
