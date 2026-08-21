@@ -1,4 +1,7 @@
-"""Экспорт RU-дерева локализации в формате CK3 (BOM, l_russian:, порядок EN-файла)."""
+"""Writing the translation tree out in the game format.
+
+BOM, the `l_<language>:` header, and the order of the original file.
+"""
 from __future__ import annotations
 
 import os
@@ -16,9 +19,9 @@ from pdxloc.core.models import ExportOptions, ExportReport, LocEntry
 from pdxloc.core.scanner import LEGACY_MARKER
 from pdxloc.core.statuses import Status
 
-# Что считается годным для записи в мод. `Status.MACHINE` сюда не входит
-# намеренно: машинный перевод никто не читал. Он добавляется только по явной
-# галке — см. `ExportOptions.include_machine`.
+# What counts as fit to write into the mod. `Status.MACHINE` is deliberately
+# left out: nobody has read machine translation. It is added only under an
+# explicit checkbox — see `ExportOptions.include_machine`.
 TRANSLATED_STATUSES = (
     Status.TRANSLATED.value, Status.REVIEWED.value,
     Status.AUTO.value, Status.STALE.value, Status.CUSTOM.value,
@@ -29,25 +32,27 @@ def _safe_name(name: str) -> str:
     return "".join("_" if c in '<>:"/\\|?*' else c for c in name).strip(" .") or "project"
 
 
-# Имя снимка — время записи; ровно в этом виде его создаёт `write_translation`
-# ниже. Шаблон нужен чистке: без него снимком считается любая подпапка, а
-# `rmtree` не спрашивает.
+# A snapshot is named after the time of the write; that is exactly the form
+# `write_translation` below creates. The cleanup needs the pattern: without it
+# any subfolder counts as a snapshot, and `rmtree` does not ask.
 SNAPSHOT_NAME = "%Y-%m-%d_%H%M%S"
 _SNAPSHOT_RE = re.compile(r"^\d{4}-\d{2}-\d{2}_\d{6}$")
 
 
 def _prune_backups(project_dir: Path, keep: int | None = None) -> None:
-    """Оставить только последние снимки: бэкап страхует запись, а не хранит историю.
+    """Keep only the last snapshots: a backup insures a write, it does not keep a
+    history.
 
-    Сколько именно — спрашиваем при вызове, а не в значении аргумента по
-    умолчанию: то вычислялось бы один раз на импорте модуля, и правка настройки
-    не действовала бы до перезапуска.
+    How many exactly is asked at call time rather than taken from a default
+    argument: that would be computed once at import, and a change of the setting
+    would have no effect until a restart.
 
-    **Чужие папки не трогаем.** Раньше снимком считалась любая подпапка, и
-    папка, положенная человеком в `backups/<проект>/` руками, уезжала в
-    `rmtree` вместе со старыми снимками — молча и без подтверждения. Своё имя
-    у снимка строгое (`SNAPSHOT_NAME`), так что отличить его от чужого можно
-    точно; что под шаблон не подошло — не наше, и удалять это мы не вправе.
+    **Other people's folders are left alone.** Any subfolder used to count as a
+    snapshot, and a folder somebody had put into `backups/<project>/` by hand went
+    into `rmtree` together with the old snapshots — silently and without
+    confirmation. A snapshot has a strict name of its own (`SNAPSHOT_NAME`), so it
+    can be told from a stranger for certain; whatever does not match the pattern
+    is not ours, and we have no right to delete it.
     """
     if keep is None:
         keep = settings.backup_keep()
@@ -60,16 +65,17 @@ def _prune_backups(project_dir: Path, keep: int | None = None) -> None:
 def _attach_raw(entries: list[LocEntry], fmt, target: Path,
                 target_read: tuple[str, str], source: Path,
                 source_read: tuple[str, str]) -> None:
-    """Подставить записям исходные строки файла — по ключу.
+    """Give the entries their source lines back, matched by key.
 
-    Двумя проходами: сперва из дерева оригинала, затем из перезаписываемого
-    файла — тот новее и должен побеждать. Строка, не нашедшаяся нигде,
-    останется без `raw`, и формат запишет её по своему шаблону: это новый ключ,
-    взяться его прочим колонкам неоткуда.
+    In two passes: first from the original tree, then from the file being
+    overwritten — that one is newer and must win. An entry found in neither is
+    left without `raw`, and the format writes it from its own template: it is a
+    new key, and its other columns have nowhere to come from.
 
-    Каждое дерево читается **своей** кодировкой: у старого формата оригинал
-    лежит в cp1252, а перевод в cp1251, и общая на двоих испортила бы чужие
-    колонки молча — испорченная строка кодируется обратно без всякой ошибки.
+    Each tree is read in **its own** encoding: in the older format the original
+    lies in cp1252 and the translation in cp1251, and one encoding for both would
+    corrupt somebody else's columns in silence — a corrupted line encodes back
+    without raising anything at all.
     """
     raw: dict[str, str] = {}
     for path, (language, encoding) in ((source, source_read),
@@ -86,24 +92,26 @@ def _attach_raw(entries: list[LocEntry], fmt, target: Path,
 
 
 def _write_atomically(target: Path, text: str, encoding: str = "utf-8-sig") -> None:
-    """Записать файл мода так, чтобы он не мог остаться обрезанным.
+    """Write a mod file so that it cannot be left truncated.
 
-    `open(target, "w")` обнуляет файл сразу, до первого байта: упади процесс
-    посередине — в папке локализации останется огрызок, и **игра прочитает его
-    как настоящий**. Пишем рядом и подменяем одним движением: `os.replace`
-    на Windows атомарен, так что виден либо прежний файл целиком, либо новый.
+    `open(target, "w")` empties the file at once, before the first byte: let the
+    process die halfway and a stub is left in the localisation folder, and **the
+    game reads it as the real thing**. We write next to it and swap in one move:
+    `os.replace` is atomic on Windows, so either the whole previous file is
+    visible or the new one.
 
-    Соседний `.tmp` игре не виден — она читает только файлы локализации, — а
-    прерванный экспорт оставит его мусором, который перезапишется следующей
-    записью.
+    The neighbouring `.tmp` is invisible to the game — it reads only localisation
+    files — and an interrupted export leaves it as litter which the next write
+    overwrites.
 
-    `fsync` намеренно не зовём: он защищает от внезапного обесточивания, но
-    стоит дорого, а файлов за один экспорт бывают сотни. От падения приложения
-    (случай, который встречается) защищает и подмена.
+    `fsync` is deliberately not called: it guards against a sudden power cut, but
+    costs a great deal, and one export can touch hundreds of files. Against a
+    crash of the application — the case that actually happens — the swap guards
+    just as well.
 
-    Концы строк: у нынешнего формата серии — LF (так пишет и сама игра), у
-    старого — CRLF, как во всех его файлах; иначе правка одной строки показала
-    бы в сравнении весь файл изменённым.
+    Line endings: LF in the current format of the series, which is what the game
+    itself writes, and CRLF in the older one, as in all of its files; otherwise
+    editing one row would show the whole file as changed in a diff.
     """
     tmp = target.with_name(target.name + ".tmp")
     newline = "\n" if encoding.startswith("utf") else "\r\n"
@@ -123,11 +131,12 @@ def export_project(
     backup_root: Path | None = None,
     progress_cb: Callable[[int, int, str], None] | None = None,
 ) -> ExportReport:
-    """Записать RU-файлы. out_root по умолчанию — ru_root проекта.
+    """Write the translation files. `out_root` defaults to the project's ru_root.
 
-    Прежние версии перезаписываемых файлов складываются в отдельное дерево
-    (`settings.backups_dir()`): рядом с локализацией их держать нельзя — игра
-    читает из той папки все `*.yml` и загрузит копию наравне с оригиналом.
+    Previous versions of the overwritten files go into a tree of their own
+    (`settings.backups_dir()`): they must not be kept next to the localisation —
+    the game reads every `*.yml` from that folder and would load a copy on equal
+    terms with the original.
     """
     proj = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
     if proj is None:
@@ -144,8 +153,9 @@ def export_project(
     fmt = loc_formats.get(get_loc_format(conn) or loc_formats.DEFAULT)
     encoding = get_loc_encoding(conn) or fmt.encodings[0]
     src_encoding = get_source_encoding(conn) or encoding
-    # Формату с несколькими кодировками её надо знать заранее: от неё зависит,
-    # переживут ли запись чужие колонки строки (см. `paradox_csv.render`).
+    # A format with several encodings has to know it in advance: whether somebody
+    # else's columns in a row survive the write depends on it (see
+    # `paradox_csv.render`).
     render_options = {} if len(fmt.encodings) == 1 else {"encoding": encoding}
 
     files = conn.execute(
@@ -163,7 +173,8 @@ def export_project(
     snapshot: Path | None = None
 
     def backup_target(target: Path, ru_rel: str) -> None:
-        """Отложить прежнюю версию файла. Папку заводим только при первой копии."""
+        """Put the previous version of a file aside. The folder is created only on the
+    first copy."""
         nonlocal snapshot
         if snapshot is None:
             base = Path(backup_root) if backup_root is not None else settings.backups_dir()
@@ -194,8 +205,8 @@ def export_project(
             elif options.mode == "all_fallback_en":
                 text = u["en_text"] or ""
                 report.keys_fallback_en += 1
-                # помечаем непереведённое: при следующем сканировании эта строка
-                # снова опознается как требующая перевода, а не как готовая
+                # mark what is untranslated: on the next scan the row is recognised as needing
+                # translation again rather than as finished
                 inline = f"# !!! {LEGACY_MARKER}"
             else:
                 skipped += 1
@@ -218,19 +229,19 @@ def export_project(
 
         target = root / ru_rel
         if not fmt.language_in_path:
-            # Формат старых игр: в строке рядом с переводом стоят французская,
-            # немецкая и испанская колонки, маркер `x` и хвостовой комментарий.
-            # В базе их нет — она хранит только пару «оригинал → перевод», —
-            # поэтому исходные строки берём с диска: сперва из того файла,
-            # который перезаписываем, а если его нет, из дерева оригинала.
+            # The format of the older games: next to the translation a row also holds the
+            # French, German and Spanish columns, the `x` marker and a trailing comment.
+            # The database has none of them — it stores only the «original → translation»
+            # pair — so the source lines are taken from disk: first from the file being
+            # overwritten, and from the original tree when there is none.
             _attach_raw(entries, fmt, target, (tgt_lang, encoding),
                         Path(proj["en_root"]) / f["rel_path"],
                         (src_lang, src_encoding))
 
         trailing = f["trailing"] if "trailing" in f.keys() else ""
         text = fmt.render(tgt_lang, entries, trailing, **render_options)
-        # не трогаем файл, если содержимое не изменилось: сохраняем даты
-        # изменения и не заставляем менеджеры модов пересобирать пакет
+        # leave the file alone when the content has not changed: the modification dates
+        # are kept and mod managers are not made to rebuild the package
         if target.is_file():
             try:
                 if target.read_text(encoding=encoding) == text:

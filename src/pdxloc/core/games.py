@@ -1,25 +1,27 @@
-"""Игры Paradox: формат локализации у них один, а языки и загоны — разные.
+"""The Paradox games: one localisation format, but different languages and pens.
 
-Зачем понадобился реестр. Формат `.yml` с BOM и заголовком `l_<язык>:` одинаков
-у всей серии, поэтому переводить моды к Stellaris или HOI4 приложение умеет и
-так. Не хватало одного: **сказать, к какой игре относится проект**. Без этого
-базы памяти разных игр лежат общей кучей и подсказывают ванильные строки CK3
-переводчику Victoria 3, а списки языков предлагают папки, которых у игры нет.
+Why a registry was needed. The `.yml` format with a BOM and an `l_<language>:`
+header is the same across the series, so the application could translate mods for
+Stellaris or HOI4 anyway. One thing was missing: **saying which game a project
+belongs to**. Without it the memory databases of different games lie in one heap
+and offer vanilla CK3 rows to a Victoria 3 translator, while the language lists
+propose folders the game does not have.
 
-Приём взят у ESP/ESM Translator (там «Game selection» и свои базы на игру):
-проект и базы живут в загоне своей игры и не смешиваются.
+The idea comes from ESP/ESM Translator, which has «Game selection» and a database
+per game: a project and its databases live in the pen of their own game and do
+not mix.
 
-Набор языковых папок у каждой игры свой, и это не догадка: сверено с
-`game_supported_languages.json` из ModTranslationHelper 1.4.3 — единственного
-инструмента серии, который эти списки уже собрал.
+Each game has its own set of language folders, and that is not guesswork: it was
+checked against `game_supported_languages.json` from ModTranslationHelper 1.4.3,
+the only tool in this niche that had already gathered those lists.
 
-**Своя игра** заводится свободным именем: формат общий, и запрещать CK2,
-Victoria 2 или что-то ещё не за что. У неё общий список папок
-(`languages.PARADOX_LANGUAGES`) — какие языки понимает чужая игра, приложению
-неоткуда знать.
+**A game of your own** is created under a free-form name: the format is shared,
+and there is no reason to forbid CK2, Victoria 2 or anything else. It gets the
+common list of folders (`languages.PARADOX_LANGUAGES`) — the application has
+nowhere to learn what languages somebody else's game understands.
 
-Названия игр **не переводятся** — это имена продуктов, как и название самого
-приложения (см. «Язык интерфейса» в ARCHITECTURE.md).
+Game names are **not translated**: they are product names, like the name of the
+application itself (see «The interface language» in ARCHITECTURE.md).
 """
 from __future__ import annotations
 
@@ -30,39 +32,41 @@ from pdxloc.core.languages import PARADOX_LANGUAGES
 
 @dataclass(frozen=True, slots=True)
 class Game:
-    id: str                      # хранится в файле проекта и в базе памяти
-    title: str                   # показывается человеку
-    folder: str                  # имя загона на диске
-    languages: tuple[str, ...]   # папки локализации, которые понимает игра
+    id: str                      # stored in the project file and in the memory database
+    title: str                   # shown to the person
+    folder: str                  # the name of the pen on disk
+    languages: tuple[str, ...]   # the localisation folders the game understands
 
 
 CK3 = "ck3"
 
 GAMES: dict[str, Game] = {g.id: g for g in (
-    # Порядок значим: первая игра — предложенная по умолчанию, и это по-прежнему
-    # CK3, из перевода модов к которой приложение и выросло.
+    # The order matters: the first game is the one offered by default, and that is
+    # still CK3, out of translating mods for which the application grew.
     Game("ck3", "Crusader Kings III", "CK3",
          ("english", "french", "german", "korean", "russian", "simp_chinese",
           "spanish")),
-    # CK2 — единственная здесь игра прежнего поколения движка: её локализация
-    # лежит в CSV, где язык не папка, а колонка (см. `core/paradox_csv.py`).
-    # Русского в её формате нет вовсе — ни в одной шапке ванильных файлов нет
-    # RUSSIAN, — поэтому в списке его нет и здесь: перевод на язык, которого
-    # игра не знает, задаётся локалью проекта, а лечь ему всё равно в колонку
-    # английского.
+    # CK2 is the only game here from the older generation of the engine: its
+    # localisation lies in CSV, where the language is a column rather than a folder
+    # (see `core/paradox_csv.py`). Its format has no Russian at all — not one header
+    # of a vanilla file says RUSSIAN — so it is absent from the list here too: a
+    # translation into a language the game does not know is set by the project
+    # locale, and it lands in the English column anyway.
     Game("ck2", "Crusader Kings II", "CK2",
          ("english", "french", "german", "spanish")),
     Game("eu4", "Europa Universalis IV", "EU4",
          ("english", "french", "german", "spanish")),
-    # EU5 вышла позже ModTranslationHelper, сверить её список не с чем, поэтому
-    # у неё общий набор папок серии. Лишняя папка в списке ничего не ломает:
-    # коробка языков редактируемая, и лишний пункт человек просто не выберет —
-    # а вот недостающий заставил бы вписывать язык руками.
+    # EU5 came out after ModTranslationHelper, so there is nothing to check its list
+    # against and it gets the common set of folders of the series. A superfluous
+    # folder in the list breaks nothing: the language box is editable and a person
+    # simply will not pick a spare entry — while a missing one would force them to
+    # type the language in by hand.
     Game("eu5", "Europa Universalis V", "EU5", tuple(PARADOX_LANGUAGES)),
-    # Корейский и китайский добавлены не по списку ModTranslationHelper, а по
-    # самой игре: в `localisation/languages.yml` установленной HOI4 они есть, и
-    # папки под них лежат рядом с остальными. Список конкурента собран раньше и
-    # с тех пор отстал — а недостающая папка заставила бы вписывать язык руками.
+    # Korean and Chinese were added not from the ModTranslationHelper list but from
+    # the game itself: the `localisation/languages.yml` of an installed HOI4 has
+    # them, and the folders for them sit next to the rest. The competitor's list was
+    # gathered earlier and has fallen behind since — while a missing folder would
+    # force people to type the language in by hand.
     Game("hoi4", "Hearts of Iron IV", "HOI4",
          ("english", "braz_por", "french", "german", "japanese", "korean",
           "polish", "russian", "simp_chinese", "spanish")),
@@ -80,30 +84,33 @@ ORDER: tuple[str, ...] = tuple(GAMES)
 
 
 def slug(name: str) -> str:
-    """Имя своей игры → идентификатор для файла проекта.
+    """The name of a game of your own → the id for the project file.
 
-    Латиницей и без пробелов: значение попадает в файл проекта, в базу памяти и
-    в имя папки, а эти три места переживут смену раскладки и переезд на другую
-    файловую систему только в таком виде.
+    Latin letters and no spaces: the value lands in the project file, in the
+    memory database and in a folder name, and those three survive a change of
+    keyboard layout and a move to another file system only in that form.
     """
     out = "".join(c if c.isalnum() and c.isascii() else "_" for c in name.lower())
     out = "_".join(part for part in out.split("_") if part)[:32]
     if not out or out in GAMES:
-        # «свой ck3» не должен притворяться встроенным: у того свой набор языков
+        # a «ck3 of your own» must not pretend to be the built-in one: that has a
+        # language set of its own
         out = f"{out}_own" if out else "game"
     return out
 
 
 def get(game_id: str, title: str = "") -> Game:
-    """Игра по идентификатору. Незнакомая — своя, с общим набором языков.
+    """A game by its id. An unfamiliar one is a game of your own, with the common
+    set of languages.
 
-    Незнакомый идентификатор не ошибка: он приезжает из файла проекта, который
-    мог быть заведён и в новой версии приложения, и своей игрой.
+    An unfamiliar id is not an error: it comes from a project file, which may have
+    been created by a newer version of the application or as a game of one's own.
 
-    Загон своей игры зовётся **как её идентификатор**, а не как введённое имя:
-    имя в файле проекта не хранится, и по папке «Victoria 2» опознать проект
-    `victoria_2` было бы уже нечем. Слаг для того и собран из латиницы, чтобы
-    годиться в имя папки.
+    The pen of such a game is named **after its id** rather than after the name
+    that was typed: the name is not stored in the project file, and there would be
+    nothing left to recognise the `victoria_2` project by from a «Victoria 2»
+    folder. The slug is built out of Latin letters precisely so it can serve as a
+    folder name.
     """
     known = GAMES.get(game_id)
     if known is not None:
@@ -124,10 +131,10 @@ def folder(game_id: str) -> str:
 
 
 def by_folder(name: str) -> str | None:
-    """Идентификатор игры по имени загона. `None` — папка не загон.
+    """The game id from a pen name. `None` means the folder is not a pen.
 
-    Нужен защите: по папке, в которой лежит файл проекта, надо понять, чей это
-    загон, — и промолчать, если папка вообще не про игры.
+    The guard needs it: from the folder a project file lies in one has to tell
+    whose pen it is — and stay silent when the folder is not about games at all.
     """
     for game in GAMES.values():
         if game.folder.casefold() == name.casefold():
