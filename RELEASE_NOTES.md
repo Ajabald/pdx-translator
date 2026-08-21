@@ -2,9 +2,9 @@ An offline desktop workbench for translating the localisation of Paradox game
 mods — a string table with statuses, translation memory, a term glossary,
 mod-version diffing and configurable markup checks.
 
-A hotfix over 0.1.0 — the whole of 0.1.0 is below, unchanged.
+What 0.1.2 adds and fixes is below; the description of 0.1.0 follows it, unchanged.
 
-## 🔧 Fixed in 0.1.1
+## 🔧 Fixed
 
 * **The first-run wizard could not build the first database.** «Build a
   database…» did nothing at all: the memory window wanted an open project, and
@@ -61,8 +61,8 @@ A hotfix over 0.1.0 — the whole of 0.1.0 is below, unchanged.
 
 **Windows 10/11, 64-bit** — no Python needed either way.
 
-* [**pdx-translator-setup-0.1.1.exe**](https://github.com/Ajabald/pdx-translator/releases/download/v0.1.1/pdx-translator-setup-0.1.1.exe) — installer *(recommended)*
-* [**pdx-translator-v0.1.1.zip**](https://github.com/Ajabald/pdx-translator/releases/download/v0.1.1/pdx-translator-v0.1.1.zip) — portable, 50 MB
+* [**pdx-translator-setup-0.1.2.exe**](https://github.com/Ajabald/pdx-translator/releases/download/v0.1.2/pdx-translator-setup-0.1.2.exe) — installer *(recommended)*
+* [**pdx-translator-v0.1.2.zip**](https://github.com/Ajabald/pdx-translator/releases/download/v0.1.2/pdx-translator-v0.1.2.zip) — portable, 50 MB
 
 The installer asks for no administrator rights and installs for the current
 user. That is not laziness: the application keeps `Bdd`, `Projects` and
