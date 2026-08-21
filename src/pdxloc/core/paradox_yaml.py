@@ -1,20 +1,20 @@
-"""Парсер/писатель формата локализации Paradox (CK3).
+"""Reader and writer for the Paradox localisation format (CK3).
 
-Это НЕ настоящий YAML: стандартные yaml-библиотеки на нём падают.
-Формат:
-    l_english:                       <- заголовок, первая строка
-     key_name:0 "text"               <- запись; номер версии после ':' опционален
-    #comment                         <- комментарий; бывает и хвостовой после кавычки
+This is NOT real YAML: the standard yaml libraries fall over on it.
+The format:
+    l_english:                       <- the header, the first line
+     key_name:0 "text"               <- an entry; the version after ':' is optional
+    #comment                         <- a comment; sometimes trailing, after the quote
 
-Файлы читаются и пишутся в UTF-8 с BOM (encoding='utf-8-sig') — CK3 молча
-игнорирует файлы без BOM.
+Files are read and written in UTF-8 with a BOM (encoding='utf-8-sig') — CK3
+silently ignores files without one.
 
-Текст записей хранится «сырым» (между кавычками, эскейпы \" и \n не раскрыты),
-чтобы хеши и сравнение версий были стабильны. unescape() — только для
-отображения и QA-подсчётов.
+The text of an entry is stored raw — between the quotes, with the \" and \n
+escapes left unexpanded — so that hashes and version comparisons stay stable.
+unescape() is for display and for the quality counts only.
 
-Известное ограничение: хвостовой комментарий, содержащий символ '"',
-распарсится неверно (регекс жадный). В реальных данных таких нет.
+A known limitation: a trailing comment containing a '"' character parses wrongly,
+because the regex is greedy. Real data holds none of those.
 """
 from __future__ import annotations
 
@@ -25,25 +25,26 @@ from collections.abc import Iterable
 from pdxloc.core.i18n import fill, translate
 from pdxloc.core.models import LocEntry, LocFile
 
-# Ключ — всё до двоеточия, кроме пробелов, кавычки и решётки. Перечислять
-# разрешённые символы оказалось нельзя: в ванильной локализации CK3 есть ключи
-# с апострофом (b_mansa'l-kharaz, b_ka'abir), и они молча терялись — строка не
-# опознавалась как запись, а при записи перевода в мод исчезла бы из файла.
+# The key is everything up to the colon except spaces, a quote and a hash.
+# Listing the permitted characters turned out to be impossible: the vanilla CK3
+# localisation has keys with an apostrophe (b_mansa'l-kharaz, b_ka'abir), and
+# they were lost in silence — the line was not recognised as an entry, and
+# writing the translation to the mod would have dropped it from the file.
 KEY = r'[^\s:"#]+'
 ENTRY_RE = re.compile(rf'^\s*({KEY}):(\d*)\s*"(.*)"\s*(#.*)?$')
-# Строка с пропущенной закрывающей кавычкой (реальные дефекты в файлах модов):
-# подбираем текст до конца строки, предупреждаем; экспорт допишет кавычку.
+# A line with the closing quote missing — a real defect in mod files: pick the
+# text up to the end of the line and warn; the export will add the quote.
 ENTRY_NOCLOSE_RE = re.compile(rf'^\s*({KEY}):(\d*)\s*"(.*)$')
 HEADER_RE = re.compile(r'^\s*l_([a-z_]+):\s*$')
 COMMENT_RE = re.compile(r'^\s*#')
 
 
 def parse_text(text: str, *, source_name: str = "?") -> LocFile:
-    """Разобрать содержимое файла локализации (без BOM — срезается при чтении)."""
+    """Parse the contents of a localisation file; the BOM is stripped on reading."""
     language = ""
     entries: list[LocEntry] = []
     warnings: list[str] = []
-    pending_comments: list[str] = []   # строки над следующей записью
+    pending_comments: list[str] = []   # the lines above the next entry
     header_seen = False
     missing_header: str | None = None
 
@@ -56,15 +57,15 @@ def parse_text(text: str, *, source_name: str = "?") -> LocFile:
                 continue
             if not line.strip():
                 continue
-            # Заголовка нет. Ругаемся не сразу: в ванильной локализации есть
-            # файлы, целиком закомментированные редактором Paradox, — там
-            # заголовка нет и записей тоже, ругаться не на что. Решаем в конце,
-            # когда видно, нашлись ли записи.
+            # No header. We do not complain at once: the vanilla localisation holds files
+            # commented out entirely by the Paradox editor — there is no header there and no
+            # entries either, so there is nothing to complain about. The decision is made at
+            # the end, when it is clear whether any entries were found.
             missing_header = fill(translate(
                 "ParadoxYaml", "%1:%2: an l_*: header was expected, found: %3"),
                 source_name, i + 1, repr(line.strip()))
-            header_seen = True   # дальше парсим как обычно
-            # строка может оказаться записью — падаем в общий разбор
+            header_seen = True   # from here on we parse as usual
+            # the line may turn out to be an entry: fall through to the common parse
 
         m = ENTRY_RE.match(line)
         if m:
@@ -118,12 +119,12 @@ def parse_text(text: str, *, source_name: str = "?") -> LocFile:
 
 
 def parse_file(path: Path, *, language: str = "", encoding: str = "") -> LocFile:
-    """Разобрать файл. Язык и кодировка здесь не спрашиваются, но принимаются.
+    """Parse a file. The language and the encoding are accepted but not asked for.
 
-    Аргументы нужны второму формату серии (`core/paradox_csv.py`), где язык —
-    это колонка, а кодировка бывает разной; общий вызов из `core/loc_formats.py`
-    должен подходить обоим. Здесь язык стоит в самом файле, а кодировка у
-    формата одна.
+    The arguments are needed by the other format of the series
+    (`core/paradox_csv.py`), where the language is a column and the encoding
+    varies; the shared call from `core/loc_formats.py` has to suit both. Here the
+    language stands in the file itself, and the format has one encoding.
     """
     text = path.read_text(encoding=encoding or "utf-8-sig")
     return parse_text(text, source_name=path.name)
@@ -149,7 +150,7 @@ def escape_value(text: str) -> str:
 
 
 def render(language: str, entries: Iterable[LocEntry], trailing: str = "") -> str:
-    """Собрать текст файла в каноническом формате (один пробел отступа у записей)."""
+    """Build the file text in the canonical form: one space of indent per entry."""
     parts: list[str] = [f"l_{language}:\n"]
     for e in entries:
         if e.comment_before:
@@ -175,33 +176,31 @@ def unescape(text: str) -> str:
     return text.replace("\\n", "\n").replace('\\"', '"')
 
 
-# --- где в дереве лежит язык -------------------------------------------
-#
-# Раньше эти три функции жили в `core/scanner.py`, потому что формат был один и
-# сканирование было единственным, кто про него знал. С появлением второго
-# формата (`core/paradox_csv.py`, старые игры серии) им место здесь: где язык
-# отражается в имени файла и в пути — это свойство формата, а не сканера.
+# --- where the language sits in the tree ---
 
 
 def lang_tag(language: str) -> str:
-    """Метка языка в имени файла: english -> _l_english."""
+    """The language marker in a file name: english -> _l_english."""
     return f"_l_{language}"
 
 
 def map_relpath(rel_posix: str, from_lang: str, to_lang: str) -> str:
-    """Путь того же файла в дереве другого языка.
+    """The path of the same file in the tree of another language.
 
-    Меняются две вещи: метка языка в имени файла (она бывает и в середине —
-    agot_modifiers_l_english_BLA.yml) и каталог языка в пути.
+    Two things change: the language marker in the file name — it also occurs in
+    the middle, as in agot_modifiers_l_english_BLA.yml — and the language
+    directory in the path.
 
-    Каталог обязателен, потому что моды мастерской устроены как
-    `localization/english/...` и `localization/russian/...`, а корнем проекта
-    естественно указывают саму `localization`. Пока каталог не переименовывался,
-    для `english/agot/foo_l_english.yml` искалась пара
-    `english/agot/foo_l_russian.yml` — её, разумеется, не существовало, и весь
-    перевод мода считался отсутствующим, а RU-файлы — осиротевшими.
+    The directory is mandatory, because workshop mods are laid out as
+    `localization/english/...` and `localization/russian/...`, while people
+    naturally point the project root at `localization` itself. While the directory
+    went unrenamed, the counterpart looked for next to
+    `english/agot/foo_l_english.yml` was `english/agot/foo_l_russian.yml` — which
+    of course did not exist, so the whole translation of the mod counted as
+    missing and the translation files as orphans.
 
-    Заменяем только целые сегменты пути: `english_notes` — не папка языка.
+    Only whole path segments are replaced: `english_notes` is not a language
+    folder.
     """
     parts = rel_posix.split("/")
     name = parts[-1].replace(lang_tag(from_lang), lang_tag(to_lang))
@@ -210,11 +209,11 @@ def map_relpath(rel_posix: str, from_lang: str, to_lang: str) -> str:
 
 
 def files(root: Path, language: str = "", *, skip_updated: bool = False) -> list[Path]:
-    """Файлы локализации с меткой языка в имени.
+    """Localisation files carrying the language marker in the name.
 
-    skip_updated отсеивает мусор старых скриптов пользователя (*_updated.yml).
-    Применяется только к дереву перевода: в исходном дереве такого мусора не
-    бывает, а имя вроде mod_updated_events_l_english.yml вполне легально.
+    skip_updated filters out litter from the user's old scripts (*_updated.yml).
+    It applies to the translation tree only: the source tree holds no such litter,
+    and a name like mod_updated_events_l_english.yml is perfectly legal.
     """
     tag = lang_tag(language) if language else "_l_"
     return sorted(
@@ -224,10 +223,10 @@ def files(root: Path, language: str = "", *, skip_updated: bool = False) -> list
 
 
 def detect(root: Path) -> bool:
-    """Похоже ли дерево на локализацию нынешнего формата серии.
+    """Whether a tree looks like localisation in the current format of the series.
 
-    Признак — заголовок `l_<язык>:` в первой значащей строке. Одного имени
-    файла мало: `.yml` рядом с модом бывает и настройкой сборки.
+    The sign is an `l_<language>:` header on the first significant line. The file
+    name alone is not enough: a `.yml` next to a mod is sometimes a build config.
     """
     for path in root.rglob("*.yml"):
         try:
