@@ -1,12 +1,12 @@
-"""Прогон машинного перевода: пачки, отказы, отмена, откат.
+"""The machine translation run: the batches, the refusals, the cancellation, the rollback.
 
-Ни один тест здесь не открывает сокет и не спит по-настоящему: провайдеры —
-заглушки, а `time.sleep` подменяется. Набор гоняется тысячи раз, и минута
-ожидания в бэкоффе превратила бы его в то, что перестают запускать.
+Not one test here opens a socket or really sleeps: the providers are stubs, and
+`time.sleep` is substituted. The suite is driven thousands of times, and a minute
+of waiting in the backoff would turn it into something people stop running.
 
-Главное, что стережётся: **пачка, которую не удалось разобрать, не применяется
-ни одной строкой**. Перевод, приземлившийся на чужой ключ, выглядит как
-сделанная работа и находится через недели.
+The main thing watched over: **a batch that could not be parsed is not applied by
+a single row**. A translation landed on a foreign key looks like work done and
+gets found weeks later.
 """
 from __future__ import annotations
 
@@ -23,12 +23,12 @@ from test_scanner import get_unit, make_project
 
 @pytest.fixture(autouse=True)
 def no_real_sleep(monkeypatch):
-    """Бэкофф проверяем логикой, а не ожиданием."""
+    """The backoff we check by logic, not by waiting."""
     monkeypatch.setattr(mt_run.time, "sleep", lambda *_: None)
 
 
 class Upper:
-    """Заглушка провайдера: возвращает текст в верхнем регистре."""
+    """A stub of a provider: returns the text in upper case."""
 
     name = "upper"
     label = "Upper"
@@ -46,7 +46,7 @@ class Upper:
 
 
 class Failing(Upper):
-    """Отказывает заданное число раз, потом работает."""
+    """Refuses a set number of times, then works."""
 
     def __init__(self, error, times=1):
         super().__init__()
@@ -65,12 +65,12 @@ def rows(*texts: str) -> list[MtRow]:
 
 
 def collect():
-    """Приёмник записи: (строка, перевод)."""
+    """A receiver of the write: (row, translation)."""
     written: list[tuple[int, str]] = []
     return written, lambda row, text: written.append((row.unit_id, text))
 
 
-# --- раскладка по пачкам ---
+# --- laying out into batches ---
 
 def test_batches_respect_the_character_budget() -> None:
     batches, oversized = mt_run.plan_batches(["a" * 30] * 5, budget=70)
@@ -85,7 +85,7 @@ def test_batches_respect_the_row_limit() -> None:
 
 
 def test_indexes_are_returned_in_order() -> None:
-    """Сопоставление идёт по позиции: одинаковые оригиналы иначе перепутались бы."""
+    """The matching goes by position: identical originals would get mixed up otherwise."""
     batches, _ = mt_run.plan_batches(["Gold", "Gold", "Gold"], budget=8)
     assert [i for batch in batches for i in batch] == [0, 1, 2]
 
@@ -97,14 +97,14 @@ def test_a_single_row_over_budget_gets_its_own_batch() -> None:
 
 
 def test_a_row_over_the_hard_limit_is_never_cut() -> None:
-    """Обрезка выглядела бы как успех, а теряла бы половину смысла."""
+    """A trim would look like a success while losing half the meaning."""
     batches, oversized = mt_run.plan_batches(
         ["a" * 500, "ok"], budget=1000, hard_limit=100)
     assert oversized == [0]
     assert batches == [[1]]
 
 
-# --- удачный прогон ---
+# --- a successful run ---
 
 def test_run_translates_and_writes_every_row() -> None:
     written, write = collect()
@@ -117,7 +117,7 @@ def test_run_translates_and_writes_every_row() -> None:
 
 
 def test_markup_survives_the_round_trip() -> None:
-    """Провайдер видит метку, а не разметку, и возвращает её нетронутой."""
+    """The provider sees a placeholder and not markup, and returns it untouched."""
     provider = Upper()
     written, write = collect()
     mt_run.run(provider, rows("Gain [GetName] and @gold!"), "en", "ru",
@@ -128,7 +128,7 @@ def test_markup_survives_the_round_trip() -> None:
 
 
 def test_lost_placeholder_is_reported_but_the_row_is_still_written() -> None:
-    """Человек должен увидеть сломанную строку — значит, она должна быть."""
+    """A human has to see the broken row — so it has to exist."""
     class Dropper(Upper):
         def translate_batch(self, texts, src_locale, tgt_locale):
             return ["перевод без меток" for _ in texts]
@@ -142,10 +142,10 @@ def test_lost_placeholder_is_reported_but_the_row_is_still_written() -> None:
     assert report.placeholders_lost[0][:2] == (1, "k0")
 
 
-# --- отказы ---
+# --- the refusals ---
 
 def test_a_batch_that_failed_is_not_applied_at_all() -> None:
-    """Ни одной строки: соответствие разобрать нечем, а угадывать нельзя."""
+    """Not a single row: there is nothing to parse the correspondence by, and guessing will not do."""
     written, write = collect()
     report = mt_run.run(Failing(MtAuthError("ключ не принят"), times=99),
                         rows("one", "two", "three"), "en", "ru",
@@ -175,11 +175,11 @@ def test_quota_error_gives_up_after_the_last_retry() -> None:
 
 
 def test_wrong_key_is_not_retried() -> None:
-    """Повтор его не исправит, а время потратит."""
+    """A retry will not mend it, but will spend the time."""
     provider = Failing(MtAuthError("ключ"), times=99)
     mt_run.run(provider, rows("one"), "en", "ru",
                write=lambda *_: None, throttle_ms=0, retries=5)
-    assert provider._left == 98      # ровно одна попытка
+    assert provider._left == 98      # exactly one attempt
 
 
 def test_a_failing_batch_does_not_stop_the_rest() -> None:
@@ -201,7 +201,7 @@ def test_a_failing_batch_does_not_stop_the_rest() -> None:
     assert written == [(2, "BBB")]
 
 
-# --- отмена ---
+# --- the cancellation ---
 
 def test_cancel_keeps_what_was_already_written() -> None:
     state = {"stop": False}
@@ -221,7 +221,7 @@ def test_cancel_keeps_what_was_already_written() -> None:
     assert "Ctrl+Z" in report.summary()
 
 
-# --- запись в базу и откат ---
+# --- the write into the database and the rollback ---
 
 def test_machine_rows_land_in_one_undoable_batch(db, make_tree) -> None:
     en = make_tree({"m_l_english.yml": 'l_english:\n a:0 "Hello"\n b:0 "World"\n'},
@@ -261,7 +261,7 @@ def test_machine_text_never_reaches_the_memory(db, make_tree) -> None:
 
 
 def test_empty_machine_text_is_not_written(db, make_tree) -> None:
-    """Статус «Машинный» без текста означал бы, что строка заполнена."""
+    """A «Machine» status without text would mean the row is filled."""
     en = make_tree({"m_l_english.yml": 'l_english:\n a:0 "Hello"\n'}, "en")
     pid = make_project(db, en, make_tree({}, "ru"))
     from pdxloc.core.scanner import scan_project

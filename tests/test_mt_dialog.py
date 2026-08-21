@@ -1,12 +1,13 @@
-"""Пакетный машинный перевод: охват, прогон, откат.
+"""Bulk machine translation: the reach, the run, the rollback.
 
-Сети здесь нет: в реестр провайдеров подставляется заглушка. Проверяется то,
-что рвётся на стыках, — какие строки попадают в охват, что прогон пишет одной
-пачкой, и что сломанные строки видны в сводке, а не теряются.
+There is no network here: a stub is put into the registry of providers. What is
+checked is what tears at the joints — which rows get into the reach, that the run
+writes in one batch, and that broken rows show in the summary instead of getting
+lost.
 
-Главное, за чем следим в охвате: **проверенное и кастомное не трогаем никогда**.
-Там уже принято решение человеком, и перезаписать его машиной — худшее, что
-эта операция может сделать.
+The main thing watched over in the reach: **the reviewed and the custom we never
+touch**. There a decision has already been made by a human, and overwriting it by
+machine is the worst this operation can do.
 """
 from __future__ import annotations
 
@@ -47,7 +48,7 @@ class Shouty:
 
 
 class Dropper(Shouty):
-    """Теряет подстановки — строку пишем, но помечаем."""
+    """Loses substitutions — we write the row, but we mark it."""
 
     name = "dropper"
 
@@ -78,7 +79,7 @@ def session(tmp_path, make_tree, qtbot, monkeypatch):
     conn = project.create_project(path, name="P", src_root=en,
                                   tgt_root=make_tree({}, "ru"))
     scan_project(conn, 1)
-    # раскладываем статусы: b проверено, c кастомное, e устарело с переводом
+    # we lay the statuses out: b is reviewed, c is custom, e is stale with a translation
     conn.execute("UPDATE units SET ru_text='Мир', status=? WHERE key='b'",
                  (Status.REVIEWED.value,))
     conn.execute("UPDATE units SET ru_text='Золото', status=? WHERE key='c'",
@@ -95,16 +96,16 @@ def keys(rows) -> set[str]:
     return {r.key for r in rows}
 
 
-# --- охват ---
+# --- the reach ---
 
 def test_untranslated_scope_skips_what_a_human_decided(session) -> None:
     conn, _ = session
     rows = collect_rows(conn, 1, "untranslated")
-    assert keys(rows) == {"a"}          # b/c решены человеком, d — разметка, e устарела
+    assert keys(rows) == {"a"}          # b/c are decided by a human, d is markup, e is stale
 
 
 def test_markup_only_rows_are_never_sent(session) -> None:
-    """Голый [GetName] в платном сервисе — деньги за ничто."""
+    """A bare [GetName] in a paid service is money for nothing."""
     conn, _ = session
     for scope in ("untranslated", "untranslated_auto", "all"):
         assert "d" not in keys(collect_rows(conn, 1, scope))
@@ -116,7 +117,7 @@ def test_whole_project_still_spares_reviewed_and_custom(session) -> None:
 
 
 def test_outdated_rows_join_only_by_an_explicit_tick(session) -> None:
-    """В них вложен труд человека — затирать молча нельзя."""
+    """A human's labour is invested in them — overwriting silently will not do."""
     conn, _ = session
     assert "e" not in keys(collect_rows(conn, 1, "all"))
     assert "e" in keys(collect_rows(conn, 1, "all", include_stale=True))
@@ -130,7 +131,7 @@ def test_selection_scope_is_exactly_the_selection(session) -> None:
     assert collect_rows(conn, 1, "selected", selected_ids=[]) == []
 
 
-# --- прогон ---
+# --- the run ---
 
 def run_dialog(session, qtbot, provider: str, scope: str = "all"):
     conn, path = session
@@ -162,13 +163,13 @@ def test_a_run_writes_machine_rows_in_one_batch(session, qtbot) -> None:
 
 
 def test_a_broken_row_is_written_and_shown(session, qtbot) -> None:
-    """Человек должен её увидеть — значит, она должна существовать."""
+    """A human has to see it — so it has to exist."""
     conn, _ = session
     dialog = run_dialog(session, qtbot, Dropper.name)
     assert dialog.report.rows_translated == 1
-    assert len(dialog.report.placeholders_lost) == 0     # у «Hello» меток нет
+    assert len(dialog.report.placeholders_lost) == 0     # «Hello» has no placeholders
 
-    # строка с разметкой попадает в охват, только если она не только разметка
+    # a row with markup gets into the reach only if it is not markup alone
     conn.execute("UPDATE units SET en_text='Gain [GetName]' WHERE key='a'")
     conn.execute("UPDATE units SET ru_text=NULL, status=? WHERE key='a'",
                  (Status.UNTRANSLATED.value,))
@@ -186,7 +187,7 @@ def test_the_dialog_refuses_to_start_without_a_service(session, qtbot) -> None:
     assert not dialog.start_button.isEnabled()
 
 
-# --- ручной веб-режим ---
+# --- the manual web mode ---
 
 def manual_dialog(session, qtbot):
     conn, path = session
@@ -204,7 +205,7 @@ def test_manual_mode_hides_the_markup_and_writes_the_result(session, qtbot) -> N
 
     dialog = manual_dialog(session, qtbot)
     out = dialog.manual_out.toPlainText()
-    assert "[GetName]" not in out          # разметка спрятана и от человека тоже
+    assert "[GetName]" not in out          # the markup is hidden from the human as well
     assert "===0===" in out
 
     dialog.manual_in.setPlainText(out.replace("Gain", "Получить"))
@@ -217,7 +218,7 @@ def test_manual_mode_hides_the_markup_and_writes_the_result(session, qtbot) -> N
 
 
 def test_manual_mode_refuses_a_damaged_batch(session, qtbot) -> None:
-    """Из пачки с расхождением не применяется ничего."""
+    """From a batch with a divergence nothing is applied."""
     conn, _ = session
     dialog = manual_dialog(session, qtbot)
     dialog.manual_in.setPlainText("Привет без разделителей")
@@ -229,7 +230,7 @@ def test_manual_mode_refuses_a_damaged_batch(session, qtbot) -> None:
 
 
 def test_manual_mode_works_without_a_service(session, qtbot) -> None:
-    """Единственный режим для того, у кого нет ни одной подписки."""
+    """The only mode for somebody who has not a single subscription."""
     conn, path = session
     prefs.set("mt/provider", "none")
     dialog = MtDialog(conn, 1, path)
@@ -241,7 +242,7 @@ def test_manual_mode_works_without_a_service(session, qtbot) -> None:
 
 
 def test_manual_mode_can_use_ascii_placeholders(session, qtbot) -> None:
-    """Через поле браузера и буфер обмена ⟦N⟧ корёжится или пропадает."""
+    """Through a browser field and the clipboard ⟦N⟧ gets mangled or vanishes."""
     conn, _ = session
     conn.execute("UPDATE units SET en_text='Gain [GetName]' WHERE key='a'")
     conn.commit()
@@ -264,4 +265,4 @@ def test_the_estimate_counts_rows_and_requests(session, qtbot) -> None:
     qtbot.addWidget(dialog)
     dialog.scope_buttons["all"].setChecked(True)
     text = dialog.estimate.text()
-    assert "1" in text          # ровно одна строка проходит охват
+    assert "1" in text          # exactly one row passes the reach

@@ -1,9 +1,9 @@
-"""Реестр команд: у каждой ровно один дом, витрины показывают те же объекты.
+"""The registry of commands: each has exactly one home, the shop windows show the same objects.
 
-Раньше «Подтвердить» существовало тремя независимыми объектами (кнопка
-тулбара, пункт контекстного меню, колонка «✓»), четыре кнопки панели не имели
-пункта меню вообще, а тринадцать операций над строками не показывались нигде,
-кроме контекстного меню. Эти проверки не дают дублям вернуться.
+«Confirm» used to exist as three independent objects (a toolbar button, a context
+menu item, the «✓» column), four toolbar buttons had no menu item at all, and
+thirteen operations over rows were shown nowhere but in the context menu. These
+checks do not let the duplicates come back.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ RU = 'l_russian:\n a:0 "Привет"\n'
 
 
 def menu_ids() -> list[str]:
-    """Идентификаторы действий в меню; порождаемые подменю («@…») пропускаем."""
+    """The identifiers of the actions in the menu; the generated submenus («@…») we skip."""
     return [
         action_id
         for _, ids in actions.MENU
@@ -33,7 +33,7 @@ def menu_ids() -> list[str]:
     ]
 
 
-# --- инварианты спеки: без Qt и без окна --------------------------------
+# --- the invariants of the spec: without Qt and without a window --------
 
 
 def test_every_action_has_exactly_one_menu_home() -> None:
@@ -45,7 +45,10 @@ def test_every_action_has_exactly_one_menu_home() -> None:
 
 
 def test_toolbar_has_no_action_outside_menu() -> None:
-    """Панель — витрина меню. Кнопка без пункта меню недостижима с клавиатуры."""
+    """The toolbar is a shop window of the menu.
+
+    A button without a menu item is unreachable from the keyboard.
+    """
     on_bar = {i for i in actions.TOOLBAR if i is not actions.SEP}
     assert on_bar <= set(menu_ids())
 
@@ -60,7 +63,7 @@ def test_menu_refers_only_to_declared_actions() -> None:
 
 
 def test_no_duplicate_shortcuts() -> None:
-    """Одна клавиша — одно действие: иначе Qt объявляет конфликт и молчит."""
+    """One key — one action: otherwise Qt declares a conflict and keeps quiet."""
     seen: dict[str, str] = {}
     clashes = []
     for spec in actions.ACTIONS:
@@ -73,16 +76,16 @@ def test_no_duplicate_shortcuts() -> None:
 
 
 def test_clipboard_keys_belong_to_the_table() -> None:
-    """Ctrl+C/V/Z в поле перевода должны означать правку текста, а не строки.
+    """Ctrl+C/V/Z in the translation field must mean an edit of the text, not of the row.
 
-    QAction главного окна перехватил бы их раньше: карта шорткатов Qt
-    опрашивается до доставки события виджету с фокусом.
+    A QAction of the main window would intercept them earlier: the shortcut map of
+    Qt is consulted before the event is delivered to the focused widget.
     """
     for action_id in ("copy_cell", "paste_ru", "undo"):
         assert actions.BY_ID[action_id].owner == actions.TABLE, action_id
 
 
-# --- живое окно ---------------------------------------------------------
+# --- a live window ------------------------------------------------------
 
 
 @pytest.fixture
@@ -109,12 +112,12 @@ def window(tmp_path, make_tree, qtbot, monkeypatch):
 
 
 def test_toolbar_shows_the_same_objects(window) -> None:
-    """Кнопка «Подтвердить» и пункт таблицы — один объект, а не два похожих."""
+    """The «Confirm» button and the table item are one object, not two alike."""
     win, _ = window
     on_bar = [a for a in win.toolbar.actions() if not a.isSeparator()]
     assert win.actions["validate"] in on_bar
     assert win.actions["unvalidate"] in on_bar
-    # тот же объект знает свою клавишу — раньше у тулбарного дубля её не было
+    # the same object knows its key — the toolbar duplicate used not to have one
     assert win.actions["validate"].shortcut() == QKeySequence("F10")
 
 
@@ -126,7 +129,7 @@ def test_context_menu_shows_the_same_objects(window) -> None:
 
 
 def test_selection_count_does_not_stick_to_action_text(window) -> None:
-    """Охват массовой операции — заголовок меню, а не хвост в тексте действия."""
+    """The reach of a bulk operation is the title of the menu, not a tail in the text of the action."""
     win, path = window
     win.open_project(path)
     win.editor_screen.table.selectAll()
@@ -152,22 +155,22 @@ def test_row_actions_disabled_without_project(window) -> None:
 
 
 def test_machine_translation_is_a_project_action(window) -> None:
-    """Перевод строки живёт там же, где остальные способы её заполнить."""
+    """The translation of a row lives where the other ways of filling it do."""
     win, path = window
-    assert not win.actions["mt"].isEnabled()      # без проекта заполнять нечего
+    assert not win.actions["mt"].isEnabled()      # without a project there is nothing to fill
     win.open_project(path)
     assert win.actions["mt"].isEnabled()
     assert win.actions["mt_batch"].isEnabled()
 
 
 def test_machine_translation_is_not_on_the_toolbar() -> None:
-    """Панель — место, куда попадают мимо, а действие стоит денег и идёт в сеть."""
+    """The toolbar is a place one hits by accident, while the action costs money and goes into the network."""
     assert "mt" not in actions.TOOLBAR
     assert "mt_batch" not in actions.TOOLBAR
 
 
 def test_legacy_action_names_still_point_at_the_registry(window) -> None:
-    """Старые имена (win.act_export и соседи) — те же объекты, не копии."""
+    """The old names (win.act_export and its neighbours) are the same objects, not copies."""
     win, _ = window
     assert win.act_export is win.actions["export"]
     assert win.act_validate is win.actions["validate"]
@@ -175,11 +178,11 @@ def test_legacy_action_names_still_point_at_the_registry(window) -> None:
 
 
 def test_open_databases_folder_actually_opens_it(window, monkeypatch) -> None:
-    """«Открыть папку баз» звало проводник через незаведённое имя.
+    """«Open the databases folder» called the explorer through a name that was not set up.
 
-    Обработчик обращался к `shell`, не импортированному в модуле, — нажатие
-    падало с NameError. Такое ловится только вызовом: действие есть, к слоту
-    привязано, но слот разваливается на первой же строке.
+    The handler went to `shell`, which was not imported in the module — the press
+    fell over with a NameError. Such a thing is caught only by calling: the action
+    is there, it is bound to a slot, but the slot falls apart on its very first line.
     """
     win, _ = window
     opened: list = []

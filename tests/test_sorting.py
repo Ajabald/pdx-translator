@@ -1,4 +1,4 @@
-"""Трёхпозиционная сортировка колонок таблицы строк."""
+"""The three-position sorting of the columns of the rows table."""
 from __future__ import annotations
 
 import os
@@ -17,7 +17,7 @@ from pdxloc.gui.units_model import (  # noqa: E402
     UnitFilters, UnitsTableModel, _text_key,
 )
 
-# ключи нарочно не по алфавиту и с числами: 10 не должен вставать перед 2
+# the keys are deliberately out of alphabetical order and with numbers: 10 must not come before 2
 EN = (
     'l_english:\n'
     ' agot_10:0 "Zulu text"\n'
@@ -28,7 +28,7 @@ EN = (
 RU = 'l_russian:\n agot_2:0 "Альфа"\n agot_1:0 "Майк"\n'
 
 
-# --- машинка состояния, без Qt ------------------------------------------
+# --- the state machine, without Qt --------------------------------------
 
 
 def test_three_clicks_return_to_the_natural_order() -> None:
@@ -44,8 +44,8 @@ def test_three_clicks_return_to_the_natural_order() -> None:
 def test_click_on_another_column_resets_the_previous_one() -> None:
     s = SortState()
     s.click(COL_KEY)
-    s.click(COL_KEY)               # довели до убывания
-    s.click(COL_STATUS)            # и ушли на соседнюю колонку
+    s.click(COL_KEY)               # brought it to descending
+    s.click(COL_STATUS)            # and went off to the neighbouring column
     assert (s.column, s.step) == (COL_STATUS, FIRST)
 
 
@@ -59,7 +59,7 @@ def test_empty_text_sorts_last() -> None:
     assert _text_key("яблоко") < _text_key(None)
 
 
-# --- модель на живых данных ---------------------------------------------
+# --- the model on live data ---------------------------------------------
 
 
 @pytest.fixture
@@ -101,10 +101,10 @@ def test_key_column_sorts_numbers_numerically(model) -> None:
 
 
 def test_row_index_survives_every_step_of_the_cycle(model) -> None:
-    """`_row_by_id` обязан пересобираться при каждой перестановке.
+    """`_row_by_id` is obliged to be rebuilt at every rearrangement.
 
-    По нему ходят refresh_row, jump_to_unit и восстановление выделения — если
-    он отстанет, правка уедет в чужую строку.
+    refresh_row, jump_to_unit and the restoration of the selection go by it — if it
+    falls behind, an edit will travel into a foreign row.
     """
     for spec in ((COL_KEY, False), (COL_KEY, True), None, (COL_STATUS, False)):
         model.set_sort(spec)
@@ -120,7 +120,7 @@ def test_row_index_survives_sorting_with_the_issues_filter(model) -> None:
 
 
 def test_status_column_sorts_in_work_order_not_alphabet(model) -> None:
-    """«Не переведено» выше «Авто», хотя алфавит велел бы наоборот."""
+    """«Untranslated» is above «Auto», though the alphabet would order the opposite."""
     model.set_sort((COL_STATUS, False))
     statuses = [model.row_data(i)["status"] for i in range(model.rowCount())]
     assert statuses.index(Status.UNTRANSLATED.value) < statuses.index(
@@ -131,7 +131,7 @@ def test_empty_translations_go_last_ascending(model) -> None:
     model.set_sort((COL_RU, False))
     texts = [model.raw_cell(i, COL_RU) for i in range(model.rowCount())]
     filled = [t for t in texts if t]
-    assert texts[:len(filled)] == filled       # пустые все в хвосте
+    assert texts[:len(filled)] == filled       # the empty ones are all in the tail
 
 
 def test_change_column_puts_meaningful_before_cosmetic(model) -> None:
@@ -150,16 +150,16 @@ def test_sort_survives_a_filter_change(model) -> None:
 
 
 def test_issue_column_orders_by_count_then_severity(model) -> None:
-    """При равном числе замечаний выше та строка, где есть ошибка."""
-    model._issue_rank = {model.unit_id_at(0): (1, 0),    # одно предупреждение
-                         model.unit_id_at(1): (1, 1),    # одна ошибка
-                         model.unit_id_at(2): (2, 0)}    # два предупреждения
+    """With an equal number of remarks the row that holds an error is higher."""
+    model._issue_rank = {model.unit_id_at(0): (1, 0),    # one warning
+                         model.unit_id_at(1): (1, 1),    # one error
+                         model.unit_id_at(2): (2, 0)}    # two warnings
     model.set_sort((COL_ISSUES, False))
     assert [model._issue_rank.get(i, (0, 0)) for i in ids(model)[:3]] == [
         (2, 0), (1, 1), (1, 0)]
 
 
-# --- взаимодействие с таблицей ------------------------------------------
+# --- the interaction with the table -------------------------------------
 
 
 @pytest.fixture
@@ -186,7 +186,7 @@ def window(tmp_path, make_tree, qtbot, monkeypatch):
 
 
 def test_header_click_on_quick_column_does_not_sort(window) -> None:
-    """✓ ✗ C И — кнопки: клик по их заголовку не должен тасовать таблицу."""
+    """✓ ✗ C И are buttons: a click on their header must not shuffle the table."""
     before = ids(window.editor_screen.model)
     window.editor_screen._on_header_clicked(COL_QS_FIRST)
     assert window.editor_screen.state.sort_spec is None
@@ -194,13 +194,13 @@ def test_header_click_on_quick_column_does_not_sort(window) -> None:
 
 
 def test_quick_click_changes_the_status_of_the_row_it_hit(window) -> None:
-    """После сортировки клик по «И» обязан попасть в свою строку, а не в соседнюю."""
+    """After a sort a click on «И» is obliged to hit its own row and not the neighbouring one."""
     screen = window.editor_screen
     screen._on_header_clicked(COL_KEY)
-    screen._on_header_clicked(COL_KEY)          # по убыванию — порядок точно не тот
+    screen._on_header_clicked(COL_KEY)          # descending — the order is certainly not the same
     row = 1
     target_id = screen.model.unit_id_at(row)
-    index = screen.model.index(row, COL_QS_FIRST + 3)   # колонка «И»
+    index = screen.model.index(row, COL_QS_FIRST + 3)   # the «И» column
     screen._on_table_clicked(index)
     status = screen.conn.execute(
         "SELECT status FROM units WHERE id = ?", (target_id,)).fetchone()["status"]
@@ -228,7 +228,7 @@ def test_sort_menu_mirrors_the_header(window) -> None:
 
 
 def test_sorting_does_not_hit_the_database(window, monkeypatch) -> None:
-    """Клик по заголовку — перестановка в памяти, а не SQL с пересчётом проверок."""
+    """A click on a header is a rearrangement in memory, not SQL with a recount of the checks."""
     screen = window.editor_screen
     calls = []
     original = screen.model.reload
@@ -236,13 +236,13 @@ def test_sorting_does_not_hit_the_database(window, monkeypatch) -> None:
                         lambda *a, **k: (calls.append(1), original(*a, **k))[1])
     screen._on_header_clicked(COL_KEY)
     assert calls == []
-    # а смена фильтра — приводит
+    # while a change of the filter does bring one
     screen.state.set_status(Status.UNTRANSLATED.value)
     assert calls == [1]
 
 
 def test_status_change_keeps_the_row_in_place(window) -> None:
-    """Строка не должна уезжать из-под курсора в момент простановки статуса."""
+    """The row must not travel out from under the cursor at the moment a status is set."""
     screen = window.editor_screen
     screen._on_header_clicked(COL_STATUS)
     before = ids(screen.model)
