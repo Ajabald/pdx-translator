@@ -55,8 +55,8 @@ class ViewState(QObject):
         """(column, descending) or None for the natural order."""
         if self.sort.column is None:
             return None
-        # у колонки «!» второй шаг сужает выборку, а не переворачивает порядок:
-        # показывать проблемные снизу незачем
+        # on the «!» column the second step narrows the selection rather than reversing
+        # the order: there is no point showing the troubled rows at the bottom
         descending = self.sort.step == SECOND and self.sort.column != COL_ISSUES
         return self.sort.column, descending
 
@@ -70,7 +70,7 @@ class ViewState(QObject):
             only_issues=self.only_issues,
         )
 
-    # --- изменение ---
+    # --- changing ---
 
     def set_status(self, value: str | None) -> None:
         if value != self.status:
@@ -94,9 +94,9 @@ class ViewState(QObject):
         if value:
             self.sort.set(COL_ISSUES, SECOND)
         else:
-            # Галку сняли — фильтр уходит, но порядок «проблемные сверху»
-            # остаётся: строки не прыгают, когда выборка расширяется, и видно,
-            # где проблемные лежат относительно остальных.
+            # The box was cleared, so the filter goes, but the «troubled first» order
+            # stays: rows do not jump about when the selection widens, and it stays visible
+            # where the troubled ones lie among the rest.
             self.sort.step = FIRST
         self.changed.emit()
 
@@ -108,14 +108,14 @@ class ViewState(QObject):
     def click_column(self, column: int) -> None:
         was_filtered = self.only_issues
         self.sort.click(column)
-        # состав строк меняет только колонка «!»; остальным хватит перестановки
+        # only the «!» column changes the set of rows; the rest need a reorder
         if was_filtered != self.only_issues:
             self.changed.emit()
         else:
             self.sortChanged.emit()
 
     def set_sort(self, column: int | None, descending: bool = False) -> None:
-        """Задать сортировку явно — из подменю «Вид → Сортировка»."""
+        """Set the sorting explicitly, from the «View → Sort» submenu."""
         was_filtered = self.only_issues
         self.sort.set(column, SECOND if descending else FIRST)
         if was_filtered != self.only_issues:
@@ -124,15 +124,15 @@ class ViewState(QObject):
             self.sortChanged.emit()
 
     def reset_filters(self) -> None:
-        """Снять фильтры, но не сортировку.
+        """Clear the filters but not the sorting.
 
-        Порядок строк ничего не прячет, а `jump_to_unit` зовёт сброс именно
-        затем, чтобы показать строку, спрятанную фильтром.
+        The order of the rows hides nothing, and `jump_to_unit` calls the reset
+        precisely in order to show a row a filter was hiding.
         """
         self.status = None
         self.search = ""
         self.show_deleted = False
         self.file_rel = self.file_prefix = None
         if self.only_issues:
-            self.sort.step = FIRST      # фильтр снят, порядок сохранён
+            self.sort.step = FIRST      # the filter is gone, the order is kept
         self.changed.emit()

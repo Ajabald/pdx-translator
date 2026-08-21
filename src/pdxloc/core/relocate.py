@@ -1,14 +1,15 @@
-"""Смена папки оригинала у существующего проекта.
+"""Changing the original folder of an existing project.
 
-`en_root` задавался при создании проекта и больше нигде не редактировался, а
-папка не вечная: мод скачали заново с Nexus в другое место, библиотеку Steam
-перенесли на другой диск, проект передали другому человеку. Раньше выход был
-один — править путь руками в SQLite.
+`en_root` was set when the project was created and edited nowhere else, while the
+folder is not forever: the mod was downloaded from Nexus again somewhere else,
+the Steam library moved to another drive, the project was handed to another
+person. The only way out used to be editing the path by hand in SQLite.
 
-Опасность операции в том, что пути файлов в базе относительные: файл, которого
-в новой папке нет, на ближайшем сканировании станет удалённым, а его переводы
-уедут в архив. Поэтому здесь только считают совпадения — окно показывает их
-до нажатия кнопки, а записывает путь отдельный вызов.
+The danger of the operation is that file paths in the database are relative: a
+file the new folder does not have turns deleted on the next scan, and its
+translations move to the archive. So this module only counts the matches — the
+window shows them before the button is pressed, and a separate call writes the
+path.
 """
 from __future__ import annotations
 
@@ -21,38 +22,38 @@ from pdxloc.core.paradox_yaml import lang_tag
 from pdxloc.core import loc_formats
 from pdxloc.core.tm_import import language_dirs
 
-# Насколько глубоко ищем папку языка внутри выбранной: путь до
-# localization/replace/english — это три уровня.
+# How deep the language folder is looked for inside the chosen one: the path to
+# localization/replace/english is three levels.
 MAX_DEPTH = 3
 
 
 @dataclass
 class RootPreview:
-    """Что случится, если сделать выбранную папку папкой оригинала."""
+    """What happens if the chosen folder becomes the original folder."""
 
-    chosen: Path                      # что выбрал пользователь
-    root: Path | None = None          # что будет записано (бывает подпапкой chosen)
-    matched: list[str] = field(default_factory=list)   # файлы базы, найденные в папке
-    missing: list[str] = field(default_factory=list)   # файлы базы, которых там нет
-    added: list[str] = field(default_factory=list)     # файлы папки, которых нет в базе
-    units_missing: int = 0            # строк в пропавших файлах
-    translated_missing: int = 0       # из них с переводом — уедут в архив
-    known_files: int = 0              # сколько файлов оригинала знает база
+    chosen: Path                      # what the user chose
+    root: Path | None = None          # what will be written (sometimes a subfolder of chosen)
+    matched: list[str] = field(default_factory=list)   # database files found in the folder
+    missing: list[str] = field(default_factory=list)   # database files that are not there
+    added: list[str] = field(default_factory=list)     # folder files the database does not know
+    units_missing: int = 0            # rows in the files that went missing
+    translated_missing: int = 0       # of those, the translated ones: they move to the archive
+    known_files: int = 0              # how many original files the database knows
     candidates: list[tuple[Path, int]] = field(default_factory=list)
     error: str | None = None
 
     @property
     def usable(self) -> bool:
-        """Можно ли записать этот путь."""
+        """Whether this path can be written."""
         return self.error is None and self.root is not None
 
     @property
     def risky(self) -> bool:
-        """Совпал не весь набор — стоит переспросить перед записью."""
+        """Not the whole set matched: worth asking again before writing."""
         return bool(self.missing)
 
     def summary(self) -> str:
-        """Что случится со строками проекта, если сменить папку."""
+        """What happens to the project rows if the folder is changed."""
         if self.error:
             return self.error
         lines = [fill(translate("Relocate", "Folder: %1"), self.root)]
