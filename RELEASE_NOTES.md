@@ -4,6 +4,29 @@ mod-version diffing and configurable markup checks.
 
 What 0.1.2 adds and fixes is below; the description of 0.1.0 follows it, unchanged.
 
+## ✨ New in 0.1.2
+
+* **Rule presets are no longer tied to Russian.** A preset used to glue two
+  unrelated things together — what the game's markup dictates and what a
+  particular language does about grammar — which is why they were called
+  «CK3 · Russian». They are now split. The preset is the game and nothing else:
+  «Crusader Kings III», «Hearts of Iron IV», «Crusader Kings II», «Stellaris».
+  The inflection helpers your language uses attach on their own, from the
+  translation language of the project, and never appear in the list — they are
+  not a choice, they are a property of the project.
+* **Twelve pairs of game and language ship with their own helpers**, harvested
+  from the games: French, German, Polish, Portuguese, Russian and Spanish across
+  the four games. This is what the split was for. A French translator of a HOI4
+  mod used to get 37 270 occurrences of their own inflection functions reported
+  as lost references, because the only list in the box was the Russian one.
+* **Settings from 0.1.0 and 0.1.1 keep working.** The old preset names are read
+  as the new ones, so a project, a global configuration or a shared `.pdxqa`
+  carries over untouched.
+* **Rule and preset descriptions have been rewritten** for the person reading
+  them, in each interface language rather than as a translation of one. The
+  measurement counts they used to quote moved to the architecture notes, where
+  they belong.
+
 ## 🔧 Fixed
 
 * **The first-run wizard could not build the first database.** «Build a
