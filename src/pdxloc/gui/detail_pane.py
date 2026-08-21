@@ -1,4 +1,6 @@
-"""Детальная панель: EN-оригинал, дифф для stale, RU-редактор, TM-подсказки."""
+"""The detail panel: the original, a diff for outdated rows, the translation
+editor and the memory suggestions.
+"""
 from __future__ import annotations
 
 import html
@@ -25,23 +27,25 @@ CTX = "DetailPane"
 
 
 def editor_font() -> QFont:
-    """Шрифт полей оригинала и перевода — настраивается в «Параметрах»."""
+    """The font of the original and translation fields, set in «Preferences»."""
     return QFont(prefs.get("editor/font_family"), prefs.get("editor/font_size"))
 
 
 def editor_text(edit) -> str:
-    """Текст поля без потерь.
+    """The text of a field without losses.
 
-    `toPlainText()` подменяет неразрывный пробел обычным — а он в русской
-    типографике стоит осмысленно (перед тире, в «5 000»), и в ванильной
-    локализации CK3 таких строк полно. Из-за подмены строка, которую даже не
-    трогали, считалась изменённой и перезаписывалась при уходе с неё.
+    `toPlainText()` swaps a non-breaking space for an ordinary one — and in
+    Russian typography that space is there on purpose (before a dash, inside
+    «5 000»), and the vanilla CK3 localisation is full of such rows. Because of
+    the swap a row nobody had even touched counted as edited and was rewritten on
+    leaving it.
     """
     return edit.document().toRawText().replace(chr(0x2029), chr(10))
 
 
 def _diff_html(old: str, new: str) -> str:
-    """HTML-дифф прежней и новой редакции оригинала — пословный, чтобы читался."""
+    """An HTML diff of the previous and the new revision of the original, word by
+    word so it can be read."""
     insert, delete = theme.color("diff.insert"), theme.color("diff.delete")
     out: list[str] = []
     for op, text in textdiff.word_diff(old, new):
@@ -64,12 +68,15 @@ SOURCE_LABELS = {
 
 
 class TmSuggestionsList(QListWidget):
-    """Варианты перевода из памяти. Двойной клик подставляет вариант,
-    правая кнопка открывает действия над самой записью памяти."""
+    """Translation variants from the memory.
+
+    A double click fills the variant in, a right click opens the actions over the
+    memory entry itself.
+    """
 
     suggestionPicked = Signal(str)
-    memoryChanged = Signal()          # запись изменена или удалена
-    manageRequested = Signal()        # открыть менеджер памяти
+    memoryChanged = Signal()          # the entry was edited or deleted
+    manageRequested = Signal()        # open the memory manager
 
     def __init__(self, conn=None, parent=None):
         super().__init__(parent)
@@ -84,8 +91,9 @@ class TmSuggestionsList(QListWidget):
             src = translate("DetailPane", SOURCE_LABELS.get(h.source, h.source))
             where = f" · {h.origin}" if h.origin else ""
             exact = h.score >= 1.0
-            # процент показываем только у неточных: у точного совпадения он
-            # только отвлекал бы, а вот перепутать неточное с точным — опасно
+            # the percentage is shown for inexact matches only: on an exact one it would
+            # merely distract, while mistaking an inexact match for an exact one is
+            # dangerous
             mark = "" if exact else f"{h.score:.0%} · "
             item = QListWidgetItem(f"{mark}{h.ru_text}    [{h.uses}× · {src}{where}]")
             item.setData(Qt.UserRole, h)
@@ -96,8 +104,8 @@ class TmSuggestionsList(QListWidget):
                     f"{h.score:.0%}") + "<br>"
                     f'<span style="font-family:Consolas">'
                     f'{_diff_html(query, h.en_text)}</span>')
-            # origin — имя базы, кроме собственной памяти проекта: та приходит
-            # из SQL строкой «Project» и переводится наравне с подписями
+            # origin is the database name, except for the project's own memory: that
+            # arrives from SQL as the string «Project» and is translated like any label
             origin = translate("DetailPane", h.origin) if h.origin else src
             tip.append("<br><br>" + fill(
                 translate("DetailPane", "Source: %1"), html.escape(origin)))
@@ -174,16 +182,16 @@ class TmSuggestionsList(QListWidget):
 
 
 class DetailPane(QWidget):
-    saved = Signal(int)        # unit_id — после любого сохранения статуса/текста
+    saved = Signal(int)        # unit_id — after any save of a status or of text
     requestNext = Signal()
 
     def __init__(self, conn: sqlite3.Connection, parent=None):
         super().__init__(parent)
         self.conn = conn
         self.unit_id: int | None = None
-        self._loaded_ru = ""       # для детекции несохранённых правок
-        # обе подсветки поля оригинала: что показывать, решает
-        # _refresh_extra_selections, единственный владелец setExtraSelections
+        self._loaded_ru = ""       # to detect unsaved edits
+        # both highlights of the original field: what to show is decided by
+        # _refresh_extra_selections, the sole owner of setExtraSelections
         self._diff_prev: str | None = None
         self._terms: dict[str, str] = {}
         self._term_index = None
@@ -197,7 +205,7 @@ class DetailPane(QWidget):
 
         splitter = QSplitter(Qt.Horizontal)
 
-        # левая колонка: EN + блок изменений оригинала
+        # the left column: the original plus the block of changes to it
         left = QWidget()
         lv = QVBoxLayout(left)
         lv.setContentsMargins(0, 0, 0, 0)
@@ -222,9 +230,9 @@ class DetailPane(QWidget):
         Ck3Highlighter(self.en_view.document())
         lv.addWidget(self.en_view, 1)
 
-        # блок изменений: заголовок, кнопка «Актуализировать» и сам дифф.
-        # Кнопка живёт здесь, а не в общем ряду внизу: она осмысленна только
-        # для устаревших строк, и рядом видно, что именно изменилось.
+        # the changes block: a header, the «Actualize» button and the diff itself.
+        # The button lives here rather than in the common row below: it is meaningful
+        # only for outdated rows, and next to it you can see what actually changed.
         self.change_box = QWidget()
         cv = QVBoxLayout(self.change_box)
         cv.setContentsMargins(0, 0, 0, 0)
@@ -243,10 +251,10 @@ class DetailPane(QWidget):
         lv.addWidget(self.change_box)
         splitter.addWidget(left)
 
-        # правая колонка: RU + TM
+        # the right column: the translation plus the memory
         right = QWidget()
         rv = QVBoxLayout(right)
-        # справа поле есть, иначе «сохранено» упирается прямо в край окна
+        # a margin on the right, or «saved» butts against the window edge
         rv.setContentsMargins(0, 0, 6, 0)
         ru_head_bar = QWidget()
         ru_head = QHBoxLayout(ru_head_bar)
@@ -254,8 +262,8 @@ class DetailPane(QWidget):
         self.ru_label = QLabel()
         ru_head.addWidget(self.ru_label)
         ru_head.addStretch(1)
-        # состояние вместо кнопки «Сохранить»: правки сохраняются сами при
-        # уходе со строки, но видеть, сохранены ли они, всё равно нужно
+        # a state indicator instead of a «Save» button: edits save themselves when you
+        # leave a row, but seeing whether they are saved is still needed
         self.save_state = QLabel()
         ru_head.addWidget(self.save_state)
         rv.addWidget(ru_head_bar)
@@ -269,9 +277,10 @@ class DetailPane(QWidget):
         self.tm_list = TmSuggestionsList(conn)
         self.tm_list.suggestionPicked.connect(self._apply_suggestion)
         self.tm_list.memoryChanged.connect(self._reload_suggestions)
-        # Высота кратна строке списка и растягивается вместе с панелью. Раньше
-        # тут стоял setMaximumHeight(90): 90 не кратно высоте строки, и
-        # последняя видимая подсказка резалась пополам — выглядело как обрыв.
+        # The height is a multiple of a list row and stretches with the panel. There
+        # used to be a setMaximumHeight(90) here: 90 is not a multiple of the row
+        # height, and the last visible suggestion was cut in half — which looked like a
+        # truncation.
         self._tm_min_rows = 3
         self.tm_list.setMinimumHeight(self._tm_rows_height(self._tm_min_rows))
         rv.addWidget(self.tm_list, 1)
@@ -280,23 +289,24 @@ class DetailPane(QWidget):
         splitter.setStretchFactor(1, 1)
         layout.addWidget(splitter, 1)
 
-        # Нижнего ряда кнопок больше нет: «Переведено»/«Проверено» дублировали
-        # колонки ✓/✗ другим хоткеем, «EN → RU» — F8, а «Сохранить» не нужна
-        # при автосохранении. Явное сохранение осталось на Ctrl+S — теперь это
-        # действие «Правка → Сохранить перевод строки» из общего реестра, а не
-        # свой QShortcut: два обработчика одной клавиши Qt считает конфликтом и
-        # не вызывает ни одного.
+        # The bottom row of buttons is gone: «Translated»/«Reviewed» duplicated the ✓/✗
+        # columns under another shortcut, «EN → RU» duplicated F8, and «Save» is not
+        # needed with autosave. An explicit save stayed on Ctrl+S — and it is now the
+        # «Edit → Save row translation» action from the common registry rather than a
+        # QShortcut of its own: Qt treats two handlers of one key as a conflict and
+        # calls neither.
 
         self.ru_edit.textChanged.connect(self._update_save_state)
         theme.on_change(self._on_theme_changed)
         prefs.on_change(self._on_pref_changed)
 
         self._head_bars = (en_head_bar, ru_head_bar)
-        self.retranslate()      # он же выравнивает шапки: их высота зависит от текста
+        self.retranslate()      # it also aligns the headers: their height depends on the text
         self.clear()
 
     def retranslate(self) -> None:
-        """Подписи панели. Панель живёт всю сессию, поэтому меняем на месте."""
+        """The panel labels. The panel lives for the whole session, so they are
+        replaced in place."""
         self.en_label.setText(translate("DetailPane", "Original (EN):"))
         self.highlight_check.setText(translate("DetailPane", "highlight changes"))
         self.highlight_check.setToolTip(translate(
@@ -316,11 +326,12 @@ class DetailPane(QWidget):
         self.tm_label.setText(translate(
             "DetailPane", "Translation memory (double click — insert, "
                           "right button — actions):"))
-        # Длина подписей поменялась — шапки снова могут разъехаться по высоте
+        # The length of the labels changed, so the headers may drift apart in height
+        # again
         self._equalise_heads()
         self._update_save_state()
         if self.unit_id is not None:
-            self.load_unit(self.unit_id)        # статус в заголовке тоже переводится
+            self.load_unit(self.unit_id)        # the status in the header is translated too
 
     def _on_pref_changed(self, key: str) -> None:
         if key.startswith("editor/font"):
@@ -333,7 +344,7 @@ class DetailPane(QWidget):
             self._reload_suggestions()
 
     def _tm_rows_height(self, rows: int) -> int:
-        """Высота списка ровно под N строк — без обрезанной половинки внизу."""
+        """The list height fits exactly N rows, with no half a row cut off below."""
         row = self.tm_list.sizeHintForRow(0)
         if row <= 0:
             row = self.tm_list.fontMetrics().height() + 4
@@ -347,11 +358,12 @@ class DetailPane(QWidget):
         self._equalise_heads()
 
     def _equalise_heads(self) -> None:
-        """Шапки обеих колонок — одной высоты.
+        """The headers of both columns get the same height.
 
-        Слева в ряду чекбокс, он выше подписи, и поле оригинала вставало на
-        несколько пикселей ниже поля перевода. Пересчитывать обязательно после
-        смены шрифта и языка — иначе тест зелёный, а окно косое.
+        The left row holds a checkbox, which is taller than a label, and the
+        original field ended up a few pixels below the translation field.
+        Recomputing is mandatory after a change of font or of language —
+        otherwise the tests are green and the window is crooked.
         """
         for bar in self._head_bars:
             bar.setFixedHeight(0)
@@ -361,7 +373,7 @@ class DetailPane(QWidget):
         for bar in self._head_bars:
             bar.setFixedHeight(height)
 
-    # --- загрузка/очистка ---
+    # --- loading and clearing ---
 
     def clear(self) -> None:
         self.unit_id = None
@@ -387,7 +399,7 @@ class DetailPane(QWidget):
             f"color: {theme.color('issue.warning' if dirty else 'hint')};")
 
     def _on_highlight_toggled(self, checked: bool) -> None:
-        """Чекбокс в панели и галка в «Параметрах» — одна настройка."""
+        """The checkbox in the panel and the one in «Preferences» are one setting."""
         prefs.set("detail/highlight_changes", checked)
         if self.unit_id is not None:
             self.load_unit(self.unit_id)
@@ -404,8 +416,8 @@ class DetailPane(QWidget):
         try:
             self.load_unit(self.unit_id)
         except sqlite3.ProgrammingError:
-            # панель пережила своё соединение (проект закрыт) — перерисовка
-            # не повод ронять окно, показывать всё равно уже нечего
+            # the panel outlived its connection — the project was closed — and a repaint is
+            # no reason to bring the window down; there is nothing left to show anyway
             self.clear()
 
     def load_unit(self, unit_id: int) -> None:
@@ -448,23 +460,24 @@ class DetailPane(QWidget):
         self._reload_suggestions()
         self._update_save_state()
 
-    # --- подсветка поля оригинала ---
+    # --- highlighting the original field ---
     #
-    # ExtraSelections ложатся поверх подсветки разметки CK3 и не мешают ей
-    # (второй QSyntaxHighlighter на том же документе затирал бы форматы
-    # первого). Но список у поля **один**, и `setExtraSelections` его заменяет
-    # целиком. Поэтому звать его имеет право только `_refresh_extra_selections`:
-    # пока подсветка изменений вызывала его сама, добавление подсветки терминов
-    # вторым вызовом молча стёрло бы дифф у устаревшей строки.
+    # ExtraSelections lie on top of the CK3 markup highlighting and do not
+    # disturb it (a second QSyntaxHighlighter on the same document would wipe the
+    # formats of the first). But a field has **one** such list, and
+    # `setExtraSelections` replaces it whole. So only `_refresh_extra_selections`
+    # has the right to call it: while the change highlighting called it itself,
+    # adding the term highlighting through a second call silently erased the diff
+    # on an outdated row.
 
     def _refresh_extra_selections(self, current_text: str) -> None:
-        """Собрать обе подсветки поля оригинала и выставить их разом."""
+        """Collect both highlights of the original field and set them in one go."""
         selections = self._change_selections(self._diff_prev, current_text)
         selections += self._term_selections(current_text)
         self.en_view.setExtraSelections(selections)
 
     def _selection(self, start: int, end: int, fmt: QTextCharFormat):
-        selection = QTextEdit.ExtraSelection()   # класс общий для текстовых полей
+        selection = QTextEdit.ExtraSelection()   # the class is shared by the text fields
         selection.format = fmt
         cursor = QTextCursor(self.en_view.document())
         cursor.setPosition(start)
@@ -473,7 +486,7 @@ class DetailPane(QWidget):
         return selection
 
     def _change_selections(self, prev_text: str | None, current_text: str) -> list:
-        """Куски, которых не было в прежней редакции оригинала."""
+        """The pieces the previous revision of the original did not have."""
         if not prev_text or not current_text:
             return []
         fmt = QTextCharFormat()
@@ -482,10 +495,11 @@ class DetailPane(QWidget):
                 for start, end in textdiff.changed_ranges(prev_text, current_text)]
 
     def _term_selections(self, current_text: str) -> list:
-        """Термины глоссария, принятые переводчиком.
+        """The glossary terms the translator has accepted.
 
-        Перевод термина висит подсказкой на самом формате: наводить мышь на
-        слово переводчик и так будет, а лезть за этим в окно глоссария — нет.
+        The translation of a term hangs as a tooltip on the format itself: a
+        translator will hover over a word anyway, whereas going to the glossary
+        window for it they will not.
         """
         if not current_text or not self.highlight_terms_check.isChecked():
             return []
@@ -499,24 +513,24 @@ class DetailPane(QWidget):
         return out
 
     def reload_glossary(self) -> None:
-        """Перечитать принятые термины — после правки глоссария.
+        """Re-read the accepted terms, after the glossary was edited.
 
-        Индекс держим готовым, а не собираем на каждую строку: он один на
-        проект, а строк переводчик проходит тысячи.
+        The index is kept ready rather than built per row: there is one of it per
+        project, while a translator walks thousands of rows.
         """
         try:
             self._terms = glossary.approved_terms(self.conn)
         except sqlite3.Error:
-            self._terms = {}        # проект закрывается — подсвечивать нечего
+            self._terms = {}        # the project is closing: there is nothing left to highlight
         self._term_index = glossary.build_index(self._terms)
         if self.unit_id is not None:
             self.load_unit(self.unit_id)
 
     def _reload_suggestions(self) -> None:
-        """Перечитать подсказки — после правки памяти или смены строки.
+        """Re-read the suggestions, after the memory changed or the row did.
 
-        Сначала точные совпадения, затем похожие строки: при переводе сабмода
-        поверх мода точных почти нет, а похожих — сколько угодно.
+        Exact matches first, then similar rows: when translating a submod on top
+        of a mod there are almost no exact ones and any number of similar ones.
         """
         self.tm_list.clear()
         if self.unit_id is None:
@@ -535,10 +549,10 @@ class DetailPane(QWidget):
         hits += [h for h in similar if h.ru_text not in known]
         self.tm_list.show_hits(hits, en_text)
 
-    # --- сохранение ---
+    # --- saving ---
 
     def _autosave(self) -> None:
-        """Автосохранение при уходе со строки, если текст менялся."""
+        """Autosave on leaving a row, when the text was changed."""
         if self.unit_id is not None and editor_text(self.ru_edit) != self._loaded_ru:
             self.save()
 
