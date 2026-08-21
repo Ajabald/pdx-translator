@@ -1,18 +1,21 @@
-"""Сканирование проекта: импорт/рескан деревьев локализации в БД.
+"""Scanning a project: importing and rescanning the localisation trees into the DB.
 
-Первичный импорт и рескан после обновления мода — один и тот же код:
-дифф-автомат сравнивает свежий разбор EN/RU-деревьев с состоянием в БД.
+The first import and a rescan after a mod update are one and the same code: a
+diff machine compares a fresh parse of the source and translation trees with the
+state in the database.
 
-Формат файлов сканер не знает — он спрашивает его у `core/loc_formats.py`:
-у нынешних игр серии язык стоит в имени файла и в пути
-(`english/x_l_english.yml` → `russian/x_l_russian.yml`), у старых он колонка
-внутри той же строки, и путь в дереве перевода тот же самый. Всё, что зависит
-от этого, идёт через `fmt.files()` и `fmt.map_relpath()`.
+The scanner does not know the file format — it asks `core/loc_formats.py`: in the
+current games of the series the language sits in the file name and in the path
+(`english/x_l_english.yml` → `russian/x_l_russian.yml`), while in the older ones
+it is a column inside the same row and the path in the translation tree is the
+very same. Everything that depends on this goes through `fmt.files()` and
+`fmt.map_relpath()`.
 
-Соглашения самого сканера:
-- Файлы с '_updated' в имени игнорируются (мусор старых скриптов пользователя).
-- Маркер старых скриптов '# !!! ТРЕБУЕТ ПЕРЕВОДА' в RU и ru == en означают
-  «не переведено».
+The scanner's own conventions:
+- Files with '_updated' in the name are ignored (litter from the user's old
+  scripts).
+- The old scripts' marker '# !!! ТРЕБУЕТ ПЕРЕВОДА' in the translation, and
+  translation == original, both mean «not translated».
 """
 from __future__ import annotations
 
@@ -42,15 +45,15 @@ def _ru_entry_state(
     file_has_real_translations: bool = False,
     is_new_unit: bool = False,
 ) -> tuple[str, bool]:
-    """(ru_text, is_translated) для записи с диска.
+    """(ru_text, is_translated) for an entry read from disk.
 
-    Правила:
-      - маркер старых скриптов -> не переведено;
-      - текст отличается от оригинала -> переведено;
-      - текст совпадает с оригиналом -> переведено только при первичном импорте
-        и только если в файле есть хотя бы один настоящий перевод (иначе это
-        просто копия исходного дерева). Совпадающий перевод — норма для имён
-        собственных, «OK» и чисел.
+    The rules:
+      - the old scripts' marker -> not translated;
+      - the text differs from the original -> translated;
+      - the text equals the original -> translated only on the first import, and
+        only when the file holds at least one real translation (otherwise it is
+        simply a copy of the source tree). A translation identical to the
+        original is normal for proper nouns, «OK» and numbers.
     """
     if LEGACY_MARKER in entry.comment_inline or not entry.text:
         return entry.text, False
@@ -62,7 +65,7 @@ def _ru_entry_state(
 def _file_has_real_translations(
     en_entries: dict[str, LocEntry], ru_entries: dict[str, LocEntry]
 ) -> bool:
-    """Есть ли в RU-файле хоть один перевод, отличающийся от оригинала."""
+    """Whether the translation file holds a single entry differing from the original."""
     for key, ru_entry in ru_entries.items():
         en_entry = en_entries.get(key)
         if (en_entry is not None and ru_entry.text
@@ -73,11 +76,11 @@ def _file_has_real_translations(
 
 
 class ScanCancelled(Exception):
-    """Сканирование прервано пользователем — изменения откатываются целиком."""
+    """The scan was interrupted by the user; the changes are rolled back whole."""
 
 
 def _format_of(conn: sqlite3.Connection, en_root: Path) -> loc_formats.LocFormat:
-    """Формат проекта: из файла проекта, а при первом скане — по дереву."""
+    """The project format: from the project file, and from the tree on the first scan."""
     from pdxloc import project as project_module
 
     stored = project_module.get_loc_format(conn)
@@ -90,11 +93,12 @@ def _format_of(conn: sqlite3.Connection, en_root: Path) -> loc_formats.LocFormat
 
 def _encodings_of(conn: sqlite3.Connection, fmt: loc_formats.LocFormat,
                   en_root: Path, ru_root: Path) -> tuple[str, str]:
-    """Кодировки дерева оригинала и дерева перевода.
+    """The encodings of the source tree and of the translation tree.
 
-    Раздельно, потому что они и вправду разные: ванильная CK2 лежит в cp1252, а
-    русский перевод — в cp1251. Кодировка перевода запоминается в проекте: ею
-    же экспорт будет писать, когда дерева под рукой может уже не быть.
+    Kept apart because they really do differ: vanilla CK2 lies in cp1252 while
+    its Russian translation lies in cp1251. The translation encoding is remembered
+    in the project: the export will write in it at a time when the tree may no
+    longer be at hand.
     """
     from pdxloc import project as project_module
 
@@ -135,7 +139,7 @@ def scan_project(
     stats = ScanStats()
     started_at = datetime.now(UTC).isoformat()
 
-    # --- 1. Разбор дерева оригинала ---
+    # --- 1. Parsing the source tree ---
     en_files = fmt.files(en_root, src_lang)
     stats.files_en = len(en_files)
     en_data: dict[str, dict[str, LocEntry]] = {}   # rel_path -> key -> entry
@@ -153,18 +157,18 @@ def scan_project(
         for e in lf.entries:
             if e.key in entries:
                 stats.duplicate_keys.append(f"{rel}: {e.key}")
-            # Пустое значение в оригинале — почти всегда недосмотр автора мода:
-            # ключ заводят заглушкой под ссылку из скрипта. Переводить нечего
-            # (строка уйдёт в «игнорировано»), но молчать нельзя — иначе о
-            # дефекте не узнает никто. По RU-дереву не считаем: там пустое
-            # значение значит просто «ещё не переведено».
+            # An empty value in the original is almost always an oversight by the mod
+            # author: a key is created as a stub for a reference from a script. There is
+            # nothing to translate — the row goes to «ignored» — but staying silent is not
+            # allowed, or nobody learns about the defect. It is not counted over the
+            # translation tree: there an empty value simply means «not translated yet».
             if not e.text.strip():
                 stats.empty_source_keys.append(f"{rel}: {e.key}")
-            entries[e.key] = e   # последний побеждает — так делает сама CK3
+            entries[e.key] = e   # the last one wins, as CK3 itself does
         en_data[rel] = entries
         file_trailing[rel] = lf.trailing
 
-    # --- 2. Разбор RU: пары к EN-файлам + осиротевшие RU-файлы ---
+    # --- 2. Parsing the translation: pairs for the source files, plus orphans ---
     def parse_ru_entries(path: Path, rel: str) -> dict[str, LocEntry]:
         lf = fmt.parse_file(path, language=tgt_lang, encoding=tgt_encoding)
         stats.parse_warnings.extend(lf.warnings)
@@ -172,10 +176,10 @@ def scan_project(
         for e in lf.entries:
             if e.key in entries:
                 stats.duplicate_keys_ru.append(f"{rel}: {e.key}")
-            entries[e.key] = e     # последний побеждает, как в самой игре
+            entries[e.key] = e     # the last one wins, as in the game itself
         return entries
 
-    ru_data: dict[str, dict[str, LocEntry]] = {}   # rel_path оригинала -> key -> запись
+    ru_data: dict[str, dict[str, LocEntry]] = {}   # rel_path of the original -> key -> entry
     for rel in en_data:
         rel_tgt = fmt.map_relpath(rel, src_lang, tgt_lang)
         ru_path = ru_root / rel_tgt
@@ -183,7 +187,7 @@ def scan_project(
             ru_data[rel] = parse_ru_entries(ru_path, rel_tgt)
             stats.files_ru += 1
 
-    orphan_ru: dict[str, dict[str, LocEntry]] = {}  # rel_path перевода -> key -> запись
+    orphan_ru: dict[str, dict[str, LocEntry]] = {}  # rel_path of the translation -> key -> entry
     if ru_root.is_dir():
         for p in fmt.files(ru_root, tgt_lang, skip_updated=True):
             rel_ru = p.relative_to(ru_root).as_posix()
@@ -192,7 +196,7 @@ def scan_project(
             orphan_ru[rel_ru] = parse_ru_entries(p, rel_ru)
             stats.files_ru += 1
 
-    # --- 3. Снимок состояния БД ---
+    # --- 3. A snapshot of the database state ---
     files_db = {
         r["rel_path"]: r
         for r in conn.execute("SELECT * FROM files WHERE project_id = ?", (project_id,))
@@ -221,7 +225,7 @@ def scan_project(
         return cur.lastrowid
 
     def record_source(unit_id: int, en_text: str, en_hash: str, version: str) -> None:
-        """Запомнить редакцию оригинала, если она новая для этой строки."""
+        """Remember a revision of the original when it is new for this row."""
         last = conn.execute(
             "SELECT en_hash FROM source_history WHERE unit_id = ? "
             "ORDER BY seen_at DESC, id DESC LIMIT 1", (unit_id,)).fetchone()
@@ -234,7 +238,7 @@ def scan_project(
         )
 
     def archive(rel: str, key: str, text: str) -> None:
-        """Перевод ключа, которого больше нет в оригинале, — в архив."""
+        """The translation of a key the original no longer has goes to the archive."""
         if not text:
             return
         cur = conn.execute(
@@ -243,7 +247,7 @@ def scan_project(
         if cur.rowcount:
             stats.archived += 1
 
-    # --- 4. Дифф-автомат по EN-ключам ---
+    # --- 4. The diff machine over the source keys ---
     seen_units: set[tuple[str, str]] = set()
     for rel, entries in en_data.items():
         file_id = ensure_file(rel)
@@ -263,9 +267,9 @@ def scan_project(
                 )
 
             if db_unit is None:
-                # новый ключ. Строку из одной разметки (и пустую) переводить
-                # нечего — копия оригинала в файле перевода этого не меняет; но
-                # если там всё же другой текст, уважаем его как перевод.
+                # a new key. A row of bare markup, or an empty one, has nothing to translate —
+                # a copy of the original in the translation file does not change that; but if
+                # there really is other text there, we respect it as a translation.
                 if has_nothing_to_translate(e.text) and (not disk_translated or disk_ru == e.text):
                     status, ru_text = Status.IGNORED.value, None
                     stats.auto_ignored += 1
@@ -290,15 +294,16 @@ def scan_project(
             if restored:
                 stats.restored += 1
 
-            # Перевод в базе разошёлся с переводом на диске: база главнее, но
-            # раньше правка с диска терялась молча, если EN тоже изменился.
+            # The translation in the database and the one on disk have parted ways: the
+            # database wins, but an edit made on disk used to be lost in silence whenever
+            # the original had changed as well.
             if (db_unit["ru_text"] is not None and disk_translated
                     and disk_ru != db_unit["ru_text"]):
                 stats.ru_conflicts += 1
                 stats.ru_conflict_list.append((rel, key, db_unit["ru_text"], disk_ru or ""))
 
             if db_unit["en_hash"] == new_hash:
-                # EN не менялся
+                # the original did not change
                 if status == Status.UNTRANSLATED.value and db_unit["ru_text"] is None and disk_translated:
                     conn.execute(
                         "UPDATE units SET ru_text = ?, status = ?, is_deleted = 0, "
@@ -317,7 +322,7 @@ def scan_project(
                     stats.unchanged += 1
                 continue
 
-            # Оригинал изменился: запоминаем редакцию и характер правки
+            # The original changed: remember the revision and the nature of the edit
             record_source(db_unit["id"], e.text, new_hash, e.version)
             kind = classify_change(db_unit["en_text"] or "", e.text)
             if kind == COSMETIC:
@@ -326,8 +331,8 @@ def scan_project(
                 stats.changed_meaningful += 1
 
             if status == Status.IGNORED.value:
-                # переводить было нечего: так и осталось — игнор сохраняем,
-                # появился текст — переводить
+                # there was nothing to translate and there still is not — keep the ignore;
+                # text appeared, so it needs translating
                 if has_nothing_to_translate(e.text):
                     conn.execute(
                         "UPDATE units SET en_text = ?, en_hash = ?, en_version = ?, is_deleted = 0, "
@@ -355,8 +360,9 @@ def scan_project(
                 )
                 stats.stale += 1
             elif status == Status.STALE.value:
-                # prev_en_text не трогаем: дифф — от текста, на котором основан перевод.
-                # Характер правки считаем от него же, а не от промежуточной редакции.
+                # prev_en_text is left alone: the diff is against the text the translation was
+                # based on. The nature of the edit is judged from the same text rather than
+                # from an intermediate revision.
                 kind_from_base = classify_change(db_unit["prev_en_text"] or "", e.text)
                 conn.execute(
                     "UPDATE units SET en_text = ?, en_hash = ?, en_version = ?, is_deleted = 0, "
@@ -368,12 +374,12 @@ def scan_project(
                 )
                 stats.stale += 1
             elif status in (Status.AUTO.value, Status.MACHINE.value):
-                # Подставленное автоматом устарело: сброс и повторный поиск в TM
-                # (bulk_apply ниже). Машинный перевод здесь же, а не в «устарело»:
-                # он сделан для прежнего текста, читать его никто не читал, и
-                # оставить как есть значило бы держать перевод чужой строки под
-                # видом почти готового — он ещё и уедет в мод по галке
-                # «включая машинный».
+                # What the machine filled in has gone stale: reset it and look in the memory
+                # again (bulk_apply below). Machine translation goes here rather than into
+                # «outdated»: it was made for the previous text, nobody has read it, and
+                # leaving it as it is would mean keeping the translation of another row in the
+                # guise of something nearly finished — and it would travel into the mod under
+                # the «including machine translation» checkbox.
                 conn.execute(
                     "UPDATE units SET en_text = ?, en_hash = ?, en_version = ?, "
                     "ru_text = NULL, status = ?, is_deleted = 0, line_no = ?, "
@@ -381,7 +387,7 @@ def scan_project(
                     (e.text, new_hash, e.version, Status.UNTRANSLATED.value,
                      e.line_no, e.comment_before, e.comment_inline, now, db_unit["id"]),
                 )
-            else:   # untranslated / orphaned-ставший-EN
+            else:   # untranslated, or an orphan that became a source row
                 new_status = status
                 ru_text = db_unit["ru_text"]
                 if disk_translated and ru_text is None:
@@ -394,19 +400,20 @@ def scan_project(
                      e.line_no, e.comment_before, e.comment_inline, now, db_unit["id"]),
                 )
 
-        # ключи, которых нет в оригинале: перевод в архив, строку не заводим
+        # keys the original does not have: the translation goes to the archive and no
+        # row is created
         for key, ru_entry in ru_entries.items():
             if key not in entries and LEGACY_MARKER not in ru_entry.comment_inline:
                 archive(rel, key, ru_entry.text)
 
-    # --- 5. Файлы перевода без пары в оригинале: только архив ---
+    # --- 5. Translation files with no counterpart: archive only ---
     for rel_ru, entries in orphan_ru.items():
         stats.orphan_ru_files.append(rel_ru)
         for key, ru_entry in entries.items():
             if LEGACY_MARKER not in ru_entry.comment_inline:
                 archive(rel_ru, key, ru_entry.text)
 
-    # --- 6. Исчезнувшие ключи и файлы ---
+    # --- 6. Vanished keys and files ---
     for (rel, key), db_unit in units_db.items():
         if (rel, key) in seen_units or db_unit["is_deleted"]:
             continue
@@ -415,19 +422,19 @@ def scan_project(
             (now, db_unit["id"]),
         )
         stats.deleted += 1
-        # перевод исчезнувшего ключа сохраняем в архиве
+        # the translation of a vanished key is kept in the archive
         if db_unit["ru_text"]:
             archive(rel, key, db_unit["ru_text"])
     for rel, row in files_db.items():
         if rel not in en_data and not row["is_deleted"]:
             conn.execute("UPDATE files SET is_deleted = 1 WHERE id = ?", (row["id"],))
 
-    # --- 7. Строки без переводимого текста, память переводов ---
+    # --- 7. Rows with nothing to translate, and the translation memory ---
     stats.auto_ignored += unit_ops.auto_ignore_untranslated(conn, project_id)
     tm.feed_from_project(conn, project_id)
     stats.auto_filled = tm.bulk_apply(conn, project_id)
 
-    # --- 8. История сканирования ---
+    # --- 8. The scan history ---
     conn.execute(
         "INSERT INTO scan_history (project_id, started_at, finished_at, stats_json) VALUES (?, ?, ?, ?)",
         (project_id, started_at, datetime.now(UTC).isoformat(),
@@ -437,8 +444,8 @@ def scan_project(
         "UPDATE projects SET last_opened_at = datetime('now') WHERE id = ?", (project_id,)
     )
     conn.commit()
-    # Весь скан — одна транзакция, и журнал к этому моменту размером со всё
-    # записанное. Сбрасываем его сразу, а не оставляем следующему открытию.
+    # The whole scan is one transaction, and by this point the journal is the size
+    # of everything written. We flush it now rather than leave it to the next open.
     from pdxloc.project import checkpoint
 
     checkpoint(conn)
