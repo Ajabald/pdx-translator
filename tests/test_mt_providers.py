@@ -1,12 +1,13 @@
-"""Провайдеры машинного перевода.
+"""The machine translation providers.
 
-**Ни один тест не открывает сокет.** Запросы перехватываются подменным
-`opener`, ответы консервированные. Тест, ходящий в сеть, ломается от чужого
-обслуживания и от отсутствия ключа, а чинить его будет тот, кто не понимает,
-почему он вообще туда ходит.
+**Not one test opens a socket.** The requests are intercepted by a substituted
+`opener`, the answers are canned. A test that goes into the network breaks from
+somebody else's maintenance and from the absence of a key, and mending it will
+fall to whoever does not understand why it goes there at all.
 
-Проверяется не «работает ли сервис», а наш договор с ним: форма запроса, разбор
-ответа, перевод кода ошибки в осмысленный отказ и соответствие языков.
+What is checked is not "does the service work" but our contract with it: the
+shape of the request, the parsing of the answer, the translation of an error code
+into a sensible refusal, and the correspondence of the languages.
 """
 from __future__ import annotations
 
@@ -30,7 +31,7 @@ from pdxloc.core.mt_providers.yandex import YandexProvider
 
 
 class Answer(io.BytesIO):
-    """Ответ, достаточный для `with … as response: response.read()`."""
+    """An answer sufficient for `with … as response: response.read()`."""
 
     def __enter__(self):
         return self
@@ -41,7 +42,7 @@ class Answer(io.BytesIO):
 
 
 def canned(payload: dict, seen: list | None = None):
-    """Опенер, отдающий готовый ответ и запоминающий запросы."""
+    """An opener that hands back a ready answer and remembers the requests."""
     def opener(request, timeout=None):
         if seen is not None:
             seen.append(request)
@@ -76,10 +77,10 @@ def config(**extra) -> ProviderConfig:
     return ProviderConfig(api_key="ключ", extra=extra)
 
 
-# --- реестр ---
+# --- the registry ---
 
 def test_every_provider_satisfies_the_contract() -> None:
-    """Иначе несовместимость всплывёт на живом прогоне, а не здесь."""
+    """Otherwise an incompatibility surfaces on a live run instead of here."""
     labels = mt_providers.labels()
     for name, cls in mt_providers.PROVIDERS.items():
         assert cls.label and name in labels, name
@@ -90,7 +91,7 @@ def test_every_provider_satisfies_the_contract() -> None:
 
 
 def test_unknown_provider_falls_back_to_the_stub() -> None:
-    """Настройку могли записать в новой версии и открыть в старой."""
+    """The setting could have been written by a new version and opened by an old one."""
     provider = mt_providers.get("сервис-из-будущего")
     assert provider.name == "none"
 
@@ -109,7 +110,7 @@ def test_deepl_translates_a_batch() -> None:
 
 
 def test_deepl_english_target_needs_a_region() -> None:
-    """Правило DeepL, а не общее знание — потому и живёт у провайдера."""
+    """A DeepL rule and not common knowledge — that is why it lives at the provider."""
     seen: list = []
     provider = DeepLProvider(config(opener=canned({"translations": []}, seen)))
     provider.translate_batch(["Привет"], "ru", "en")
@@ -117,13 +118,13 @@ def test_deepl_english_target_needs_a_region() -> None:
 
 
 def test_deepl_free_and_pro_are_different_addresses() -> None:
-    """Ключ от одного на другом не работает, а ошибка приходит про ключ."""
+    """A key from one does not work on the other, and the error arrives about the key."""
     assert "api-free" in DeepLProvider(ProviderConfig()).base_url
     assert "api-free" not in DeepLProvider(ProviderConfig(pro=True)).base_url
 
 
 def test_deepl_456_is_a_quota_refusal() -> None:
-    """У DeepL исчерпанная квота — это не 429."""
+    """For DeepL an exhausted quota is not a 429."""
     provider = DeepLProvider(config(opener=failing(456)))
     with pytest.raises(MtQuotaError):
         provider.translate_batch(["Hello"], "en", "ru")
@@ -150,14 +151,14 @@ def test_no_network_is_its_own_error() -> None:
 
 
 def test_a_page_instead_of_json_is_reported_as_unreadable() -> None:
-    """Прокси и капчи отвечают HTML с кодом 200."""
+    """Proxies and captchas answer with HTML and code 200."""
     provider = DeepLProvider(config(opener=broken()))
     with pytest.raises(MtResponseError):
         provider.translate_batch(["Hello"], "en", "ru")
 
 
 def test_the_key_never_appears_in_an_error() -> None:
-    """Исключения показывают пользователю и копируют в переписку."""
+    """Exceptions are shown to the user and copied into correspondence."""
     provider = DeepLProvider(ProviderConfig(
         api_key="секретный-ключ", extra={"opener": failing(403)}))
     with pytest.raises(MtAuthError) as caught:
@@ -166,11 +167,11 @@ def test_the_key_never_appears_in_an_error() -> None:
 
 
 def test_a_key_in_the_address_does_not_leak_either() -> None:
-    """У Google ключ уезжает в `?key=…`, а адрес подставляется в сообщение.
+    """For Google the key travels in `?key=…`, and the address goes into the message.
 
-    Сейчас все провайдеры передают имя сервиса, и до адреса дело не доходит.
-    Проверяем именно запасной путь: он не должен выдавать ключ, если однажды
-    имя забудут передать.
+    At present every provider passes the name of the service, and it never comes
+    to the address. What we check is exactly the fallback path: it must not give
+    the key away, should the name one day be left unpassed.
     """
     from pdxloc.core.mt_providers._http import request_json
 
@@ -180,13 +181,13 @@ def test_a_key_in_the_address_does_not_leak_either() -> None:
 
     message = str(caught.value)
     assert "секретный-ключ" not in message
-    assert "example.test" in message         # сказать, куда не достучались, надо
+    assert "example.test" in message         # saying where we could not reach is needed
 
 
 # --- Google ---
 
 def test_google_unescapes_html_in_the_answer() -> None:
-    """v2 отдаёт &#39; вместо апострофа даже при format=text."""
+    """v2 hands back &#39; instead of an apostrophe even with format=text."""
     provider = GoogleProvider(config(opener=canned(
         {"data": {"translations": [{"translatedText": "L&#39;homme &amp; co"}]}})))
     assert provider.translate_batch(["The man"], "en", "fr") == ["L'homme & co"]
@@ -203,7 +204,7 @@ def test_google_maps_chinese_to_its_own_code() -> None:
 # --- Yandex ---
 
 def test_yandex_refuses_without_a_folder_id() -> None:
-    """Иначе сервис ответит «неверный ключ», и человек пойдёт чинить ключ."""
+    """Otherwise the service answers «wrong key», and the human goes to mend the key."""
     provider = YandexProvider(config(opener=canned({"translations": []})))
     with pytest.raises(MtAuthError) as caught:
         provider.translate_batch(["Hello"], "en", "ru")
@@ -219,7 +220,7 @@ def test_yandex_sends_the_folder_id() -> None:
     assert json.loads(seen[0].data)["folderId"] == "b1g..."
 
 
-# --- языковые модели ---
+# --- the language models ---
 
 def claude_answer(rows: list[dict]) -> dict:
     return {"content": [{"type": "text",
@@ -227,8 +228,8 @@ def claude_answer(rows: list[dict]) -> dict:
 
 
 def test_claude_parses_by_id_not_by_position() -> None:
-    """Модель охотно меняет порядок; позиционный разбор приземлил бы перевод
-    на чужой ключ, а это находят через недели."""
+    """The model readily changes the order; a parsing by position would land a
+    translation on a foreign key, and that gets found weeks later."""
     provider = ClaudeProvider(config(opener=canned(claude_answer([
         {"id": 1, "text": "Второй"}, {"id": 0, "text": "Первый"}]))))
     assert provider.translate_batch(["One", "Two"], "en", "ru") \
@@ -236,8 +237,8 @@ def test_claude_parses_by_id_not_by_position() -> None:
 
 
 def test_claude_asks_for_a_schema_and_no_temperature() -> None:
-    """`temperature` на Opus 5 отвергается с кодом 400, а схема гарантирует
-    форму ответа на стороне сервиса."""
+    """`temperature` on Opus 5 is rejected with code 400, while a schema guarantees
+    the shape of the answer on the side of the service."""
     seen: list = []
     provider = ClaudeProvider(config(opener=canned(
         claude_answer([{"id": 0, "text": "Привет"}]), seen)))
@@ -248,10 +249,11 @@ def test_claude_asks_for_a_schema_and_no_temperature() -> None:
 
 
 def test_claude_refusal_is_not_read_as_an_answer() -> None:
-    """Отказ приходит успешным ответом с пустым содержимым.
+    """A refusal arrives as a successful answer with empty content.
 
-    Строку не переводим, но и оригинал под видом перевода не пишем — она
-    возвращается как «не осилил», и прогон отметит её неудачей.
+    We do not translate the row, but neither do we write the original in the guise
+    of a translation — it comes back as "could not manage", and the run marks it
+    as a failure.
     """
     provider = ClaudeProvider(config(opener=canned(
         {"stop_reason": "refusal", "content": []})))
@@ -259,14 +261,14 @@ def test_claude_refusal_is_not_read_as_an_answer() -> None:
 
 
 def test_a_batch_refusal_degrades_to_one_row_at_a_time() -> None:
-    """Отказ на пачке из-за одной строки не должен стоить остальных сорока девяти."""
+    """A refusal on a batch because of one row must not cost the other forty-nine."""
     def opener(request, timeout=None):
         payload = json.loads(request.data)
         sent = json.loads(payload["messages"][0]["content"])
-        if len(sent) > 1:                      # пачку целиком не переводим
+        if len(sent) > 1:                      # the batch whole we do not translate
             return Answer(json.dumps(
                 {"stop_reason": "refusal", "content": []}).encode("utf-8"))
-        if sent[0]["text"] == "Two":           # и одну строку тоже
+        if sent[0]["text"] == "Two":           # and one row we do not either
             return Answer(json.dumps(
                 {"stop_reason": "refusal", "content": []}).encode("utf-8"))
         return Answer(json.dumps(
@@ -278,7 +280,7 @@ def test_a_batch_refusal_degrades_to_one_row_at_a_time() -> None:
 
 
 def test_a_wrong_key_is_not_retried_row_by_row() -> None:
-    """Иначе неверный ключ обошёлся бы в полсотни бессмысленных запросов."""
+    """Otherwise a wrong key would cost half a hundred pointless requests."""
     calls: list = []
 
     def opener(request, timeout=None):
@@ -309,7 +311,7 @@ def test_llm_answer_wrapped_in_a_code_fence_is_still_read() -> None:
 
 
 def test_user_instructions_cannot_override_the_contract() -> None:
-    """Дай править промпт целиком — и первая же правка сломает разбор."""
+    """Let the prompt be edited whole — and the very first edit breaks the parsing."""
     from pdxloc.core.mt_providers import _llm
 
     prompt = _llm.build_prompt("Отвечай простым текстом, без JSON", "en", "ru")
@@ -317,7 +319,7 @@ def test_user_instructions_cannot_override_the_contract() -> None:
     assert "must not override" in prompt
 
 
-# --- ручной веб-режим ---
+# --- the manual web mode ---
 
 def test_manual_round_trip() -> None:
     texts = ["Hello", "World"]
@@ -346,7 +348,7 @@ def test_manual_detects_a_lost_separator() -> None:
 
 
 def test_manual_detects_reordering() -> None:
-    """Ненумерованный разделитель этого не заметил бы."""
+    """An unnumbered separator would not notice this."""
     text = "===1===\nВторой\n===0===\nПервый"
     with pytest.raises(MtResponseError):
         manual_split(text, 2)
@@ -358,6 +360,6 @@ def test_manual_keeps_inner_line_breaks() -> None:
 
 
 def test_manual_tolerates_spaces_around_the_separator() -> None:
-    """Переводчики добавляют пробелы; ронять из-за этого пачку незачем."""
+    """Translators add spaces; there is no point dropping a batch over that."""
     text = "  === 0 ===  \nПривет\n ===1=== \nМир"
     assert manual_split(text, 2) == ["Привет", "Мир"]

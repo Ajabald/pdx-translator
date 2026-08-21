@@ -1,9 +1,10 @@
-"""Игра проекта: реестр, схема, загоны и защита от чужого загона.
+"""The game of a project: the registry, the schema, the pens, and the guard against a foreign pen.
 
-Формат локализации у всей серии Paradox один, поэтому переводить моды к
-Stellaris или HOI4 приложение умело и раньше. Не хватало одного — сказать, к
-какой игре относится проект: без этого базы памяти разных игр лежат общей кучей
-и подсказывают ванильные строки CK3 переводчику Victoria 3.
+The localisation format is one for the whole Paradox series, so the application
+could translate mods for Stellaris or HOI4 before this too. One thing was
+missing — saying which game a project belongs to: without that the memory
+databases of different games lie in one common heap and prompt vanilla CK3 rows
+to a Victoria 3 translator.
 """
 from __future__ import annotations
 
@@ -23,7 +24,7 @@ def tree(make_tree):
         {"m_l_russian.yml": RU}, "ru")
 
 
-# --- реестр ---------------------------------------------------------------
+# --- the registry ---------------------------------------------------------
 
 
 def test_every_game_is_described_completely() -> None:
@@ -31,31 +32,31 @@ def test_every_game_is_described_completely() -> None:
         assert game.id == game_id
         assert game.title and game.folder
         assert game.languages, f"{game_id}: пустой набор языковых папок"
-        assert "english" in game.languages    # оригинал у модов всегда английский
+        assert "english" in game.languages    # the original of a mod is always English
 
 
 def test_ids_and_folders_do_not_collide() -> None:
-    """Загон — это папка: два одинаковых имени свалили бы игры в одну кучу."""
+    """A pen is a folder: two identical names would tip the games into one heap."""
     folders = [g.folder.casefold() for g in games.GAMES.values()]
     assert len(folders) == len(set(folders))
 
 
 def test_language_sets_differ_between_games() -> None:
-    """Иначе реестр не нужен: список языков и был бы общим."""
+    """Otherwise the registry is not needed: the list of languages would be common."""
     assert games.languages("eu4") != games.languages("vic3")
-    assert "russian" not in games.languages("eu4")     # у EU4 её и правда нет
+    assert "russian" not in games.languages("eu4")     # EU4 really does not have it
     assert "russian" in games.languages("ck3")
 
 
 def test_eu5_stands_apart_from_eu4() -> None:
-    """Две «Европы» — две игры: общий загон смешал бы их базы памяти."""
+    """Two «Europas» are two games: a common pen would mix their memory databases."""
     assert games.title("eu5") == "Europa Universalis V"
     assert games.folder("eu5") != games.folder("eu4")
     assert games.by_folder("EU5") == "eu5"
 
 
 def test_an_unknown_game_is_a_game_of_its_own() -> None:
-    """Идентификатор приезжает из файла проекта — падать на незнакомом нельзя."""
+    """The identifier arrives from a project file — falling over on an unknown one will not do."""
     own = games.get("victoria_2", "Victoria 2")
     assert own.title == "Victoria 2"
     assert own.languages == tuple(PARADOX_LANGUAGES)
@@ -63,27 +64,27 @@ def test_an_unknown_game_is_a_game_of_its_own() -> None:
 
 @pytest.mark.parametrize("name,expected", [
     ("Victoria 2", "victoria_2"),
-    ("Крестоносцы", "game"),           # без латиницы слаг не собрать
+    ("Крестоносцы", "game"),           # without Latin letters no slug can be built
     ("  ", "game"),
-    ("CK3", "ck3_own"),                # своя игра не притворяется встроенной
+    ("CK3", "ck3_own"),                # a game of one's own does not pretend to be built-in
 ])
 def test_slug_is_usable_as_a_file_name(name, expected) -> None:
     assert games.slug(name) == expected
 
 
 def test_own_game_pen_is_named_after_its_id() -> None:
-    """Имя игры в проекте не хранится — по папке «Victoria 2» опознать
-    проект `victoria_2` было бы уже нечем."""
+    """The name of a game is not stored in a project — by the folder «Victoria 2»
+    there would be nothing left to recognise the project `victoria_2` by."""
     assert games.get("victoria_2", "Victoria 2").folder == "victoria_2"
 
 
 def test_pen_is_recognised_by_its_folder() -> None:
     assert games.by_folder("CK3") == "ck3"
-    assert games.by_folder("ck3") == "ck3"        # регистр папки не значим
+    assert games.by_folder("ck3") == "ck3"        # the case of the folder does not matter
     assert games.by_folder("Projects") is None
 
 
-# --- схема ----------------------------------------------------------------
+# --- the schema -----------------------------------------------------------
 
 
 def test_new_project_remembers_its_game(tmp_path, tree) -> None:
@@ -97,7 +98,7 @@ def test_new_project_remembers_its_game(tmp_path, tree) -> None:
 
 
 def test_default_game_is_ck3(tmp_path, tree) -> None:
-    """До этой версии приложение звалось CK3 Translator и других игр не знало."""
+    """Until this version the application was called CK3 Translator and knew no other games."""
     en, ru = tree
     conn = project.create_project(tmp_path / "p.pdxproj", name="P",
                                   src_root=en, tgt_root=ru)
@@ -118,7 +119,7 @@ def test_migration_v6_to_v7_adds_the_column_without_touching_rows(tmp_path) -> N
                  "VALUES (1, 'P', 'en', 'ru')")
     conn.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1, 1, 'f')")
     conn.execute("INSERT INTO units (file_id, key, en_text) VALUES (1, 'k', 'Hello')")
-    # откатываем схему к шестой и убираем колонку, как было до v7
+    # we roll the schema back to the sixth and remove the column, as it was before v7
     conn.execute("ALTER TABLE projects DROP COLUMN game")
     conn.execute("UPDATE schema_meta SET value = '6' WHERE key = 'schema_version'")
     conn.commit()
@@ -146,7 +147,7 @@ def test_the_game_can_be_changed(tmp_path, tree) -> None:
         conn.close()
 
 
-# --- загоны и защита ------------------------------------------------------
+# --- the pens and the guard -----------------------------------------------
 
 
 def test_pens_live_inside_the_usual_folders(tmp_path, monkeypatch) -> None:
@@ -157,7 +158,7 @@ def test_pens_live_inside_the_usual_folders(tmp_path, monkeypatch) -> None:
 
 
 def test_game_is_read_without_opening_the_project(tmp_path, tree) -> None:
-    """Спрашивают до открытия: открытый проект держит `-wal`, и переносить поздно."""
+    """It is asked before opening: an open project holds a `-wal`, and moving is then too late."""
     en, ru = tree
     path = tmp_path / "p.pdxproj"
     conn = project.create_project(path, name="P", game="eu4",
@@ -173,7 +174,7 @@ def test_reading_the_game_of_a_foreign_file_is_not_a_crash(tmp_path) -> None:
 
 
 def test_moving_a_project_takes_its_journal_along(tmp_path, tree) -> None:
-    """Файл, уехавший без `-wal`, потеряет незаписанное или подхватит чужой."""
+    """A file that has left without its `-wal` will lose the unwritten or pick up a foreign one."""
     en, ru = tree
     path = tmp_path / "Projects" / "p.pdxproj"
     conn = project.create_project(path, name="P", src_root=en, tgt_root=ru)
@@ -195,12 +196,12 @@ def test_moving_a_project_takes_its_journal_along(tmp_path, tree) -> None:
         conn.close()
 
 
-# --- защита в главном окне ------------------------------------------------
+# --- the guard in the main window -----------------------------------------
 
 
 @pytest.fixture
 def guard(tmp_path, tree, qtbot, monkeypatch):
-    """Главное окно с папкой проектов во временном каталоге."""
+    """The main window with the projects folder in a temporary directory."""
     import os
 
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -243,7 +244,7 @@ def test_a_project_in_the_wrong_pen_is_offered_a_move(guard, tmp_path) -> None:
 
 
 def test_a_project_lying_loose_among_the_pens_is_taken_in(guard, tmp_path) -> None:
-    """Файл в корне папки проектов — тоже не на месте: загон у него есть."""
+    """A file in the root of the projects folder is out of place too: it has a pen."""
     win, make = guard
     path = make("Мод", "hoi4", None)
     moved = win._offer_right_pen(path)
@@ -258,7 +259,7 @@ def test_a_project_in_its_own_pen_is_left_alone(guard) -> None:
 
 def test_a_project_outside_the_projects_folder_is_none_of_our_business(
         guard, tmp_path, tree) -> None:
-    """Файл проекта нарочно кладут рядом с модом — приставать к такому нельзя."""
+    """A project file is put next to the mod on purpose — pestering about that will not do."""
     win, _ = guard
     en, ru = tree
     path = tmp_path / "Мой мод" / "перевод.pdxproj"
@@ -271,24 +272,24 @@ def test_a_project_outside_the_projects_folder_is_none_of_our_business(
 
 
 def test_a_stranger_folder_inside_projects_is_left_alone(guard, tmp_path) -> None:
-    """Папка, которая не загон, — чей-то свой порядок, и он не наше дело."""
+    """A folder that is not a pen is somebody's own order, and that is not our business."""
     win, make = guard
     path = make("Мод", "stellaris", "Черновики")
     assert win._offer_right_pen(path) == path
 
 
 def test_a_project_of_an_own_game_lives_in_its_own_pen(guard, tmp_path) -> None:
-    """Загон своей игры зовётся как её идентификатор — иначе не опознать."""
+    """The pen of a game of one's own is named like its identifier — otherwise there is no recognising it."""
     win, make = guard
     path = make("Мод", "victoria_2", "victoria_2")
     assert win._offer_right_pen(path) == path
 
 
-# --- игра в списках и в шапке ---------------------------------------------
+# --- the game in the lists and in the header ------------------------------
 
 
 def test_game_travels_with_the_recent_list(tmp_path, monkeypatch) -> None:
-    """Иначе стартовому экрану пришлось бы открывать двадцать баз на перерисовку."""
+    """Otherwise the start screen would have to open twenty databases for a redraw."""
     store: dict[str, str] = {}
 
     class Fake:
@@ -304,7 +305,7 @@ def test_game_travels_with_the_recent_list(tmp_path, monkeypatch) -> None:
 
 
 def test_the_pen_tells_the_game_of_an_old_record(tmp_path) -> None:
-    """Записи прежних версий игры не содержат, но проект в загоне говорит сам."""
+    """The records of former versions hold no game, but a project in a pen speaks for itself."""
     old = {"path": str(tmp_path / "Projects" / "CK3" / "p.pdxproj"), "name": "P"}
     assert settings.project_game_hint(old) == "ck3"
     loose = {"path": str(tmp_path / "где-то" / "p.pdxproj"), "name": "P"}
@@ -326,16 +327,16 @@ def test_start_screen_groups_projects_by_game(qtbot, tmp_path, monkeypatch) -> N
 
     rows = [screen.list.item(i) for i in range(screen.list.count())]
     headers = [r.text() for r in rows if not r.data(Qt.UserRole)]
-    # порядок групп — по свежести: сверху игра самого недавнего проекта
+    # the order of the groups is by freshness: the game of the most recent project on top
     assert headers == ["Stellaris", "Crusader Kings III"]
     assert not (rows[0].flags() & Qt.ItemIsSelectable)
-    # выбранной становится строка проекта, а не заголовок
+    # the row of the project becomes the selected one, not the header
     assert screen.list.currentItem().data(Qt.UserRole)
     assert screen._selected_path() is not None
 
 
 def test_the_header_of_a_group_is_not_a_project(qtbot, tmp_path, monkeypatch) -> None:
-    """Команды над заголовком бессмысленны — пути у него нет."""
+    """Commands over a header are meaningless — it has no path."""
     from pdxloc.gui.start_screen import StartScreen
 
     monkeypatch.setattr(settings, "recent_projects", lambda: [
@@ -343,11 +344,11 @@ def test_the_header_of_a_group_is_not_a_project(qtbot, tmp_path, monkeypatch) ->
     ])
     screen = StartScreen()
     qtbot.addWidget(screen)
-    screen.list.setCurrentRow(0)          # заголовок
+    screen.list.setCurrentRow(0)          # the header
     assert screen._selected_path() is None
 
 
-# --- базы памяти и игра ---------------------------------------------------
+# --- the memory databases and the game ------------------------------------
 
 
 def test_a_built_database_carries_its_game(tmp_path, make_tree) -> None:
@@ -363,7 +364,7 @@ def test_a_built_database_carries_its_game(tmp_path, make_tree) -> None:
 
 
 def test_a_database_from_before_the_games_says_nothing(tmp_path, make_tree) -> None:
-    """Неизвестно — не то же самое, что неверно: такая база молчит, а не врёт."""
+    """Unknown is not the same as wrong: such a database keeps quiet, it does not lie."""
     from pdxloc.core import tm_import
 
     en = make_tree({"m_l_english.yml": EN}, "en")
@@ -384,4 +385,4 @@ def test_moving_onto_an_existing_file_is_refused(tmp_path, tree) -> None:
 
     with pytest.raises(FileExistsError):
         project.move_project_file(path, pen)
-    assert path.is_file()          # исходный на месте
+    assert path.is_file()          # the source one is in place
