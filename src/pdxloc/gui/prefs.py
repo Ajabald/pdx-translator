@@ -1,13 +1,13 @@
-"""Настройки, влияющие на вид и поведение интерфейса.
+"""Settings that shape how the interface looks and behaves.
 
-`settings.py` — сырое хранилище (QSettings), и оно намеренно умеет работать без
-Qt: `_get` ловит ImportError ради безоконных режимов. Здесь, наоборот, живут
-значения по умолчанию, типизированные геттеры и оповещение о смене: диалог
-параметров пишет сюда, а панели перерисовываются по сигналу, а не по перезапуску
-приложения.
+`settings.py` is the raw store (QSettings), and it deliberately works without Qt:
+`_get` catches ImportError for the windowless modes. Here, by contrast, live the
+defaults, the typed getters and the change notification: the preferences dialog
+writes here, and the panels repaint on a signal rather than on a restart of the
+application.
 
-Заводить настройку без живой точки применения нельзя: мёртвая галка хуже
-отсутствующей — она обещает то, чего не делает.
+A setting must not be added without a live point where it applies: a dead
+checkbox is worse than a missing one, because it promises what it does not do.
 """
 from __future__ import annotations
 
@@ -26,28 +26,28 @@ DEFAULTS: dict[str, object] = {
     "detail/highlight_changes": True,
     "detail/highlight_terms": True,
     "backup/keep": 5,
-    "tm/min_score": 60,          # проценты — в UI целый спинбокс
+    "tm/min_score": 60,          # a percentage; in the UI it is an integer spin box
     "tm/suggestions": 8,
-    # Машинный перевод. Ключей доступа здесь нет намеренно: они по одному на
-    # провайдера и хранятся защищёнными (см. `core/mt.api_key`), а `get` отдал
-    # бы защищённую строку вместо ключа.
+    # Machine translation. The access keys are deliberately not here: there is one
+    # per provider and they are stored protected (see `core/mt.api_key`), while
+    # `get` would hand back the protected string instead of the key.
     "mt/provider": "none",
-    "mt/deepl_pro": False,       # у DeepL это другой адрес, не тариф
-    "mt/llm_model": "",          # пусто — умолчание провайдера
-    "mt/llm_prompt": "",         # пожелания пользователя, а не договор о формате
-    "mt/yandex_folder": "",      # у Yandex одного ключа не хватает
-    "mt/char_budget": 4500,      # символов в одном запросе
-    "mt/throttle_ms": 250,       # пауза между запросами: 150 мс упираются в лимиты
-    "mt/retries": 3,             # повторы по исчерпанной квоте
+    "mt/deepl_pro": False,       # with DeepL this is another address, not a plan
+    "mt/llm_model": "",          # empty means the provider's own default
+    "mt/llm_prompt": "",         # the user's wishes, not the format contract
+    "mt/yandex_folder": "",      # with Yandex a key alone is not enough
+    "mt/char_budget": 4500,      # characters in a single request
+    "mt/throttle_ms": 250,       # pause between requests: 150 ms runs into the limits
+    "mt/retries": 3,             # retries after an exhausted quota
     "mt/timeout_sec": 30,
     "mt/manual_separator": "===%d===",
-    "mt/manual_ascii_tokens": False,   # {{N}} вместо ⟦N⟧ для ручного режима
-    "export/include_machine": False,   # машинный перевод в мод — осознанный выбор
+    "mt/manual_ascii_tokens": False,   # {{N}} instead of ⟦N⟧ for the manual route
+    "export/include_machine": False,   # machine translation into the mod is a deliberate choice
 }
 
 
 class _Notifier(QObject):
-    changed = Signal(str)        # какой ключ поменяли
+    changed = Signal(str)        # which key was changed
 
 
 notifier = _Notifier()
@@ -57,7 +57,7 @@ def get(key: str):
     default = DEFAULTS[key]
     value = settings.qsettings().value(key, default)
     if isinstance(default, bool):
-        # QSettings возвращает строку 'true'/'false' из реестра
+        # QSettings returns the string 'true'/'false' from the registry
         return value if isinstance(value, bool) else str(value).lower() == "true"
     if isinstance(default, int):
         try:
@@ -67,7 +67,7 @@ def get(key: str):
     return value
 
 
-def set(key: str, value) -> None:   # noqa: A001 — читается как prefs.set(...)
+def set(key: str, value) -> None:   # noqa: A001 — it reads as prefs.set(...)
     if get(key) == value:
         return
     settings.qsettings().setValue(key, value)

@@ -1,23 +1,24 @@
-"""Диагностический лог: единственный ответ на «оно упало».
+"""The diagnostic log: the only answer to «it crashed».
 
-Публичный релиз — это чужие машины, к которым не подойти. Без лога на жалобу
-«не работает» сказать нечего: воспроизвести чужой мод, чужую игру и чужой
-Windows нельзя, а трассировка приходит одним файлом.
+A public release means other people's machines, ones you cannot walk up to.
+Without a log there is nothing to say to «it does not work»: somebody else's mod,
+somebody else's game and somebody else's Windows cannot be reproduced, while a
+traceback arrives as a single file.
 
-Три решения, каждое со своей причиной:
+Three decisions, each with its own reason:
 
-* **файл рядом с приложением**, а не в `%APPDATA%`. Приложение переносимое —
-  живёт хоть на флешке, — и лог должен уезжать вместе с ним. `app_root()` уже
-  умеет отличать сборку от исходников;
-* **`RotatingFileHandler` из стандартной библиотеки**. Единственная зависимость
-  этого проекта — PySide6, и заводить вторую ради записи в файл не станем. Без
-  ротации файл рос бы вечно на машине, куда никто не заглядывает;
-* **`sys.excepthook`**. Ради него всё и делается: необработанное исключение в
-  Qt-приложении сейчас уходит в никуда — окно продолжает стоять, человек видит
-  «ничего не произошло», и рассказать об этом ему нечем.
+* **the file sits next to the application**, not in `%APPDATA%`. The application
+  is portable — it lives on a flash drive if you like — and the log has to travel
+  with it. `app_root()` already knows a build from the sources;
+* **`RotatingFileHandler` from the standard library**. This project has one
+  dependency, PySide6, and a second will not be added for writing to a file.
+  Without rotation the file would grow forever on a machine nobody looks at;
+* **`sys.excepthook`**. It is what all of this is for: an unhandled exception in
+  a Qt application currently goes nowhere — the window stays up, the person sees
+  «nothing happened», and has nothing to report it with.
 
-Модуль **не импортирует Qt**: `--scan-cli` работает без PySide6 и обязан
-продолжать, а лог нужен ему ровно так же.
+The module **does not import Qt**: `--scan-cli` works without PySide6 and must
+keep doing so, and it needs the log just as much.
 """
 from __future__ import annotations
 
@@ -29,8 +30,8 @@ from pathlib import Path
 
 LOG_NAME = "pdx-translator.log"
 
-# Мегабайта хватает на несколько сеансов с трассировками, а две копии позволяют
-# спросить «а что было в прошлый раз» — обычно ломается не с первого запуска.
+# A megabyte is enough for several sessions with tracebacks, and two copies let
+# you ask «what happened last time» — things usually break on a later run.
 MAX_BYTES = 1_000_000
 BACKUPS = 2
 
@@ -44,13 +45,13 @@ def log_path() -> Path:
 
 
 def setup(*, level: int = logging.INFO) -> Path | None:
-    """Завести файловый лог и перехват необработанных исключений.
+    """Set up the log file and the catch for unhandled exceptions.
 
-    Возвращает путь к файлу или None, если писать не удалось. **Молчаливый
-    отказ здесь намеренный**: приложение, которое не запускается из-за того,
-    что не смогло завести лог, — хуже приложения без лога. Каталог бывает
-    только на чтение (флешка с защитой, `Program Files` без прав), и это не
-    повод не работать.
+    Returns the path to the file, or None if writing was not possible. **The
+    silent failure here is deliberate**: an application that will not start
+    because it could not open a log is worse than an application with no log. The
+    directory is sometimes read-only — a write-protected flash drive, `Program
+    Files` without rights — and that is no reason to refuse to work.
     """
     global _configured
     if _configured:
@@ -77,7 +78,7 @@ def setup(*, level: int = logging.INFO) -> Path | None:
 
 
 def _log_environment() -> None:
-    """Три строки, снимающие половину вопросов ещё до чтения трассировки."""
+    """Three lines that answer half the questions before the traceback is read."""
     from pdxloc import __version__
 
     log = logging.getLogger("pdxloc")
@@ -88,11 +89,11 @@ def _log_environment() -> None:
 
 
 def _log_uncaught(exc_type, exc, tb) -> None:
-    """Записать необработанное исключение и отдать его прежнему обработчику.
+    """Log an unhandled exception and hand it on to the previous hook.
 
-    Прежний зовётся обязательно: без него исчезнет привычный вывод в консоль
-    при запуске из исходников, а `KeyboardInterrupt` перестанет выглядеть
-    прерыванием.
+    Calling the previous one is mandatory: without it the familiar console output
+    disappears when running from source, and `KeyboardInterrupt` stops looking
+    like an interrupt.
     """
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc, tb)
