@@ -1,25 +1,27 @@
-"""Функции склонения, которыми переводы Paradox чинят русскую грамматику.
+"""The functions a translation uses to fix the grammar the source has none of.
 
-Списки — **данные, снятые с живых деревьев**, а не догадка. В обе игры они
-попали одинаково: взяты вызовы, которые встречаются в русском дереве и **ни
-разу** в английском. Отсюда и надёжность отбора: опечатка переводчика
-(`[BRA.GetADjectiveCap]`, `[FROM.GetAdejctive]` — обе живые) в английском тоже
-не встречается, но в русском попадается раз-другой, а настоящая функция —
-сотнями. Поэтому у CK2, где таких вызовов много, взят ещё и порог по частоте.
+The lists are **data taken from live trees**, not guesswork. They were gathered
+the same way everywhere: the calls that appear in the translated tree and **never
+once** in the English one.
 
-Зачем это правилам. Английское `[JAP.GetAdjective]` переводчик заменяет на
-`[JAP.GetAdjRuLower]` и дописывает окончание, а `[X.GetName]` превращает в
-«сража[X.GetLasLsya], [X.GetFirstName]». Проверка «набор ссылок должен
-совпадать» видит здесь потерю и добавление — то есть ошибку, — хотя перед нами
-приём самой игры. Списки гасят ровно этот случай: см. параметр
-`ignore_extra_tails` у правила `brackets_mismatch` и `ending_calls` у
-`glued_markup` в `core/qa_rules.py`.
+Why the rules need this. A translator replaces `[JAP.GetAdjective]` with
+`[JAP.GetAdjRuLower]` and glues an ending onto it, and turns `[X.GetName]` into
+«сража[X.GetLasLsya], [X.GetFirstName]». The check «the set of references must
+match» sees a loss and an addition here — an error, that is — although what it is
+looking at is a technique of the game itself. The lists silence exactly that
+case: see the `ignore_extra_tails` parameter of `brackets_mismatch` and
+`ending_calls` of `glued_markup` in `core/qa_rules.py`.
+
+The two Russian lists below were assembled by hand and are kept verbatim: the
+numbers in ARCHITECTURE.md rest on them. Everything harvested since lives in
+`LANGUAGE_CALLS` at the end of the file, together with the criteria it was
+gathered by.
 """
 from __future__ import annotations
 
 # --- Hearts of Iron IV -----------------------------------------------------
 #
-# 33 функции, покрывают 5 918 добавленных вызовов ванильного русского перевода.
+# 33 functions covering 5 918 calls added by the vanilla Russian translation.
 HOI4_RU_CALLS = [
     "GetAdjRuEnd", "GetAdjRuLower", "GetAdjectiveRuLower",
     "GetEgoEye_RU", "GetEmuEy_RU",
@@ -37,21 +39,22 @@ HOI4_RU_CALLS = [
     "GetVerbGendEndA_RU",
 ]
 
-# Те из них, что возвращают не слово, а его окончание: к ним текст дописывают
-# вплотную — «объявил[CHI.GetVerbGendEndA_RU]», — и пробела там быть не должно.
+# The ones that return an ending rather than a word: text is glued straight
+# onto them — «объявил[CHI.GetVerbGendEndA_RU]» — and no space belongs there.
 HOI4_RU_ENDINGS = [c for c in HOI4_RU_CALLS
                    if "End" in c or "Ending" in c or "Suffix" in c or "END" in c]
 
 # --- Crusader Kings II -----------------------------------------------------
 #
-# Здесь приём тот же, но размах другой: русская CK2 склоняет всё подряд, и
-# таких вызовов набирается 881 на 25 786 вхождений. В список берём встреченные
-# пять раз и чаще — 259 функций и 95,7 % вхождений. Хвост из одиночек отброшен
-# намеренно: там и живут опечатки (`GeAdjective`, `GerHerHim`, `EndA` без
-# `Get`), а прощать их нельзя — такой вызов в игре не сработает.
+# The technique is the same here, the scale is not: the Russian CK2 inflects
+# everything in sight, and such calls come to 881 over 25 786 occurrences. The
+# list takes the ones seen five times or more — 259 functions and 95.7% of the
+# occurrences. The tail of one-offs is dropped on purpose: that is where the
+# typos live (`GeAdjective`, `GerHerHim`, `EndA` without `Get`), and forgiving
+# them is not allowed — such a call does not fire in the game.
 #
-# Отдельного списка окончаний нет: в CK2 к слову вплотную дописывают почти
-# любую из этих функций, поэтому `glued_markup` получает тот же набор.
+# There is no separate list of endings: in CK2 almost any of these functions gets
+# glued straight onto a word, so `glued_markup` receives the same set.
 CK2_RU_CALLS = [
     "GetAbsPossPronoun", "GetAdultererAdulteressLong", "GetAgedPerson",
     "GetAgedPersonACC", "GetAgedPersonC", "GetAgedPersonDAT",

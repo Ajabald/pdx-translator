@@ -204,7 +204,7 @@ class ParamEditors(QWidget):
         if isinstance(widget, QComboBox):
             return widget.currentText()
         if isinstance(widget, QPlainTextEdit):
-            # и перевод строки, и запятая: человек мог вставить список откуда угодно
+            # newline or comma alike: the list may have been pasted from anywhere
             parts = widget.toPlainText().replace(",", "\n").split("\n")
             return [p.strip() for p in parts if p.strip()]
         text = widget.text().strip()

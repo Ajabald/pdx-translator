@@ -146,7 +146,8 @@ class _ThemedIconEngine(QIconEngine):
 
 
 def icon(widget, name: str | None) -> QIcon | None:
-    """Иконка действия по имени из спеки; None — если рисовать нечего."""
+    """The icon of an action by its name in the spec; None when there is nothing
+    to draw."""
     if not name:
         return None
     if available(name):

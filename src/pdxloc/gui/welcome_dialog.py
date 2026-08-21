@@ -1,18 +1,17 @@
-"""Мастер первого запуска: язык, базы памяти, первый проект.
+"""The first-run wizard: language, memory databases, the first project.
 
-Раньше новый пользователь получал пустой список проектов и ни одной подсказки.
-Два умолчания при этом молча решались за него, и оба неверно: интерфейс
-включался на языке системы (а перевод мог быть и не на её языке), а работа
-начиналась без единой базы памяти переводов — то есть без половины смысла
-инструмента.
+A new user used to get an empty project list and not one hint. Two defaults were
+quietly decided for them, and both wrongly: the interface came up in the system
+language (while the translation might well be into another), and work began
+without a single translation memory database — that is, without half the point of
+the tool.
 
-Три шага и ни одним больше. Тема и папки остались в «Параметрах»: они меняются
-редко и разумно выглядят по умолчанию, а мастер, который спрашивает обо всём,
-пролистывают не читая.
+Three steps and not one more. The theme and the folders stayed in «Preferences»:
+they change rarely and look sensible by default, and a wizard that asks about
+everything gets clicked through unread.
 
-Мастер показывается **один раз**. Всё, что он предлагает, доступно и потом
-обычными командами, поэтому «Пропустить» здесь — полноправный ответ, а не
-уловка.
+The wizard is shown **once**. Everything it offers is available afterwards
+through ordinary commands, so «Skip» here is a full answer rather than a trick.
 """
 from __future__ import annotations
 
@@ -31,7 +30,7 @@ DONE_KEY = "general/first_run_done"
 
 
 def needed() -> bool:
-    """Показывать ли мастер. Один раз за жизнь установки."""
+    """Whether to show the wizard. Once in the lifetime of an installation."""
     return not prefs.get(DONE_KEY)
 
 
@@ -40,7 +39,7 @@ def mark_done() -> None:
 
 
 class WelcomeDialog(QDialog):
-    """Три шага знакомства. Каждый умеет ничего не делать."""
+    """Three steps of introduction. Each of them can do nothing at all."""
 
     buildDatabaseRequested = Signal()
     createProjectRequested = Signal()
@@ -85,10 +84,10 @@ class WelcomeDialog(QDialog):
 
         self._go(0)
 
-    # --- шаги ---
+    # --- the steps ---
 
     def _language_page(self) -> QWidget:
-        """Первым шагом — чтобы остальные читались на понятном языке."""
+        """The first step, so the rest can be read in a language you understand."""
         page = QWidget()
         box = QVBoxLayout(page)
         box.setContentsMargins(0, 0, 0, 0)
@@ -140,12 +139,12 @@ class WelcomeDialog(QDialog):
         return page
 
     def _on_build_database(self) -> None:
-        """Собрать базу — и перечитать страницу.
+        """Build a database — and re-read the page.
 
-        Окно сборки модально, поэтому управление возвращается сюда уже после
-        него. Не перечитав текст, мастер оставил бы на экране «баз памяти пока
-        нет» сразу после того, как база собрана, — и следующий шаг человек
-        проходил бы, не веря ни одному слову.
+        The build window is modal, so control returns here only after it. Without
+        re-reading the text the wizard would leave «there are no translation
+        memory databases yet» on the screen right after one was built, and the
+        person would walk the next step believing not a word of it.
         """
         self.buildDatabaseRequested.emit()
         self._refresh_databases_page()
@@ -176,10 +175,11 @@ class WelcomeDialog(QDialog):
         box.addStretch(1)
         return page
 
-    # --- навигация ---
+    # --- navigation ---
 
     def _refresh_databases_page(self) -> None:
-        """Текст шага зависит от того, есть ли базы: врать нельзя ни в одну сторону."""
+        """The text of the step depends on whether databases exist: it must not lie in
+        either direction."""
         found = len(project_mod.all_tm_databases())
         if found:
             self.db_text.setText(fill(translate(
@@ -230,7 +230,7 @@ class WelcomeDialog(QDialog):
         self._retranslate()
 
     def _retranslate(self) -> None:
-        """Мастер живёт дольше смены языка — подписи меняем на месте."""
+        """The wizard outlives a language change, so the labels are replaced in place."""
         self.setWindowTitle(translate("Welcome", "Getting started"))
         self.skip_btn.setText(translate("Welcome", "Skip"))
         self.back_btn.setText(translate("Welcome", "Back"))
@@ -241,7 +241,8 @@ class WelcomeDialog(QDialog):
         self.accept()
 
     def done(self, result: int) -> None:
-        # Закрыли крестиком — мастер всё равно показан, и второй раз ему
-        # взяться неоткуда: иначе он встречал бы при каждом запуске.
+        # Closed with the cross — the wizard still counts as shown, and there is
+        # nowhere for a second showing to come from: otherwise it would greet every
+        # start.
         mark_done()
         super().done(result)
