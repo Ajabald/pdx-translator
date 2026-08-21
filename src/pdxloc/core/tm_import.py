@@ -1,12 +1,13 @@
-"""Сборка баз памяти переводов (.pdxtm) из готовых файлов локализации.
+"""Building translation memory databases (.pdxtm) from ready localisation files.
 
-Двумя способами:
-  * из пары папок с локализацией — так делается база игры из ванильной
-    локализации CK3 (localization/english + localization/russian);
-  * из текущего проекта — чтобы поделиться своими переводами.
+Two ways:
+  * from a pair of localisation folders — that is how a game database is made
+    out of the vanilla CK3 localisation (localization/english +
+    localization/russian);
+  * from the current project — to share your own translations.
 
-Базы пишутся в режиме журналирования DELETE: их подключают только на чтение,
-а WAL при этом требует служебных файлов рядом.
+The databases are written in DELETE journal mode: they are attached read-only,
+and WAL would need service files next to them.
 """
 from __future__ import annotations
 
@@ -18,11 +19,11 @@ from pathlib import Path
 from pdxloc.core.i18n import fill, translate
 from pdxloc.core import loc_formats, tm
 from pdxloc.core.progress import throttled
-from pdxloc.db import fts5_available  # noqa: F401  — часть публичного API модуля
+from pdxloc.db import fts5_available  # noqa: F401 — part of the module's public API
 from pdxloc.core.scanner import LEGACY_MARKER
 from pdxloc.core.statuses import Status
 
-TM_SCHEMA_VERSION = 2      # v2: полнотекстовый индекс tm_fts для поиска похожих
+TM_SCHEMA_VERSION = 2      # v2: the tm_fts full-text index for the similarity search
 
 TM_DDL = """
 CREATE TABLE tm_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -39,9 +40,10 @@ CREATE TABLE tm_entries (
 CREATE INDEX idx_tm_hash ON tm_entries(en_hash);
 """
 
-# Индекс кандидатов для поиска похожих строк. content='tm_entries' — внешнее
-# содержимое: текст не дублируется, индекс над ванильной базой (244 тыс. записей)
-# добавляет к файлу около 30 МБ и отвечает за доли миллисекунды.
+# The candidate index for the similar-rows search. content='tm_entries' means
+# external content: the text is not duplicated, and over the vanilla database
+# (244 000 entries) the index adds about 30 MB to the file and answers in
+# fractions of a millisecond.
 TM_FTS_DDL = """
 CREATE VIRTUAL TABLE tm_fts USING fts5(
     en_text, content='tm_entries', content_rowid='id', tokenize='unicode61');
@@ -58,10 +60,10 @@ def has_fts_index(conn: sqlite3.Connection, schema: str = "main") -> bool:
 
 
 def build_fts_index(path: Path, progress_cb: ProgressCb | None = None) -> int:
-    """Достроить индекс похожих строк в существующей базе. Идемпотентна.
+    """Build the similar-rows index in an existing database. Idempotent.
 
-    Базы подключаются к проекту только на чтение, поэтому индекс строится
-    отдельным соединением — по кнопке, а не втихую при открытии проекта.
+    Databases are attached to a project read-only, so the index is built through a
+    connection of its own — on a button, not quietly when the project opens.
     """
     path = Path(path)
     if not fts5_available():
@@ -82,7 +84,7 @@ def build_fts_index(path: Path, progress_cb: ProgressCb | None = None) -> int:
         conn.commit()
         if progress_cb:
             progress_cb(1, 2, translate("TmImport", "compacting…"))
-        conn.execute("VACUUM")      # rebuild оставляет дыры в файле
+        conn.execute("VACUUM")      # rebuild leaves holes in the file
         count = conn.execute("SELECT COUNT(*) FROM tm_entries").fetchone()[0]
     finally:
         conn.close()
@@ -95,7 +97,7 @@ def build_fts_index(path: Path, progress_cb: ProgressCb | None = None) -> int:
 class TmBuildReport:
     files: int = 0
     pairs: int = 0
-    skipped: int = 0        # пары, где перевода нет или он равен оригиналу
+    skipped: int = 0        # pairs with no translation, or with one equal to the original
     warnings: list[str] = None
 
     def __post_init__(self):
@@ -103,7 +105,7 @@ class TmBuildReport:
             self.warnings = []
 
     def summary(self) -> str:
-        """Итог сборки базы — показывается на вкладке «Собрать базу»."""
+        """The outcome of a build, shown on the «Build a database» tab."""
         lines = [
             fill(translate("TmImport", "Files processed: %1"), self.files),
             fill(translate("TmImport", "Translation pairs: %1"), self.pairs),
@@ -126,11 +128,12 @@ def create_tm_database(
     kind: str = "import",
     game: str = "",
 ) -> sqlite3.Connection:
-    """Пустая база памяти с описанием в `tm_meta`.
+    """An empty memory database with its description in `tm_meta`.
 
-    `game` пустой означает «неизвестна»: базы, собранные до появления игр,
-    ничего о себе не говорят, и выдавать за них догадку нельзя — по такой
-    догадке база молча пропала бы из списка у проекта другой игры.
+    An empty `game` means «unknown»: databases built before games existed say
+    nothing about themselves, and a guess must not be passed off as their answer —
+    on such a guess a database would quietly disappear from the list of a project
+    for another game.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -153,7 +156,7 @@ def create_tm_database(
 
 
 def find_sibling_language_dir(src_dir: Path, tgt_lang: str) -> Path | None:
-    """Соседняя папка того же уровня для другого языка (localization/english → …/russian)."""
+    """The sibling folder for another language (localization/english → …/russian)."""
     src_dir = Path(src_dir)
     sibling = src_dir.parent / tgt_lang
     return sibling if sibling.is_dir() else None
@@ -162,12 +165,13 @@ def find_sibling_language_dir(src_dir: Path, tgt_lang: str) -> Path | None:
 def find_localization_dirs(
     root: Path, src_lang: str = "english", tgt_lang: str = "russian",
 ) -> tuple[Path | None, Path | None]:
-    """Найти папки локализации внутри указанной.
+    """Find the localisation folders inside the one given.
 
-    Пользователь естественно указывает корень игры или мода, а локализация
-    лежит глубже: у CK3 это game\\localization\\english. Без этого поиска пары
-    не находятся вовсе: метка языка есть и в имени файла, и в имени каталога,
-    а подменяется только в имени — путь к переводу получается несуществующим.
+    People naturally point at the root of a game or a mod, while the localisation
+    lies deeper: in CK3 at game\\localization\\english. Without this search no
+    pairs are found at all: the language marker is in the file name and in the
+    directory name alike, yet only the name gets substituted — so the path to the
+    translation comes out pointing at nothing.
     """
     root = Path(root)
     if not root.is_dir():
@@ -178,13 +182,14 @@ def find_localization_dirs(
         tgt = base / tgt_lang
         return (src if src.is_dir() else None, tgt if tgt.is_dir() else None)
 
-    # сам корень уже папка нужного языка
+    # the root itself is already the language folder we want
     if root.name == src_lang:
         return root, find_sibling_language_dir(root, tgt_lang)
 
-    # типовые места: <root>/localization, <root>/game/localization, <root>/replace.
-    # `localisation` через «s» — это старые игры серии (CK2, EU3, Victoria 2) и
-    # EU4 со Stellaris: букву в названии папки Paradox сменила только к CK3
+    # the usual places: <root>/localization, <root>/game/localization,
+    # <root>/replace. `localisation` with an «s» is the older games of the series
+    # (CK2, EU3, Victoria 2) and also EU4 and Stellaris: Paradox only changed the
+    # letter in the folder name by CK3
     candidates = [root, root / "localization", root / "localisation",
                   root / "game" / "localization", root / "game" / "localisation",
                   root / "localization" / "replace",
@@ -195,7 +200,7 @@ def find_localization_dirs(
             if src is not None:
                 return src, tgt
 
-    # последний шанс: поискать папку языка на разумной глубине
+    # a last chance: look for a language folder at a sensible depth
     for depth in ("*", "*/*", "*/*/*"):
         for found in sorted(root.glob(f"{depth}/{src_lang}")):
             if found.is_dir():
@@ -204,12 +209,12 @@ def find_localization_dirs(
 
 
 def language_dirs(root: Path, lang: str, max_depth: int = 3) -> list[Path]:
-    """Все папки языка внутри указанной, от ближних к дальним.
+    """Every language folder inside the one given, nearest first.
 
-    Переводы-моды кладут файлы не в одном месте: у русификатора AGOT рядом
-    лежат `localization/russian` (перевод самого мода) и
-    `localization/replace/russian` (замена ванильных строк). Выбрать нужно ту,
-    что действительно парная оригиналу, поэтому возвращаем все.
+    Translation mods do not keep their files in one place: the AGOT Russian pack
+    has `localization/russian` — the translation of the mod itself — next to
+    `localization/replace/russian`, which replaces the vanilla rows. The one that
+    truly pairs with the original has to be chosen, so we return them all.
     """
     root = Path(root)
     if not root.is_dir():
@@ -230,10 +235,11 @@ def language_dirs(root: Path, lang: str, max_depth: int = 3) -> list[Path]:
 def resolve_target_dir(
     src_dir: Path, chosen: Path, src_lang: str = "english", tgt_lang: str = "russian",
 ) -> tuple[Path | None, list[tuple[Path, int]]]:
-    """Какую папку перевода брать для указанной папки оригинала.
+    """Which translation folder to take for a given original folder.
 
-    Возвращает лучшую (больше всего пар) и все рассмотренные с числом пар —
-    чтобы окно могло объяснить выбор, а не молча подставить другой путь.
+    Returns the best one — the most pairs — and every folder considered with its
+    count, so the window can explain the choice instead of quietly substituting
+    another path.
     """
     chosen = Path(chosen)
     if not chosen.is_dir():
@@ -295,11 +301,11 @@ def build_tm_from_dirs(
     progress_cb: ProgressCb | None = None,
     should_cancel: Callable[[], bool] | None = None,
 ) -> TmBuildReport:
-    """Собрать базу из двух деревьев локализации.
+    """Build a database from two localisation trees.
 
-    Пишем во временный файл и переименовываем в конце: иначе при неудаче на
-    месте остаётся пустая, но с виду исправная база — её можно подключить и
-    долго гадать, почему нет подсказок.
+    We write to a temporary file and rename it at the end: otherwise a failure
+    leaves an empty but seemingly sound database in place — one that can be
+    attached, leaving you to wonder for a long time why no suggestions appear.
     """
     src_dir = Path(src_dir)
     if not src_dir.is_dir():
@@ -317,9 +323,10 @@ def build_tm_from_dirs(
 
     fmt = loc_formats.get(loc_formats.detect(src_dir))
     src_files = fmt.files(src_dir, src_lang)
-    # Кодировки деревьев спрашиваем один раз на сборку: у старого формата серии
-    # оригинал и перевод лежат в разных однобайтовых кодировках (cp1252 и
-    # cp1251), а определять их на каждый файл значило бы читать дерево дважды.
+    # The tree encodings are asked for once per build: in the older format of the
+    # series the original and the translation lie in different single-byte encodings
+    # (cp1252 and cp1251), and determining them per file would mean reading the tree
+    # twice.
     src_encoding = _encoding_of(fmt, src_dir)
     tgt_encoding = _encoding_of(fmt, tgt_dir)
     if not src_files:
@@ -336,7 +343,7 @@ def build_tm_from_dirs(
     report_progress = throttled(progress_cb)
 
     def milestone(text: str) -> None:
-        """Веха идёт мимо ограничителя частоты — иначе её может съесть."""
+        """A milestone goes past the rate limiter, or the limiter may swallow it."""
         if progress_cb is not None:
             progress_cb(len(src_files), len(src_files), text)
 
@@ -373,16 +380,16 @@ def build_tm_from_dirs(
                 "INSERT OR IGNORE INTO tm_entries (en_hash, en_text, ru_text, source, key) "
                 "VALUES (?, ?, ?, ?, ?)", rows)
             report.pairs += len(rows)
-            # фиксируем порциями: на ванильной локализации это сотни тысяч
-            # записей, держать их все в одной транзакции незачем
+            # commit in chunks: over the vanilla localisation this is hundreds of thousands
+            # of entries, and there is no point holding them all in one transaction
             if report.files % 100 == 0:
                 conn.commit()
                 conn.execute("BEGIN")
         milestone(translate("TmImport", "saving the database…"))
         conn.commit()
         if has_fts_index(conn):
-            # индекс с внешним содержимым не обновляется вставками сам —
-            # собираем его разом в конце, это заметно быстрее построчного
+            # an index with external content does not update itself on inserts — we build
+            # it in one go at the end, which is noticeably faster than row by row
             milestone(translate("TmImport", "building the similar-rows index…"))
             conn.execute("INSERT INTO tm_fts(tm_fts) VALUES('rebuild')")
             conn.commit()
@@ -420,7 +427,7 @@ def build_tm_from_dirs(
 
 
 def source_for(kind: str) -> str:
-    """Метка источника записи — по ней видно, откуда пришёл вариант перевода."""
+    """The source label of an entry: it shows where a translation variant came from."""
     return "game" if kind == "game" else "import"
 
 
@@ -430,19 +437,19 @@ def export_project_tm(
     *,
     name: str,
 ) -> TmBuildReport:
-    """Выгрузить переводы проекта в отдельную базу — чтобы поделиться."""
+    """Export the project translations into a database of their own, to share."""
     proj = project_conn.execute(
         "SELECT name, src_lang, tgt_lang FROM projects WHERE id = 1").fetchone()
     src_lang = proj["src_lang"] if proj else "english"
     tgt_lang = proj["tgt_lang"] if proj else "russian"
-    # игру не спрашиваем: проект её знает, и разойтись они не должны
+    # the game is not asked for: the project knows it, and the two must not diverge
     from pdxloc.project import game as project_game
     game = project_game(project_conn)
 
-    # Список статусов положительный: `Status.MACHINE` и `Status.AUTO` в него не
-    # входят намеренно. Такую базу подключают к другим проектам, и машинная
-    # догадка, разошедшаяся по чужим проектам как «перевод из базы», —
-    # худшее, что может случиться с памятью переводов.
+    # The list of statuses is a positive one: `Status.MACHINE` and `Status.AUTO` are
+    # deliberately left out. Such a database gets attached to other projects, and a
+    # machine guess spreading through somebody else's projects as «a translation
+    # from the database» is the worst thing that can happen to a translation memory.
     rows = project_conn.execute(
         """SELECT en_text, ru_text, key, en_hash FROM units
            WHERE is_deleted = 0 AND en_text IS NOT NULL AND ru_text IS NOT NULL
