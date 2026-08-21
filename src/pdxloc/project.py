@@ -1,10 +1,10 @@
-"""Файлы проектов (.pdxproj) и подключение баз памяти переводов.
+"""Project files (.pdxproj) and attaching translation memory databases.
 
-Проект — самостоятельный файл SQLite: строки, файлы, память переводов, архив.
-Его можно положить куда угодно и передать другому человеку.
+A project is a self-contained SQLite file: strings, files, translation memory,
+archive. It can be put anywhere and handed to another person.
 
-Базы памяти переводов (.pdxtm) подключаются к соединению только на чтение;
-поиск идёт по объединяющему представлению tm_all (см. attach_tm_sources).
+Translation memory databases (.pdxtm) are attached to the connection read-only;
+the search goes through the uniting view tm_all (see attach_tm_sources).
 """
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ from pdxloc.core import games
 from pdxloc.core.i18n import QT_TRANSLATE_NOOP, fill, translate
 from pdxloc.db import init_schema, register_functions
 
-# Приоритет источников памяти переводов: свои переводы, затем экспорты чужих
-# проектов, затем большие игровые базы.
+# Priority of translation memory sources: our own translations, then exports of
+# other people's projects, then the big game databases.
 KIND_PRIORITY = {"project-export": 1, "import": 2, "game": 3}
 KIND_LABELS = {
     "game": QT_TRANSLATE_NOOP("Project", "game database"),
@@ -35,7 +35,7 @@ def _uri(path: Path, mode: str) -> str:
     return f"file:{quote(str(path).replace(chr(92), '/'), safe='/:')}?mode={mode}"
 
 
-# --- проекты ---
+# --- projects ---
 
 def create_project(
     path: Path,
@@ -49,10 +49,11 @@ def create_project(
     src_locale: str = "",
     tgt_locale: str = "",
 ) -> sqlite3.Connection:
-    """Создать новый файл проекта и вернуть открытое соединение.
+    """Create a new project file and return an open connection.
 
-    Локали по умолчанию пустые: это значит «совпадают с папкой языка», и
-    заполнять их нужно только при переводе на язык, которого в игре нет.
+    The locales are empty by default: that means "the same as the language
+    folder", and they need filling in only when translating into a language the
+    game does not have.
     """
     path = Path(path)
     if path.exists():
@@ -70,18 +71,18 @@ def create_project(
 
 
 def open_project(path: Path, tm_paths: list[Path] | None = None) -> sqlite3.Connection:
-    """Открыть файл проекта, применить схему и подключить базы памяти."""
+    """Open a project file, apply the schema and attach the memory databases."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    # uri=True нужен не только здесь: без него нельзя подключать базы по URI
+    # uri=True is needed not only here: without it databases cannot be attached by URI
     conn = sqlite3.connect(_uri(path, "rwc"), uri=True)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode = WAL")
-    # Потолок журнала. Сканирование пишет весь проект одной транзакцией, и
-    # `-wal` вырастал до размера самой базы (замер на ванильной HOI4: файл
-    # 181 МБ, журнал 182 МБ) — а лежал он там до следующей записи, и каждое
-    # открытие проекта начиналось с чтения этих мегабайт. После чекпоинта
-    # файл теперь усекается сам.
+    # A ceiling for the journal. A scan writes the whole project in one
+    # transaction, and `-wal` grew to the size of the database itself (measured
+    # on vanilla HOI4: file 181 MB, journal 182 MB) — and there it lay until the
+    # next write, so every opening of the project began by reading those
+    # megabytes. After a checkpoint the file now truncates itself.
     conn.execute("PRAGMA journal_size_limit = 67108864")
     register_functions(conn)
     init_schema(conn)
@@ -92,16 +93,17 @@ def open_project(path: Path, tm_paths: list[Path] | None = None) -> sqlite3.Conn
 
 
 def checkpoint(conn: sqlite3.Connection) -> None:
-    """Перенести журнал в базу и усечь его.
+    """Move the journal into the database and truncate it.
 
-    Зовётся там, где работа заведомо закончена: после сканирования, после
-    импорта и при закрытии проекта. Сам по себе SQLite журнал не усекает — он
-    накапливает страницы, и без этого рядом с проектом остаётся `-wal`
-    размером с базу, который читается при каждом следующем открытии.
+    Called where the work is known to be over: after a scan, after an import
+    and when closing the project. SQLite does not truncate the journal by
+    itself — it piles up pages, and without this a `-wal` the size of the
+    database is left next to the project and read at every next opening.
 
-    Ошибка гасится намеренно: чекпоинт не может выполниться, пока базу читает
-    кто-то ещё (открытое окно памяти переводов, фоновый счётчик), и это не
-    повод мешать закрытию проекта — журнал доживёт до следующего раза.
+    The error is swallowed deliberately: a checkpoint cannot run while somebody
+    else is reading the database (an open translation memory window, a
+    background counter), and that is no reason to get in the way of closing the
+    project — the journal will live to the next time.
     """
     try:
         conn.commit()
@@ -111,11 +113,12 @@ def checkpoint(conn: sqlite3.Connection) -> None:
 
 
 def read_only_connection(path: Path) -> sqlite3.Connection:
-    """Соединение только на чтение — для фоновых замеров.
+    """A read-only connection — for background counting.
 
-    Не `open_project`: тот включает WAL, применяет схему и подключает базы
-    памяти, а фоновому счётчику нужно лишь пересчитать строки, ничего не
-    трогая в файле, который прямо сейчас открыт основным потоком.
+    Not `open_project`: that one turns on WAL, applies the schema and attaches
+    the memory databases, while the background counter only needs to recount
+    the rows without touching anything in the file the main thread has open
+    right now.
     """
     conn = sqlite3.connect(_uri(Path(path), "ro"), uri=True)
     conn.row_factory = sqlite3.Row
@@ -123,16 +126,16 @@ def read_only_connection(path: Path) -> sqlite3.Connection:
 
 
 def project_companions(path: Path, *, with_backups: bool = False) -> list[Path]:
-    """Файлы, из которых состоит проект на диске.
+    """The files a project consists of on disk.
 
-    Соединение открывается в режиме WAL (см. open_project), поэтому рядом с
-    самим файлом живут `-wal` и `-shm`. Удалить только основной файл нельзя:
-    следующий проект с тем же именем подхватит чужой журнал.
+    The connection is opened in WAL mode (see open_project), so `-wal` and
+    `-shm` live next to the file itself. Deleting only the main file will not
+    do: the next project with the same name would pick up a foreign journal.
     """
     path = Path(path)
     files = [path, Path(f"{path}-wal"), Path(f"{path}-shm")]
     if with_backups:
-        # копии перед миграциями схемы (db._backup_db_file) и база прежних версий
+        # copies made before schema migrations (db._backup_db_file) and the old-version database
         files += sorted(path.parent.glob(f"{path.name}.v*.bak"))
         files += sorted(path.parent.glob(f"{path.name}.migrated"))
     return [f for f in files if f.exists()]
@@ -140,27 +143,28 @@ def project_companions(path: Path, *, with_backups: bool = False) -> list[Path]:
 
 @dataclass(frozen=True)
 class DeleteReport:
-    """Что удалилось и как. `bypassed_trash` — то, что ушло мимо корзины."""
+    """What was deleted and how. `bypassed_trash` — what went past the recycle bin."""
 
     removed: list[Path] = field(default_factory=list)
     bypassed_trash: list[Path] = field(default_factory=list)
 
-    def __len__(self) -> int:       # вызывающие считают файлы, а не разбирают отчёт
+    def __len__(self) -> int:       # callers count files, they do not take the report apart
         return len(self.removed)
 
 
 def delete_project_file(path: Path, *, with_backups: bool = False) -> DeleteReport:
-    """Удалить файл проекта вместе со спутниками.
+    """Delete the project file together with its companions.
 
-    Уходит в корзину, если система умеет (см. core/trash). Занятый файл
-    поднимает OSError — вызывающий обязан объяснить это пользователем, потому
-    что причина почти всегда одна: проект ещё открыт.
+    Goes to the recycle bin if the system can (see core/trash). A busy file
+    raises OSError — the caller is obliged to explain that to the user, because
+    the reason is almost always the same: the project is still open.
 
-    **Корзина срабатывает не всегда**, и это надо передать наверх: Windows не
-    кладёт туда файл, который не помещается в её квоту, а проект перевода — это
-    сотни мегабайт. Диалог перед удалением обещает корзину, поэтому случай
-    «обещали, но удалили насмерть» обязан дойти до человека, а не потеряться
-    здесь. Отсюда `bypassed_trash` вместо голого списка путей.
+    **The recycle bin does not always work**, and that has to be passed
+    upwards: Windows does not put a file there if it does not fit its quota,
+    and a translation project is hundreds of megabytes. The dialog before
+    deleting promises the recycle bin, so the case "promised, but deleted for
+    good" is obliged to reach the human instead of getting lost here. Hence
+    `bypassed_trash` instead of a bare list of paths.
     """
     from pdxloc.core import trash
 
@@ -177,13 +181,14 @@ def delete_project_file(path: Path, *, with_backups: bool = False) -> DeleteRepo
 
 @dataclass(frozen=True)
 class ProjectLanguages:
-    """Языки проекта: папка игры отдельно, язык текста отдельно.
+    """The languages of a project: the game folder apart, the text language apart.
 
-    `src_lang`/`tgt_lang` определяют имена папок, метку `_l_xxx` в имени файла
-    и заголовок `l_xxx:` — это диктует игра. `src_locale`/`tgt_locale` говорят,
-    на каком языке текст: по ним работают машинный перевод, именование баз
-    памяти и языковые правила проверки. Совпадают они почти всегда, но не
-    когда переводят на язык, которого в игре нет.
+    `src_lang`/`tgt_lang` decide the folder names, the `_l_xxx` mark in the file
+    name and the `l_xxx:` header — that is dictated by the game.
+    `src_locale`/`tgt_locale` say what language the text is in: machine
+    translation, memory database naming and the language check rules work off
+    them. They coincide almost always, but not when the translation goes into a
+    language the game does not have.
     """
 
     src_lang: str
@@ -193,7 +198,7 @@ class ProjectLanguages:
 
     @property
     def split(self) -> bool:
-        """Расходятся ли папка и язык текста — есть ли о чём говорить в UI."""
+        """Do the folder and the text language diverge — is there anything to say in the UI."""
         from pdxloc.core import languages
 
         return (self.src_locale != languages.default_locale(self.src_lang)
@@ -201,11 +206,11 @@ class ProjectLanguages:
 
 
 def languages(conn: sqlite3.Connection, project_id: int = 1) -> ProjectLanguages:
-    """Языки проекта с подставленными локалями.
+    """The languages of a project with the locales filled in.
 
-    Раньше это разбирал каждый потребитель сам — пятью копиями строки
-    `proj["src_lang"] if "src_lang" in keys else "english"`, и добавление
-    локалей означало бы шестую и седьмую.
+    This used to be sorted out by every consumer itself — five copies of the
+    line `proj["src_lang"] if "src_lang" in keys else "english"`, and adding
+    the locales would have meant a sixth and a seventh.
     """
     from pdxloc.core import languages as lang_mod
 
@@ -228,11 +233,12 @@ def languages(conn: sqlite3.Connection, project_id: int = 1) -> ProjectLanguages
 
 def set_languages(conn: sqlite3.Connection, langs: ProjectLanguages,
                   project_id: int = 1) -> None:
-    """Записать языки проекта.
+    """Write the languages of the project down.
 
-    Локаль, совпадающую с выведенной из папки, храним пустой: так проект не
-    зарастает значениями, которые и так известны, а смена папки языка сама
-    тянет за собой язык текста.
+    A locale that coincides with the one derived from the folder is stored
+    empty: that way the project does not grow over with values that are known
+    anyway, and a change of the language folder drags the text language along
+    by itself.
     """
     from pdxloc.core import languages as lang_mod
 
@@ -253,10 +259,10 @@ def project_name(conn: sqlite3.Connection) -> str:
     return row["name"] if row else translate("Project", "(unnamed)")
 
 
-# --- игра проекта ---
+# --- the game of the project ---
 
 def game(conn: sqlite3.Connection, project_id: int = 1) -> str:
-    """Идентификатор игры. Пусто в базе — CK3: других игр приложение не знало."""
+    """The game identifier. Empty in the database means CK3: the app knew no other games."""
     row = conn.execute(
         "SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
     if row is None or "game" not in row.keys() or not row["game"]:
@@ -270,11 +276,11 @@ def set_game(conn: sqlite3.Connection, game_id: str, project_id: int = 1) -> Non
 
 
 def read_game(path: Path) -> str | None:
-    """Игра проекта, не открывая его. `None` — файл не читается как проект.
+    """The game of a project without opening it. `None` — the file does not read as a project.
 
-    Соединением только на чтение и без применения схемы: спрашивают до
-    открытия, чтобы успеть перенести файл в свой загон — открытый проект
-    держит `-wal`, и переносить его было бы поздно.
+    With a read-only connection and without applying the schema: it is asked
+    before opening, in time to move the file into its own pen — an open project
+    holds a `-wal`, and moving it then would be too late.
     """
     try:
         conn = read_only_connection(path)
@@ -292,11 +298,11 @@ def read_game(path: Path) -> str | None:
 
 
 def move_project_file(path: Path, target_dir: Path) -> Path:
-    """Перенести файл проекта со спутниками в другую папку.
+    """Move the project file with its companions into another folder.
 
-    Спутники обязательны: `-wal` и `-shm` — часть проекта, и файл, уехавший без
-    журнала, в лучшем случае потеряет незаписанное, а в худшем подхватит чужой
-    журнал от одноимённого соседа.
+    The companions are obligatory: `-wal` and `-shm` are part of the project,
+    and a file that has left without its journal will at best lose what was not
+    written, and at worst pick up a foreign journal from a namesake neighbour.
     """
     path = Path(path)
     target_dir = Path(target_dir)
@@ -313,7 +319,7 @@ def move_project_file(path: Path, target_dir: Path) -> Path:
 
 
 def save_project_as(conn: sqlite3.Connection, new_path: Path) -> Path:
-    """Сохранить копию проекта по новому пути (соединение закрывается вызывающим)."""
+    """Save a copy of the project under a new path (the connection is closed by the caller)."""
     new_path = Path(new_path)
     if new_path.exists():
         raise FileExistsError(fill(translate(
@@ -321,12 +327,12 @@ def save_project_as(conn: sqlite3.Connection, new_path: Path) -> Path:
     new_path.parent.mkdir(parents=True, exist_ok=True)
     conn.commit()
     conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-    # VACUUM INTO не работает внутри транзакции и требует отсутствия цели
+    # VACUUM INTO does not work inside a transaction and demands the target be absent
     conn.execute("VACUUM INTO ?", (str(new_path),))
     return new_path
 
 
-# --- перенос базы прежних версий ---
+# --- moving the database of former versions ---
 
 def _safe_filename(name: str) -> str:
     bad = '<>:"/\\|?*'
@@ -334,16 +340,17 @@ def _safe_filename(name: str) -> str:
     return cleaned or "project"
 
 
-# --- базы памяти переводов ---
+# --- translation memory databases ---
 
 def tm_meta(path: Path, *, with_count: bool = False) -> dict[str, str] | None:
-    """Прочитать описание базы. None, если файл не является базой памяти.
+    """Read the description of a database. None if the file is not a memory database.
 
-    Число записей считается только по просьбе: `COUNT(*)` идёт полным сканом
-    таблицы (у ванильной базы CK3 это 244 118 строк и 144 МБ файла), а
-    спрашивают описание в основном затем, чтобы узнать «это вообще база
-    памяти?» — при открытии проекта так делается на каждую подключённую базу.
-    Показать число нужно ровно в двух местах, и оба зовут `list_tm_databases`.
+    The number of records is counted only on request: `COUNT(*)` goes as a full
+    scan of the table (for the vanilla CK3 database that is 244,118 rows and a
+    144 MB file), while the description is asked for mostly to find out "is this
+    a memory database at all?" — on opening a project that is done for every
+    attached database. The number has to be shown in exactly two places, and
+    both of them call `list_tm_databases`.
     """
     try:
         conn = sqlite3.connect(_uri(Path(path), "ro"), uri=True)
@@ -366,11 +373,11 @@ def tm_meta(path: Path, *, with_count: bool = False) -> dict[str, str] | None:
 
 def list_tm_databases(directory: Path | None = None, *,
                       game: str | None = None) -> list[tuple[Path, dict[str, str]]]:
-    """Базы памяти переводов в папке.
+    """The translation memory databases in a folder.
 
-    `game` выбирает загон своей игры (`Bdd\\CK3`), и в него же попадает корень
-    `Bdd`: базы, собранные до появления загонов, лежат там, и прятать их от
-    человека значило бы объявить их пропавшими.
+    `game` picks the pen of its own game (`Bdd\\CK3`), and the `Bdd` root gets
+    in there as well: databases built before the pens appeared lie there, and
+    hiding them from the human would mean declaring them lost.
     """
     if directory is not None:
         directories = [Path(directory)]
@@ -395,12 +402,13 @@ def list_tm_databases(directory: Path | None = None, *,
 
 
 def any_tm_database() -> bool:
-    """Есть ли на машине хоть одна база памяти.
+    """Is there at least one memory database on the machine.
 
-    Отдельно от `all_tm_databases`, потому что вопрос задаётся при каждом
-    открытии проекта, а ответ «да» виден по первому же файлу: собирать список
-    с описанием и числом записей ради него значило бы прочитать все базы
-    целиком — сотни мегабайт на ровном месте.
+    Separate from `all_tm_databases`, because the question is asked at every
+    opening of a project, while the answer "yes" is visible from the very first
+    file: collecting a list with descriptions and record counts for its sake
+    would mean reading all the databases whole — hundreds of megabytes for
+    nothing.
     """
     root = settings.bdd_dir()
     if not root.is_dir():
@@ -412,10 +420,10 @@ def any_tm_database() -> bool:
 
 
 def all_tm_databases() -> list[tuple[Path, dict[str, str]]]:
-    """Базы всех игр разом — для вопроса «есть ли на машине хоть одна».
+    """The databases of every game at once — for the question "is there any at all".
 
-    Загоны обходятся на один уровень: глубже человек раскладывает по-своему, и
-    угадывать его порядок не наше дело.
+    The pens are walked one level deep: deeper down the human arranges things
+    their own way, and guessing that order is not our business.
     """
     root = settings.bdd_dir()
     folders = [root, *sorted(p for p in root.glob("*") if p.is_dir())] \
@@ -427,7 +435,7 @@ def all_tm_databases() -> list[tuple[Path, dict[str, str]]]:
 
 
 def get_tm_sources(conn: sqlite3.Connection) -> list[str]:
-    """Имена подключённых баз (без путей — проект остаётся переносимым)."""
+    """The names of the attached databases (no paths — the project stays portable)."""
     row = conn.execute(
         "SELECT value FROM project_meta WHERE key = 'tm_sources'").fetchone()
     if not row or not row["value"]:
@@ -446,7 +454,7 @@ def set_tm_sources(conn: sqlite3.Connection, names: list[str]) -> None:
     conn.commit()
 
 
-# --- папка вывода: куда записывается перевод ---
+# --- the output folder: where the translation is written ---
 
 def _meta(conn: sqlite3.Connection, key: str) -> str | None:
     row = conn.execute(
@@ -462,10 +470,10 @@ def _set_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
 
 
 def get_export_root(conn: sqlite3.Connection) -> str | None:
-    """Папка, куда записывали перевод в прошлый раз.
+    """The folder the translation was written to last time.
 
-    Хранится отдельно от `ru_root`: та — источник импорта, и по умолчанию
-    писать поверх неё значит затирать дерево, из которого читали.
+    Stored apart from `ru_root`: that one is the import source, and writing over
+    it by default means erasing the tree we read from.
     """
     return _meta(conn, "export_root")
 
@@ -474,16 +482,17 @@ def set_export_root(conn: sqlite3.Connection, path: Path | str) -> None:
     _set_meta(conn, "export_root", str(path))
 
 
-# --- формат локализации и кодировка ---
+# --- localisation format and encoding ---
 
 def get_loc_format(conn: sqlite3.Connection) -> str | None:
-    """Формат файлов проекта: `yml` или `csv`. None — ещё не определён.
+    """The format of the project files: `yml` or `csv`. None — not decided yet.
 
-    Определяется при первом сканировании по содержимому дерева и с тех пор
-    берётся отсюда. Хранить, а не переопределять каждый раз, нужно ради
-    экспорта: дерево оригинала может стать недоступным (диск отключили, мод
-    снесли), а записывать перевод всё равно надо в том формате, в каком его
-    читали, — угадывать по остаткам поздно.
+    It is decided at the first scan by the contents of the tree and is taken
+    from here ever after. Storing it instead of deciding anew every time is
+    needed for the sake of export: the source tree may become unavailable (the
+    disk unplugged, the mod removed), and the translation still has to be
+    written in the format it was read in — guessing from the leftovers is too
+    late.
     """
     return _meta(conn, "loc_format")
 
@@ -493,10 +502,10 @@ def set_loc_format(conn: sqlite3.Connection, format_id: str) -> None:
 
 
 def get_loc_encoding(conn: sqlite3.Connection) -> str | None:
-    """Кодировка дерева перевода. None — формат обходится одной (utf-8 с BOM).
+    """The encoding of the translation tree. None — the format makes do with one (utf-8 with BOM).
 
-    Нужна старому формату: ваниль лежит в cp1252, русский перевод — в cp1251, и
-    записать его в другой кодировке значит отдать игре мусор.
+    Needed by the old format: vanilla lies in cp1252, the Russian translation
+    in cp1251, and writing it in another encoding means handing the game rubbish.
     """
     return _meta(conn, "loc_encoding")
 
@@ -506,12 +515,12 @@ def set_loc_encoding(conn: sqlite3.Connection, encoding: str) -> None:
 
 
 def get_source_encoding(conn: sqlite3.Connection) -> str | None:
-    """Кодировка дерева **оригинала** — она бывает другой, чем у перевода.
+    """The encoding of the **source** tree — it happens to differ from the translation one.
 
-    Хранится отдельно не для симметрии: экспорт достраивает строку по файлу
-    оригинала (там лежат прочие языки), и прочти он ванильный cp1252 как
-    cp1251, французское `Reconquête` превратилось бы в `Reconquкte` — причём
-    молча, потому что такая строка прекрасно записывается обратно.
+    It is stored separately not for symmetry: export completes a line from the
+    source file (the other languages lie there), and were it to read vanilla
+    cp1252 as cp1251, the French `Reconquête` would turn into `Reconquкte` —
+    and silently at that, because such a string writes back perfectly well.
     """
     return _meta(conn, "loc_encoding_src")
 
@@ -529,18 +538,20 @@ def set_last_export_at(conn: sqlite3.Connection, when: str | None = None) -> Non
               when or datetime.now().strftime("%Y-%m-%d %H:%M"))
 
 
-# --- разовая уборка строк без переводимого текста ---
+# --- one-off cleanup of strings with no translatable text ---
 
 def get_auto_ignore_done(conn: sqlite3.Connection) -> bool:
-    """Проходил ли по проекту разовый авто-игнор строк из одной разметки.
+    """Has the one-off auto-ignore of markup-only strings passed over the project.
 
-    Уборка идёт при открытии проекта и заведена ради проектов, созданных
-    прежними версиями. Без этой отметки она шла бы каждый раз — и отменённая
-    через Ctrl+Z возвращалась бы при следующем открытии. Отмена, которую
-    переигрывают за спиной, учит не доверять отмене вообще.
+    The cleanup runs when a project is opened and exists for the sake of
+    projects created by former versions. Without this mark it would run every
+    time — and what was undone with Ctrl+Z would come back at the next opening.
+    An undo that is replayed behind your back teaches you not to trust undo at
+    all.
 
-    Сканирование отметку не смотрит и не ставит: оно приносит новые ключи, и
-    убирать из них теговые — его обычная работа, а не разовая уборка.
+    The scan neither looks at the mark nor sets it: it brings in new keys, and
+    removing the tag-only ones among them is its ordinary work, not a one-off
+    cleanup.
     """
     return _meta(conn, "auto_ignore_done") == "1"
 
@@ -549,14 +560,14 @@ def set_auto_ignore_done(conn: sqlite3.Connection) -> None:
     _set_meta(conn, "auto_ignore_done", "1")
 
 
-# --- настройка проверок: слой проекта ---
+# --- check settings: the project layer ---
 
 def get_qa_overlay(conn: sqlite3.Connection) -> dict:
-    """Правки набора правил, сделанные для этого проекта.
+    """The edits to the rule set made for this project.
 
-    Живёт в `project_meta`, а не в отдельной таблице: миграция схемы ради
-    одной строки JSON не нужна, и настройка уезжает вместе с файлом проекта —
-    ровно как список подключённых баз.
+    It lives in `project_meta` and not in a table of its own: a schema migration
+    for the sake of one JSON string is not needed, and the setting travels with
+    the project file — exactly like the list of attached databases.
     """
     raw = _meta(conn, "qa_overlay")
     if not raw:
@@ -579,11 +590,12 @@ def set_qa_overlay(conn: sqlite3.Connection, overlay: dict | None) -> None:
 
 
 def project_tm_paths(conn: sqlite3.Connection) -> list[Path]:
-    """Пути включённых баз: сперва загон своей игры, затем корень Bdd.
+    """The paths of the enabled databases: the pen of its own game first, then the Bdd root.
 
-    В проекте хранится только имя файла — так проект остаётся переносимым.
-    Искать приходится в двух местах: базы, собранные до появления загонов,
-    лежат в корне, и потерять их из-за переезда папок нельзя.
+    Only the file name is stored in the project — that way the project stays
+    portable. Looking has to be done in two places: databases built before the
+    pens appeared lie in the root, and losing them to a move of the folders is
+    not on.
     """
     folders = [settings.bdd_pen(game(conn)), settings.bdd_dir()]
     paths: list[Path] = []
@@ -596,10 +608,11 @@ def project_tm_paths(conn: sqlite3.Connection) -> list[Path]:
 
 
 def attach_tm_sources(conn: sqlite3.Connection, tm_paths: list[Path]) -> list[str]:
-    """Подключить базы на чтение и пересобрать представление tm_all.
+    """Attach the databases read-only and rebuild the tm_all view.
 
-    Представление временное, то есть живёт в пределах соединения: фоновому
-    сканеру нужно вызывать open_project самому, а не получать чужой connect.
+    The view is temporary, that is, it lives within the connection: the
+    background scanner has to call open_project itself instead of receiving
+    somebody else's connect.
     """
     for row in conn.execute("PRAGMA database_list").fetchall():
         if row[1].startswith("tm"):
@@ -622,9 +635,9 @@ def attach_tm_sources(conn: sqlite3.Connection, tm_paths: list[Path]) -> list[st
             continue
         origin = meta.get("name") or path.stem
         prio = KIND_PRIORITY.get(meta.get("kind", "import"), 5)
-        # идентификаторы подключённых баз делаем отрицательными: нумерация в
-        # каждом файле своя, и без этого удаление чужой записи стёрло бы свою
-        # с тем же номером
+        # we make the identifiers of attached databases negative: the numbering
+        # is its own in every file, and without this deleting a foreign record
+        # would wipe our own with the same number
         parts.append(
             f"SELECT -(id + {(i + 1) * 10_000_000}) AS id, "
             "en_hash, en_text, ru_text, source, key, updated_at, "
@@ -636,11 +649,12 @@ def attach_tm_sources(conn: sqlite3.Connection, tm_paths: list[Path]) -> list[st
 
 
 def attached_tm_paths(conn: sqlite3.Connection) -> list[Path]:
-    """Файлы подключённых баз памяти — чтобы повторить набор в другом потоке.
+    """The files of the attached memory databases — to repeat the set in another thread.
 
-    Представление `tm_all` временное, то есть живёт в пределах соединения.
-    Фоновый счёт по памяти переводов открывает своё соединение и обязан собрать
-    тот же набор баз заново; список путей — всё, что для этого нужно.
+    The `tm_all` view is temporary, that is, it lives within the connection. The
+    background count over the translation memory opens its own connection and is
+    obliged to gather the same set of databases anew; a list of paths is all it
+    takes.
     """
     found: list[Path] = []
     for row in conn.execute("PRAGMA database_list").fetchall():
@@ -652,20 +666,21 @@ def attached_tm_paths(conn: sqlite3.Connection) -> list[Path]:
 
 @dataclass
 class AttachedTm:
-    """Подключённая база для поиска похожих строк."""
+    """An attached database for the search of similar strings."""
 
-    alias: str            # tm0, tm1 … — по нему адресуются таблицы базы
-    origin: str           # имя базы, как его видит пользователь
-    prio: int             # приоритет источника, как в tm_all
-    id_offset: int        # смещение идентификаторов, чтобы совпадало с tm_all
-    has_fts: bool         # построен ли индекс похожих строк
+    alias: str            # tm0, tm1 … — the tables of the database are addressed by it
+    origin: str           # the name of the database as the user sees it
+    prio: int             # the priority of the source, as in tm_all
+    id_offset: int        # the shift of the identifiers, to match tm_all
+    has_fts: bool         # whether the index of similar strings is built
 
 
 def attached_tm_bases(conn: sqlite3.Connection) -> list[AttachedTm]:
-    """Подключённые базы с признаком «есть ли индекс похожих строк».
+    """The attached databases with the mark "is there an index of similar strings".
 
-    Поиск похожих идёт по каждой базе отдельно (индекс живёт внутри неё), а не
-    через объединяющее представление tm_all, поэтому нужны сами алиасы.
+    The search for similar ones goes over each database separately (the index
+    lives inside it) and not through the uniting view tm_all, which is why the
+    aliases themselves are needed.
     """
     from pdxloc.core import tm_import
 
