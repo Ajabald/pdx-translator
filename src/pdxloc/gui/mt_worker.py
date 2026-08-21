@@ -1,18 +1,19 @@
-"""Машинный перевод в отдельном потоке.
+"""Machine translation on a thread of its own.
 
-Отдельный модуль, а не метод диалога, по двум причинам. Первая: `moveToThread`
-не должен появиться в `prefs_dialog.py` — там ему не место, и тест
-`tests/test_threads.py` проверяет именно расположение. Вторая: воркер нужен
-двоим — «Параметрам» (проверить ключ) и диалогу пакетного перевода.
+A module rather than a method of the dialog, for two reasons. First:
+`moveToThread` must not appear in `prefs_dialog.py` — it has no business there,
+and `tests/test_threads.py` checks exactly where it lives. Second: the worker is
+needed by two callers — «Preferences», to check a key, and the batch translation
+dialog.
 
-Правила, купленные двумя зависаниями (см. `tests/test_threads.py`):
+Rules paid for with two freezes (see `tests/test_threads.py`):
 
-* сигналы воркера подключаются **только к связанным методам**. Лямбда живёт
-  дольше виджета и обращается к уже удалённому C++ объекту;
-* `wait()` из потока интерфейса не звать никогда — поток останавливает себя
-  сам, по своему же сигналу;
-* соединение с базой воркер открывает **своё, внутри `run`**: подключённые
-  базы и временные представления живут в пределах соединения.
+* the worker's signals are connected **to bound methods only**. A lambda outlives
+  the widget and reaches into an already deleted C++ object;
+* never call `wait()` from the interface thread — the thread stops itself, on its
+  own signal;
+* the worker opens a database connection **of its own, inside `run`**: attached
+  databases and temporary views live within a connection.
 """
 from __future__ import annotations
 
@@ -25,22 +26,24 @@ from pdxloc.core.mt_providers import ProviderConfig
 
 
 class MtWorker(QObject):
-    """Прогон перевода: читает строки, пишет результат, докладывает о ходе.
+    """The translation run: reads rows, writes results, reports progress.
 
-    **Сигнала `cancelled` здесь нет намеренно**, хотя у соседних воркеров он
-    есть (`scan_dialog.ScanWorker`, `tm_build_tab._BuildWorker`). У тех отмена
-    терминальна: прерванное сканирование и недособранная база не дают ничего,
-    о чём стоило бы докладывать, и `cancelled` приходит **вместо** `finished`.
+    **There is deliberately no `cancelled` signal here**, although the
+    neighbouring workers have one (`scan_dialog.ScanWorker`,
+    `tm_build_tab._BuildWorker`). For those, cancelling is terminal: an
+    interrupted scan and a half-built database give nothing worth reporting, and
+    `cancelled` arrives **instead of** `finished`.
 
-    Здесь наоборот. Строки, успевшие перевестись до отмены, уже записаны в
-    базу, и сводку по ним человек обязан увидеть — значит отмена не состояние
-    прогона, а свойство его результата, и живёт она в `report.cancelled`.
-    Отдельный сигнал такое сказать не может: он излучался бы **вместе** с
-    `finished`, и подписчику пришлось бы гадать, какой из двух главный.
+    Here it is the other way round. The rows that were translated before the
+    cancellation are already written to the database, and the person must see the
+    summary for them — so cancelling is not a state of the run but a property of
+    its result, and it lives in `report.cancelled`. A separate signal cannot say
+    that: it would be emitted **together with** `finished`, and a subscriber
+    would have to guess which of the two is the main one.
     """
 
     progress = Signal(int, int, str)
-    finished = Signal(object)      # MtReport; отмена — поле report.cancelled
+    finished = Signal(object)      # MtReport; cancellation is the report.cancelled field
     failed = Signal(str)
 
     def __init__(
@@ -94,21 +97,21 @@ class MtWorker(QObject):
             finally:
                 conn.close()
             self.finished.emit(report)
-        except Exception as e:  # noqa: BLE001 — показываем пользователю любую ошибку
+        except Exception as e:  # noqa: BLE001 — every error is shown to the user
             self.failed.emit(str(e))
 
 
 class RowWorker(QObject):
-    """Перевод одной строки: только сеть, базы не касается.
+    """Translating a single row: the network only, no database at all.
 
-    Пакетный воркер открывает своё соединение, потому что пишет тысячи строк по
-    ходу дела. Здесь писать нечего до самого конца, а медленная часть — только
-    запрос; поэтому результат отдаётся сигналом, и записывает его тот, у кого
-    соединение уже есть. Так не нужен ни путь к проекту, ни второе соединение
-    ради одной строки.
+    The batch worker opens a connection of its own because it writes thousands of
+    rows as it goes. Here there is nothing to write until the very end, and the
+    slow part is the request alone; so the result is handed over by a signal and
+    written by whoever already holds a connection. That way neither a path to the
+    project nor a second connection is needed for one row.
     """
 
-    finished = Signal(int, str, list)   # unit_id, перевод, потерянные метки
+    finished = Signal(int, str, list)   # unit_id, the translation, the lost placeholders
     failed = Signal(str)
 
     def __init__(self, unit_id: int, text: str, provider_name: str,
@@ -139,15 +142,15 @@ class RowWorker(QObject):
 
 
 class KeyCheckWorker(QObject):
-    """Один дешёвый запрос: принимает ли сервис ключ.
+    """One cheap request: does the service accept the key.
 
-    Проверка ничего не блокирует и ничем не распоряжается: сохранённая отметка
-    «ключ верен» — это подсказка, а не пропуск. Ключ протухает молча, и
-    инструмент, отказавшийся работать по своей записи недельной давности,
-    врал бы хуже, чем просто ошибка от сервиса.
+    The check blocks nothing and governs nothing: a stored «the key is good» mark
+    is a hint, not a pass. A key expires in silence, and a tool that refused to
+    work on the strength of its own week-old note would lie worse than a plain
+    error from the service.
     """
 
-    finished = Signal(bool, str)   # успех, сообщение
+    finished = Signal(bool, str)   # success, message
 
     def __init__(self, provider_name: str, config: ProviderConfig,
                  src_locale: str, tgt_locale: str):
@@ -174,11 +177,11 @@ class KeyCheckWorker(QObject):
 
 
 def config_from_prefs(provider_name: str) -> ProviderConfig:
-    """Собрать настройки провайдера в одном месте.
+    """Gather the provider settings in one place.
 
-    Собирает интерфейс, а не сам провайдер: ядро обязано импортироваться без
-    Qt, а `prefs` — это уже Qt. Единая точка нужна затем, чтобы одна строка и
-    пакетный прогон не разошлись в том, с какими настройками они работают.
+    The interface gathers them, not the provider: the core must import without
+    Qt, and `prefs` is already Qt. The single point exists so that a single row
+    and a batch run do not disagree about the settings they work under.
     """
     from pdxloc.core import mt
     from pdxloc.gui import prefs
@@ -194,11 +197,11 @@ def config_from_prefs(provider_name: str) -> ProviderConfig:
 
 
 def start(worker: QObject, parent: QObject) -> QThread:
-    """Завести поток под воркера и запустить.
+    """Set a thread up for a worker and start it.
 
-    Возвращает поток: держать ссылку обязан вызывающий, иначе Qt соберёт его
-    посреди работы. Останавливать не надо — поток гасит себя сам, по сигналам
-    воркера, подключённым вызывающим.
+    Returns the thread: the caller must keep the reference, or Qt collects it in
+    the middle of the work. There is no need to stop it — the thread puts itself
+    out on the worker's signals, connected by the caller.
     """
     thread = QThread(parent)
     worker.moveToThread(thread)

@@ -1,20 +1,20 @@
-"""Защита разметки CK3 при машинном переводе.
+"""Shielding CK3 markup during machine translation.
 
-Переводчики — и сервисы, и люди — охотно ломают `[GetTrait('x').GetName]`,
-`$VALUE$`, `@gold!` и `#bold …#!`. Перед отправкой такие куски заменяются
-короткими непереводимыми метками, после — возвращаются на место.
+Translators — services and people alike — happily break `[GetTrait('x').GetName]`,
+`$VALUE$`, `@gold!` and `#bold …#!`. Before sending, such pieces are replaced with
+short untranslatable placeholders and put back afterwards.
 
-Метки двух видов, и это не прихоть:
+There are two forms of placeholder, and that is not a whim:
 
-* `⟦N⟧` по умолчанию. Символы редкие, сервисы принимают их за знак препинания
-  и не трогают;
-* `{{N}}` для ручного режима. Там текст проходит через поле ввода браузера и
-  буфер обмена, а это ровно то место, где U+27E6 корёжится или пропадает
-  вовсе. `unshield` понимает обе формы всегда — восстанавливать надо и то, что
-  отправляли не мы.
+* `⟦N⟧` by default. The characters are rare, services take them for punctuation
+  and leave them alone;
+* `{{N}}` for the manual route. There the text passes through a browser input
+  field and the clipboard, and that is exactly where U+27E6 gets mangled or
+  disappears outright. `unshield` always understands both forms — what has to be
+  restored is not necessarily what we sent.
 
-Провайдеры живут в `core/mt_providers/`, оркестрация прогона — в
-`core/mt_run.py`. Здесь только разметка и реестр.
+The providers live in `core/mt_providers/`, the orchestration of a run in
+`core/mt_run.py`. Here there is only the markup and the registry.
 """
 from __future__ import annotations
 
@@ -25,13 +25,13 @@ from pdxloc.core import markup
 from pdxloc.core.i18n import fill, translate
 from pdxloc.core.mt_providers import PROVIDERS, ProviderConfig, get, labels
 
-# Состав и порядок — в core/markup.py: закрывающий #! обязан искаться раньше
-# открывающих тегов, а @name! — позже [ … ], иначе иконка внутри скриптового
-# вызова крадёт диапазон всей скобки.
+# The composition and the order live in core/markup.py: the closing #! must be
+# searched for before the opening tags, and @name! after [ … ], or an icon
+# inside a scripted call steals the range of the whole bracket.
 _SHIELDED = markup.shield_tokens()
 
-# Обе формы метки, с допуском на вставленные пробелы: переводчики любят
-# «⟦ 3 ⟧», а редакторы — превращать {{3}} в { {3} }.
+# Both forms of the placeholder, allowing for inserted spaces: translators are
+# fond of «⟦ 3 ⟧», and editors of turning {{3}} into { {3} }.
 _TOKEN_RE = re.compile(r"⟦\s*(\d+)\s*⟧|\{\s*\{\s*(\d+)\s*\}\s*\}")
 
 UNICODE_TOKENS = "unicode"
@@ -43,7 +43,7 @@ def _token(index: int, kind: str) -> str:
 
 
 def shield_tags(text: str, kind: str = UNICODE_TOKENS) -> tuple[str, dict[str, str]]:
-    """Заменить разметку метками. Возвращает (текст с метками, соответствие)."""
+    """Replace the markup with placeholders. Returns (shielded text, the mapping)."""
     mapping: dict[str, str] = {}
     out: list[str] = []
     last = 0
@@ -61,51 +61,52 @@ _DIGITS_RE = re.compile(r"\d+")
 
 
 def _index(match: re.Match) -> str:
-    """Номер метки, какой бы из двух форм она ни была."""
+    """The number of a placeholder, whichever of the two forms it takes."""
     return match.group(1) or match.group(2)
 
 
 def _number(token: str) -> str:
-    """Номер из самой метки: «⟦7⟧» и «{{7}}» — это один и тот же номер 7."""
+    """The number out of the placeholder itself: «⟦7⟧» and «{{7}}» are both 7."""
     found = _DIGITS_RE.search(token)
     return found.group(0) if found else ""
 
 
 def _by_number(mapping: dict[str, str]) -> dict[str, str]:
-    """Соответствие по номеру: форму метки в ответе мы не контролируем."""
+    """The mapping keyed by number: we do not control the form in the answer."""
     return {_number(token): value for token, value in mapping.items()}
 
 
 def unshield(text: str, mapping: dict[str, str]) -> str:
-    """Вернуть разметку на место.
+    """Put the markup back.
 
-    Восстанавливаем **по номеру**, а не по точному виду метки: сервис мог
-    вставить пробелы внутрь, а ручной режим — прислать другую форму скобок.
-    Незнакомый номер оставляем как есть: выдумывать за переводчика нечего.
+    Restoring goes **by number** rather than by the exact look of a placeholder:
+    a service may have inserted spaces inside, and the manual route may bring
+    back the other form of brackets. An unfamiliar number is left as it is: there
+    is nothing to invent on the translator's behalf.
     """
     by_number = _by_number(mapping)
     return _TOKEN_RE.sub(lambda m: by_number.get(_index(m), m.group(0)), text)
 
 
 def missing_tokens(text: str, mapping: dict[str, str]) -> list[str]:
-    """Метки, которые перевод потерял — сигнал, что результат сломан."""
+    """The placeholders the translation lost: a sign the result is broken."""
     present = {_index(m) for m in _TOKEN_RE.finditer(text)}
     return [token for token in mapping if _number(token) not in present]
 
 
 @runtime_checkable
 class TranslationProvider(Protocol):
-    """Провайдер машинного перевода.
+    """A machine translation provider.
 
-    Получает уже защищённые тексты и обязан вернуть столько же строк в том же
-    порядке. Сопоставление идёт по позиции, и это единственное, на что можно
-    опереться: одинаковые оригиналы в проекте — обычное дело, и искать
-    соответствие по тексту значило бы их перепутать.
+    It receives already shielded texts and must return the same number of rows in
+    the same order. Matching goes by position, and that is the only thing to lean
+    on: identical originals are an everyday matter in a project, and matching by
+    text would mix them up.
 
-    Вернуть можно и `None` вместо строки — это значит «эту строку перевести не
-    удалось». Поблажка понадобилась LLM: они не всегда отдают N ответов на N
-    запросов, и ронять из-за одной строки пачку в полсотни было бы
-    расточительно. Классические сервисы ею не пользуются.
+    `None` may be returned instead of a string; it means «this row could not be
+    translated». The concession was needed for the LLM providers: they do not
+    always give N answers to N requests, and dropping a batch of fifty over one
+    row would be wasteful. The classic services do not use it.
     """
 
     name: str
@@ -121,7 +122,7 @@ class TranslationProvider(Protocol):
 
 
 def get_provider(name: str, config: ProviderConfig | None = None):
-    """Провайдер по имени. Неизвестное имя — заглушка (см. `mt_providers.get`)."""
+    """A provider by name. An unknown name gives the stub (see `mt_providers.get`)."""
     return get(name, config)
 
 
@@ -135,11 +136,11 @@ def translate_texts(
     src_locale: str,
     tgt_locale: str,
 ) -> list[tuple[str | None, list[str]]]:
-    """Перевести тексты, сохранив разметку.
+    """Translate the texts with the markup kept intact.
 
-    Возвращает пары (перевод, потерянные метки). Перевод `None` значит, что
-    провайдер эту строку не осилил; вторые заполнены, если разметка испорчена
-    и результат нужно проверить руками.
+    Returns pairs of (translation, lost placeholders). A `None` translation means
+    the provider could not manage that row; the second half is filled in when the
+    markup came back damaged and the result needs checking by hand.
     """
     shielded, mappings = [], []
     for text in texts:
