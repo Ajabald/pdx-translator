@@ -861,10 +861,9 @@ BUILTIN_RULES: tuple[Rule, ...] = (
         params={"ignore_flags": False, "compare": "multiset",
                 "only_if_all_lost": False, "allow_extra": False},
         note=QT_TRANSLATE_NOOP(
-            "QaRules", "A lost variable is a hole in the text right in the game. "
-                       "Of the hits on a live translation, 56% are exactly that "
-                       "and 44% are a differing set — the latter are silenced by "
-                       "«only_if_all_lost»"),
+            "QaRules", "A lost variable leaves a hole in the text in the game. A "
+                       "set that merely differs is a softer case, and "
+                       "«only_if_all_lost» keeps quiet about it"),
         example_bad=(("Cost: $VALUE$", "Цена"),),
         example_ok=(("Cost: $VALUE$", "Цена: $VALUE$"),),
     ),
@@ -873,10 +872,10 @@ BUILTIN_RULES: tuple[Rule, ...] = (
         category="markup", severity=ERROR,
         message=QT_TRANSLATE_NOOP("QaRules", "Icons do not match the original"),
         note=QT_TRANSLATE_NOOP(
-            "QaRules", "@gold! is the CK3 icon. £gold£ belongs to "
-                       "EU4/HOI4/Stellaris and never occurs in CK3 — zero "
-                       "matches over 440 000 rows — but it is still checked, "
-                       "because a translator who saw one elsewhere may type it"),
+            "QaRules", "@gold! is the CK3 icon; the £gold£ form belongs to EU4, "
+                       "HOI4 and Stellaris. Both are checked, because a "
+                       "translator who has worked on another game types the icon "
+                       "they are used to"),
         example_bad=(("@gold! paid", "уплачено"),
                      ("£gold£ paid", "уплачено")),
         example_ok=(("@gold! paid", "@gold! уплачено"),
@@ -890,10 +889,9 @@ BUILTIN_RULES: tuple[Rule, ...] = (
             "QaRules", "Colour codes do not match the original"),
         params={"compare": "multiset"},
         note=QT_TRANSLATE_NOOP(
-            "QaRules", "The HOI4/EU4/Stellaris colour: §Y…§!. A lost §! paints "
-                       "the rest of the line, a swapped code turns a warning "
-                       "green. Quiet on live data: 25 hits over the whole "
-                       "vanilla Russian HOI4 (11 290 rows carry a colour)"),
+            "QaRules", "The colour of HOI4, EU4 and Stellaris: §Y…§!. A lost §! "
+                       "paints the rest of the line, and a swapped code can turn "
+                       "a warning green"),
         example_bad=(("§YWarning§!", "Внимание"),),
         example_ok=(("§YWarning§!", "§YВнимание§!"),),
     ),
@@ -905,11 +903,9 @@ BUILTIN_RULES: tuple[Rule, ...] = (
             "QaRules", "A grammar tag or variant of the original was lost"),
         params={"compare": "multiset"},
         note=QT_TRANSLATE_NOOP(
-            "QaRules", "The Stellaris 3.6 system: «Empress&!fem,vowel» and "
-                       "«A $1$|||vowel:An $1$». Added variants are not counted "
-                       "— it is the translator who writes them for cases, "
-                       "6 327 rows of the Russian tree against 463 of the "
-                       "English one; a lost tag, on the contrary, changes the "
+            "QaRules", "The Stellaris grammar system: «Empress&!fem,vowel» and "
+                       "«A $1$|||vowel:An $1$». Variants the translator adds for "
+                       "cases are fine; a lost tag is not — it changes the "
                        "gender of a name everywhere it is substituted"),
         example_bad=(("Empress&!fem", "Императрица"),),
         example_ok=(("Empress&!fem", "Императрица&!fem"),
@@ -975,9 +971,9 @@ BUILTIN_RULES: tuple[Rule, ...] = (
             "QaRules", "Extra spaces at the beginning or the end"),
         params={"compare_with_source": True},
         note=QT_TRANSLATE_NOOP(
-            "QaRules", "The edge space is in the original too — that is how the "
-                       "game glues strings together; on a live translation this "
-                       "is 93% of all hits of the rule"),
+            "QaRules", "An edge space is often in the original too: that is how "
+                       "the game glues strings together. Compared against the "
+                       "source, the rule stays quiet about those"),
         example_bad=(("Hello", "Привет "),), example_ok=(("Hello ", "Привет "),),
     ),
     Rule(
@@ -996,9 +992,9 @@ BUILTIN_RULES: tuple[Rule, ...] = (
             "QaRules", "Unpaired quotes or brackets in the translation"),
         params={"only_if_source_balanced": True, "strip_markup_first": False},
         note=QT_TRANSLATE_NOOP(
-            "QaRules", "The original itself is often unbalanced — on a live "
-                       "translation that is 74% of all hits, and the translation "
-                       "has nothing to do with it"),
+            "QaRules", "The original is often unbalanced itself, and the "
+                       "translation has nothing to do with it — hence the check "
+                       "against the source"),
         example_bad=(("A (b) c", "А (б в"),), example_ok=(("A (b) c", "А (б) в"),),
     ),
     Rule(
@@ -1172,58 +1168,57 @@ def default_ruleset() -> RuleSet:
 
 CUSTOM = "custom"
 
-PRESET_ORDER = ("strict", "ck3_ru", "hoi4_ru", "ck2_ru", "stellaris_ru",
-                "quiet", CUSTOM)
+PRESET_ORDER = ("strict", "ck3", "hoi4", "ck2", "stellaris", "quiet", CUSTOM)
 PRESET_LABELS = {
     "strict": QT_TRANSLATE_NOOP("QaRules", "Strict"),
-    "ck3_ru": QT_TRANSLATE_NOOP("QaRules", "CK3 · Russian"),
-    "hoi4_ru": QT_TRANSLATE_NOOP("QaRules", "HOI4 · Russian"),
-    "ck2_ru": QT_TRANSLATE_NOOP("QaRules", "CK2 · Russian"),
-    "stellaris_ru": QT_TRANSLATE_NOOP("QaRules", "Stellaris · Russian"),
+    "ck3": QT_TRANSLATE_NOOP("QaRules", "Crusader Kings III"),
+    "hoi4": QT_TRANSLATE_NOOP("QaRules", "Hearts of Iron IV"),
+    "ck2": QT_TRANSLATE_NOOP("QaRules", "Crusader Kings II"),
+    "stellaris": QT_TRANSLATE_NOOP("QaRules", "Stellaris"),
     "quiet": QT_TRANSLATE_NOOP("QaRules", "Breakage only"),
     CUSTOM: QT_TRANSLATE_NOOP("QaRules", "Own"),
 }
+
+# Как наборы звались до 0.1.2, когда игра и язык были склеены в один пресет.
+# Имена лежат в qa_rules.json пользователей, в оверлеях внутри файлов проектов
+# и в выгруженных .pdxqa — читать их придётся всегда.
+PRESET_ALIASES = {"ck3_ru": "ck3", "hoi4_ru": "hoi4",
+                  "ck2_ru": "ck2", "stellaris_ru": "stellaris"}
 PRESET_NOTES = {
     "strict": QT_TRANSLATE_NOOP(
-        "QaRules", "Every rule on, no leniency. For proofreading a finished "
-                   "translation, when noise is tolerable but a miss is not."),
-    "ck3_ru": QT_TRANSLATE_NOOP(
-        "QaRules", "Techniques of the Russian CK3 translation are not counted "
-                   "as errors: a wrapper for inflection, an added #L, formatting "
-                   "flags. On a live translation (136 113 rows) — 37 040 issues "
-                   "against 12 591."),
-    "hoi4_ru": QT_TRANSLATE_NOOP(
-        "QaRules", "The Russian HOI4 inflects with functions of its own — "
-                   "[JAP.GetAdjRuLower] instead of [JAP.GetAdjective], an ending "
-                   "glued to the word. On the vanilla translation (124 893 rows) "
-                   "— 5 269 issues against 11 072."),
-    "ck2_ru": QT_TRANSLATE_NOOP(
-        "QaRules", "The Russian CK2 inflects everything: 259 functions of the "
-                   "game do the endings, and the translator adds an address "
-                   "where English has none. On the vanilla translation "
-                   "(89 616 rows) — 24 047 issues against 45 593."),
-    "stellaris_ru": QT_TRANSLATE_NOOP(
-        "QaRules", "Stellaris inflects names with its own grammar system, and "
-                   "half of the noise here is names that match the original. "
-                   "On the vanilla translation (148 751 rows) — 29 525 issues "
-                   "against 32 969, and 17 156 of them are lowered to a signal."),
+        "QaRules", "Every rule on, nothing forgiven. For the final read-through, "
+                   "when you would rather sift ten false alarms than miss one "
+                   "real fault."),
+    "ck3": QT_TRANSLATE_NOOP(
+        "QaRules", "What a CK3 translator does on purpose stops counting as a "
+                   "mistake: a reference wrapped so it can be inflected, an "
+                   "added #L, formatting flags. The helpers your language uses "
+                   "are added on their own."),
+    "hoi4": QT_TRANSLATE_NOOP(
+        "QaRules", "HOI4 gives each language its own inflection helpers, and a "
+                   "translation swaps plain references for them. This set knows "
+                   "them, so a swap stops reading as a loss."),
+    "ck2": QT_TRANSLATE_NOOP(
+        "QaRules", "CK2 translations inflect nearly everything and add forms of "
+                   "address the English has none of. That is expected here — a "
+                   "reference that went missing is still caught."),
+    "stellaris": QT_TRANSLATE_NOOP(
+        "QaRules", "Stellaris inflects names through a grammar system of its "
+                   "own, and many terms are meant to stay as they are in the "
+                   "original. Those stop shouting; anything that breaks the "
+                   "text still does."),
     "quiet": QT_TRANSLATE_NOOP(
-        "QaRules", "Only what breaks the text in the game: lost variables, icons "
-                   "and references, unclosed tags, an empty translation."),
+        "QaRules", "Only what breaks the text in the game: a lost variable or "
+                   "icon, an unclosed tag, an empty translation. Everything "
+                   "else keeps quiet."),
     CUSTOM: QT_TRANSLATE_NOOP(
-        "QaRules", "Built-in values without a preset — tuned by hand from here."),
+        "QaRules", "The built-in values with nothing on top. Start here to set "
+                   "every rule by hand."),
 }
 
-# Какой пресет чей. Пара «игра + язык перевода», потому что пресет отвечает
-# сразу за обе стороны: приёмы задаёт язык, а имена функций, которыми он их
-# исполняет, даёт игра. Пары в таблице нет — рекомендации нет: назвать наугад
-# хуже, чем промолчать.
-PRESET_FOR: dict[tuple[str, str], str] = {
-    ("ck3", "ru"): "ck3_ru",
-    ("hoi4", "ru"): "hoi4_ru",
-    ("ck2", "ru"): "ck2_ru",
-    ("stellaris", "ru"): "stellaris_ru",
-}
+# Пресетом стала сама игра, поэтому таблицы соответствия больше нет: набор для
+# CK3 так и называется «Crusader Kings III». До 0.1.2 здесь лежала пара «игра
+# плюс язык», потому что язык был вписан в сам пресет.
 
 # «(recommended)» стояло прямо внутри ярлыка `ck3_ru`, то есть обещалось всем —
 # включая переводчика HOI4, которому рекомендован соседний набор. Пометка
@@ -1233,9 +1228,13 @@ RECOMMENDED_MARK = QT_TRANSLATE_NOOP(
     "QaRules", "%1 — recommended for this project")
 
 
-def recommended(game: str, locale: str) -> str | None:
-    """Пресет под игру и язык перевода. `None` — такой пары нет."""
-    return PRESET_FOR.get((game, locale))
+def recommended(game: str, locale: str = "") -> str | None:
+    """Набор под игру проекта. `None` — своей игры у неё нет.
+
+    Язык на выбор набора больше не влияет: он подцепляет свой слой сам, см.
+    `language_profile`.
+    """
+    return game if game in PRESETS and game != CUSTOM else None
 
 
 def display_order(game: str = "", locale: str = "") -> tuple[str, ...]:
@@ -1275,7 +1274,7 @@ PRESETS: dict[str, dict] = {
         "edge_space": {"params": {"compare_with_source": False}},
         "unbalanced_quotes": {"params": {"only_if_source_balanced": False}},
     },
-    "ck3_ru": {
+    "ck3": {
         # 33 703 → 26 001 (обёртки) → 13 582 (обёртка вместо ссылки) → 9 955
         # (флаги оформления вида |E не считаются расхождением)
         "brackets_mismatch": {"params": {
@@ -1290,20 +1289,16 @@ PRESETS: dict[str, dict] = {
         # не ошибка, а повод свериться — 11 449 строк с завышенной серьёзностью
         "inconsistent": {"severity": INFO},
     },
-    "hoi4_ru": {
+    "hoi4": {
         # Замер на ванильном русском HOI4 (124 893 строки с переводом):
         # brackets_mismatch 5 028 → 746, glued_markup 1 249 → 5. Оставшееся —
         # кандидаты в настоящие ошибки, включая опечатки Paradox в именах
         # функций и потерянные пробелы («регионе[350.GetName],»).
         "brackets_mismatch": {"params": {
-            "ignore_extra_tails": HOI4_RU_CALLS,
             "allow_replacement": True,
             "ignore_flags": True,
         }},
-        "glued_markup": {"params": {
-            "ending_calls": HOI4_RU_ENDINGS,
-            "allow_inside_word": True,
-        }},
+        "glued_markup": {"params": {"allow_inside_word": True}},
         # Двойной пробел приезжает из самого оригинала — «£command_power  §Y…»
         # разделяет иконку и число именно так. 292 → 15.
         "double_space": {"params": {"ignore_if_in_source": True}},
@@ -1311,7 +1306,7 @@ PRESETS: dict[str, dict] = {
         # по-разному, — повод свериться, а не ошибка.
         "inconsistent": {"severity": INFO},
     },
-    "stellaris_ru": {
+    "stellaris": {
         # Замер на ванильной паре (148 751 строка с переводом): 32 969 → 29 525.
         # Главный источник шума здесь другой, чем у соседей: 17 156 строк, где
         # перевод совпал с оригиналом, — это термины и названия видов, планет и
@@ -1325,7 +1320,7 @@ PRESETS: dict[str, dict] = {
         "dollar_mismatch": {"params": {"allow_extra": True}},
         "inconsistent": {"severity": INFO},
     },
-    "ck2_ru": {
+    "ck2": {
         # Замер на ванильной паре (89 616 строк с переводом): всего 45 593 →
         # 24 047, brackets_mismatch 21 905 → 9 924, glued_markup 13 101 → 3 546.
         # `allow_extra` — здесь не роскошь: русский переводчик CK2 постоянно
@@ -1333,15 +1328,11 @@ PRESETS: dict[str, dict] = {
         # сража[X.GetLasLsya], [X.GetFirstName]»), и добавленная подстановка
         # игру не ломает. Потерянная — ломает, и её правило по-прежнему ловит.
         "brackets_mismatch": {"params": {
-            "ignore_extra_tails": CK2_RU_CALLS,
             "allow_replacement": True,
             "allow_extra": True,
             "ignore_flags": True,
         }},
-        "glued_markup": {"params": {
-            "ending_calls": CK2_RU_CALLS,
-            "allow_inside_word": True,
-        }},
+        "glued_markup": {"params": {"allow_inside_word": True}},
         "double_space": {"params": {"ignore_if_in_source": True}},
         "inconsistent": {"severity": INFO},
     },
@@ -1354,6 +1345,28 @@ PRESETS: dict[str, dict] = {
         }},
     },
 }
+
+
+# --- языковой слой -------------------------------------------------------
+#
+# Что остаётся от пресета, когда из него вынули игру: списки функций, которыми
+# перевод на конкретный язык чинит грамматику. Пара «игра плюс язык», потому
+# что имена даёт игра, а нужду в них — язык. Слой не выбирается человеком: он
+# подцепляется по языку перевода открытого проекта, и это ровно то, из-за чего
+# в названии набора больше не нужно слово «русский».
+#
+# Данные и способ, которым они сняты, — в `core/inflections.py`.
+
+
+def language_profile(preset: str, locale: str) -> dict | None:
+    """Дельта языка поверх игрового профиля. `None` — пары нет, и врать нечем."""
+    calls = inflections.calls(preset, locale)
+    if not calls:
+        return None
+    delta: dict = {"brackets_mismatch": {"params": {"ignore_extra_tails": calls}}}
+    if (glued := inflections.endings(preset, locale)):
+        delta["glued_markup"] = {"params": {"ending_calls": glued}}
+    return delta
 
 
 # --- оверлеи: дельта поверх набора --------------------------------------
@@ -1394,8 +1407,13 @@ def apply_delta(rules: RuleSet, delta: Mapping | None) -> RuleSet:
 
 
 def preset_of(overlay: Mapping | None) -> str:
-    """Пресет оверлея; `custom` — если не задан или незнаком."""
+    """Пресет оверлея; `custom` — если не задан или незнаком.
+
+    Прежние имена (`ck3_ru`) переводятся в нынешние: до 0.1.2 игра и язык
+    жили в одном пресете, и настройки с теми именами лежат у людей на дисках.
+    """
     name = (overlay or {}).get("preset")
+    name = PRESET_ALIASES.get(name, name)
     return name if name in PRESETS else CUSTOM
 
 
@@ -1447,7 +1465,9 @@ def resolve(*overlays: Mapping | None, locale: str = "") -> RuleSet:
     for overlay in overlays:
         if not overlay:
             continue
-        rules = apply_delta(rules, PRESETS.get(preset_of(overlay)))
+        preset = preset_of(overlay)
+        rules = apply_delta(rules, PRESETS.get(preset))
+        rules = apply_delta(rules, language_profile(preset, locale))
         rules = with_user_rules(
             rules, for_locale(RuleSet(user_rules(overlay)), locale))
         rules = apply_delta(rules, overlay.get("rules"))

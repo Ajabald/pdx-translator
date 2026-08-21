@@ -116,13 +116,13 @@ def test_every_game_preset_is_named_in_the_readme(lang: str) -> None:
     продолжал перечислять четыре штуки времён одной CK3 — и обещание «семь игр
     серии» этим себе же противоречило.
 
-    Проверяются только наборы вида «игра_язык»: их имя содержит слаг игры,
-    который в тексте стоит буквально. У `strict`, `quiet` и `custom` имя
+    Проверяются только наборы, названные игрой: с 0.1.2 их имя и есть слаг
+    игры, а он стоит в тексте буквально. У `strict`, `quiet` и `custom` имя
     человеческое и в каждом языке своё («Строгий», «Только поломки»), сверять
     его с идентификатором нечестно — их считает тест выше, по числу.
     """
     said = text(lang).lower()
-    game_presets = [p for p in qa_rules.PRESETS if "_" in p]
+    game_presets = [p for p in qa_rules.PRESETS if p in games.ORDER]
     assert game_presets, "игровых наборов не осталось — проверка потеряла смысл"
     missing = [p for p in game_presets if p.split("_")[0] not in said]
     assert not missing, (

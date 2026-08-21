@@ -595,7 +595,8 @@ def test_the_recommended_preset_leads_the_list(qtbot, tmp_path, make_tree) -> No
 
     До 0.1.2 «(recommended)» было вписано прямо в ярлык `ck3_ru`, то есть
     стояло у всех сразу: переводчик HOI4 читал совет к чужому набору, а свой —
-    снятый на его же ванильном переводе — видел безо всякой пометки.
+    снятый на его же ванильном переводе — видел безо всякой пометки. С 0.1.2
+    набор зовётся игрой, и рекомендуется тот, чьё имя совпало с игрой проекта.
     """
     path = _hoi4_project(tmp_path, make_tree)
     conn = project.open_project(path, [])
@@ -606,7 +607,7 @@ def test_the_recommended_preset_leads_the_list(qtbot, tmp_path, make_tree) -> No
         win.rules_tab._debounce.stop()
         combo = win.rules_tab.preset_combo
 
-        assert combo.itemData(0) == "hoi4_ru"
+        assert combo.itemData(0) == "hoi4"
         assert "recommended for this project" in combo.itemText(0)
         assert combo.itemData(1) is None                  # разделитель
         others = [combo.itemText(i) for i in range(2, combo.count())]
@@ -653,8 +654,8 @@ def test_the_menu_marks_the_recommended_preset_and_lets_it_go(
     win.open_project(path)
     labels = {a.text() for a in win._qa_preset_menu.actions()}
     assert any("recommended for this project" in text for text in labels)
-    assert win.qa_preset_actions["hoi4_ru"].text().startswith("HOI4 · Russian")
-    assert shown()[0] == "hoi4_ru"
+    assert win.qa_preset_actions["hoi4"].text().startswith("Hearts of Iron IV")
+    assert shown()[0] == "hoi4"
 
     win.show_start()
     assert shown() == before          # пунктов ровно столько же, и порядок прежний

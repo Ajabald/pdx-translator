@@ -37,7 +37,9 @@ def test_round_trip_through_a_file(tmp_path) -> None:
 
     bundle = qa_exchange.read(path)
     restored = bundle.ruleset()
-    assert bundle.preset == "ck3_ru"
+    # имя набора приезжает нынешним: файл писан до 0.1.2, когда игра и язык
+    # жили вместе, и `ck3_ru` — это нынешний `ck3`
+    assert bundle.preset == "ck3"
     assert bundle.skipped == ()
     assert [r.id for r in restored] == [r.id for r in rules]
     assert not restored.get("same_as_en").enabled

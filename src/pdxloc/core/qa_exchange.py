@@ -107,6 +107,8 @@ def parse(data: Mapping) -> Bundle:
 
     skipped: list[str] = []
     preset = data.get("preset")
+    # Файл мог быть выгружен до 0.1.2, когда игра и язык жили в одном наборе.
+    preset = qa_rules.PRESET_ALIASES.get(preset, preset)
     if preset not in qa_rules.PRESETS:
         if preset:
             skipped.append(str(preset))

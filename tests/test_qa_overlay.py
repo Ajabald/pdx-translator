@@ -12,7 +12,7 @@ import json
 import pytest
 
 from pdxloc import project as project_module
-from pdxloc.core import qa, qa_rules
+from pdxloc.core import inflections, qa, qa_rules
 
 
 # --- слияние слоёв -------------------------------------------------------
@@ -76,36 +76,55 @@ def test_every_preset_is_applicable_and_described(name: str) -> None:
     assert qa_rules.PRESET_NOTES[name]
 
 
-def test_the_recommended_preset_follows_the_game_and_the_language() -> None:
-    """Раньше «(recommended)» стояло в ярлыке `ck3_ru` и обещалось всем.
+def test_the_recommended_preset_is_the_one_named_after_the_game() -> None:
+    """Набор зовётся игрой, поэтому подбирать его нечем — он и есть игра.
 
-    Переводчик HOI4 читал рекомендацию к чужому набору — а свой, снятый на его
-    же ванильном переводе, стоял рядом безо всякой пометки.
+    До 0.1.2 здесь была таблица пар «игра плюс язык», потому что язык был вписан
+    в сам набор: у CK3 он звался `ck3_ru`. Язык уехал в свой слой, и таблица
+    схлопнулась.
     """
-    assert qa_rules.recommended("hoi4", "ru") == "hoi4_ru"
-    assert qa_rules.recommended("ck3", "ru") == "ck3_ru"
-    # игра без замера и закрытый проект: молчание честнее выдумки
-    assert qa_rules.recommended("vic3", "ru") is None
-    assert qa_rules.recommended("ck3", "de") is None
-    assert qa_rules.recommended("", "") is None
+    assert qa_rules.recommended("hoi4") == "hoi4"
+    assert qa_rules.recommended("ck3") == "ck3"
+    # игра без своего набора и закрытый проект: молчание честнее выдумки
+    assert qa_rules.recommended("vic3") is None
+    assert qa_rules.recommended("") is None
 
 
-@pytest.mark.parametrize("game,locale", [("hoi4", "ru"), ("vic3", "ru"), ("", "")])
-def test_display_order_is_a_permutation_of_the_registry(game, locale) -> None:
-    """Витрина переставляет пресеты, а не теряет и не двоит их."""
-    order = qa_rules.display_order(game, locale)
+@pytest.mark.parametrize("game", ["hoi4", "vic3", ""])
+def test_display_order_is_a_permutation_of_the_registry(game) -> None:
+    """Витрина переставляет наборы, а не теряет и не двоит их."""
+    order = qa_rules.display_order(game)
     assert sorted(order) == sorted(qa_rules.PRESET_ORDER)
-    best = qa_rules.recommended(game, locale)
+    best = qa_rules.recommended(game)
     if best is not None:
         assert order[0] == best
     else:
         assert order == qa_rules.PRESET_ORDER
 
 
-def test_every_preset_of_the_table_is_a_real_one() -> None:
-    """Опечатка в паре «игра + язык» иначе молча ничего бы не рекомендовала."""
-    for pair, name in qa_rules.PRESET_FOR.items():
-        assert name in qa_rules.PRESETS, f"{pair}: нет набора {name}"
+def test_old_preset_names_still_resolve() -> None:
+    """Имена до 0.1.2 лежат в qa_rules.json, в проектах и в выгруженных .pdxqa.
+
+    Забудь про них — и настройка человека молча превратилась бы в «Свой».
+    """
+    for old, now in qa_rules.PRESET_ALIASES.items():
+        assert qa_rules.preset_of({"preset": old}) == now, old
+        assert now in qa_rules.PRESETS
+
+
+def test_the_language_layer_attaches_by_the_target_language() -> None:
+    """Слой языка не выбирают — он приходит с языком перевода проекта."""
+    fr = qa_rules.resolve({"preset": "hoi4"}, locale="fr")
+    ru = qa_rules.resolve({"preset": "hoi4"}, locale="ru")
+    none = qa_rules.resolve({"preset": "hoi4"})
+
+    def tails(rules):
+        return rules.get("brackets_mismatch").params["ignore_extra_tails"]
+
+    assert len(tails(fr)) > 100        # французский HOI4 склоняет активнее всех
+    assert len(tails(ru)) == len(inflections.HOI4_RU_CALLS)
+    assert not tails(none)             # языка нет — и врать нечем
+    assert set(tails(fr)) != set(tails(ru))
 
 
 def test_preset_deltas_name_only_existing_rules_and_params() -> None:
