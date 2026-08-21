@@ -578,6 +578,35 @@ def test_ignored_issue_can_be_returned_to_the_check(window, conn) -> None:
 # --- окно без проекта ----------------------------------------------------
 
 
+def test_a_long_list_gets_a_multi_line_field(qtbot) -> None:
+    """Списки склоняющих функций бывают в сотню имён и больше.
+
+    В строку через запятую такое не влезает, а править его там опасно: одна
+    снесённая запятая склеивает два имени, и оба перестают работать молча.
+    """
+    from PySide6.QtWidgets import QLineEdit, QPlainTextEdit
+
+    from pdxloc.gui.rules_param_editors import ParamEditors
+
+    editors = ParamEditors()
+    qtbot.addWidget(editors)
+    rule = qa_rules.BY_ID["brackets_mismatch"]
+
+    short = rule.with_params(ignore_extra_tails=["GetOne", "GetTwo"])
+    editors.set_rule(short)
+    assert isinstance(editors._widgets["ignore_extra_tails"], QLineEdit)
+
+    names = [f"GetName{i}" for i in range(60)]
+    editors.set_rule(rule.with_params(ignore_extra_tails=names))
+    field = editors._widgets["ignore_extra_tails"]
+    assert isinstance(field, QPlainTextEdit)
+    assert field.toPlainText().splitlines() == names
+    # читается обратно без потерь, и вставленный через запятую список тоже
+    assert editors.values(rule)["ignore_extra_tails"] == names
+    field.setPlainText("GetA, GetB\nGetC")
+    assert editors.values(rule)["ignore_extra_tails"] == ["GetA", "GetB", "GetC"]
+
+
 def _hoi4_project(tmp_path, make_tree):
     """Проект чужой игры: у него рекомендуемый набор не тот, что у CK3."""
     en = make_tree({"m_l_english.yml": EN}, "en")

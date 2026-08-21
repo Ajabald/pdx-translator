@@ -809,8 +809,17 @@ class RulesTab(QWidget):
             self.scope_combo.findData(self.scope))
         self.preset_combo.setCurrentIndex(
             self.preset_combo.findData(self._preset[self.scope]))
-        self.preset_combo.setToolTip(translate(
-            "QaRules", qa_rules.PRESET_NOTES.get(self._preset[self.scope], "")))
+        note = translate(
+            "QaRules", qa_rules.PRESET_NOTES.get(self._preset[self.scope], ""))
+        # Слой языка приходит с проектом. Без проекта его нет, и числа
+        # замечаний здесь честно отличаются от тех, что человек увидит в
+        # работе, — промолчать значило бы дать прочитать разницу как пропажу.
+        if not rules_state.locale():
+            note += "\n\n" + translate(
+                "RulesWindow",
+                "The inflection helpers of the target language are added when a "
+                "project is open — they come with its translation language.")
+        self.preset_combo.setToolTip(note)
         self._loading = False
 
     # --- панель справа ---

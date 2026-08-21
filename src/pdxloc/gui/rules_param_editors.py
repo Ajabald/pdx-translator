@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QFormLayout, QLineEdit, QSpinBox, QWidget,
+    QCheckBox, QComboBox, QFormLayout, QLineEdit, QPlainTextEdit, QSpinBox,
+    QWidget,
 )
 
-from pdxloc.core.i18n import QT_TRANSLATE_NOOP, translate
+from pdxloc.core.i18n import QT_TRANSLATE_NOOP, fill, translate
 from pdxloc.core.qa_rules import Rule
 
 
@@ -134,9 +135,7 @@ class ParamEditors(QWidget):
             edit.editingFinished.connect(self.changed.emit)
             return edit
         if isinstance(value, (list, tuple)):
-            edit = QLineEdit(", ".join(str(v) for v in value))
-            edit.editingFinished.connect(self.changed.emit)
-            return edit
+            return self._list_editor(value)
         if isinstance(value, str):
             choices = self.CHOICES.get(name)
             if choices:
@@ -149,6 +148,40 @@ class ParamEditors(QWidget):
             edit.editingFinished.connect(self.changed.emit)
             return edit
         return None
+
+    # Списки склоняющих функций бывают длинными: у французского Stellaris их
+    # 206, у CK2 — 127. В строку через запятую такое не влезает, а править его
+    # там опасно: одна снесённая запятая склеивает два имени, и оба перестают
+    # работать молча. Длинный список получает многострочное поле, по имени на
+    # строку, и остаётся читаемым.
+    LONG_LIST = 12
+
+    def _list_editor(self, value) -> QWidget:
+        items = [str(v) for v in value]
+        if len(items) <= self.LONG_LIST:
+            edit = QLineEdit(", ".join(items))
+            edit.editingFinished.connect(self.changed.emit)
+            return edit
+        box = QPlainTextEdit("\n".join(items))
+        box.setMaximumHeight(150)
+        box.setPlaceholderText(translate("RulesWindow", "One per line"))
+        box.setToolTip(fill(translate("RulesWindow", "Values: %1"), len(items)))
+        box.focusOutEvent = self._on_list_blur(box)
+        return box
+
+    def _on_list_blur(self, box: QPlainTextEdit):
+        """Правку длинного поля считаем законченной по уходу фокуса.
+
+        У `QPlainTextEdit` нет `editingFinished`, а слать сигнал на каждую
+        букву — значит пересчитывать замечания всего проекта по нажатию клавиши.
+        """
+        original = QPlainTextEdit.focusOutEvent
+
+        def handler(event, _box=box):
+            original(_box, event)
+            self.changed.emit()
+
+        return handler
 
     def values(self, rule: Rule) -> dict:
         """Значения полей, приведённые к типу параметра по умолчанию."""
@@ -169,6 +202,10 @@ class ParamEditors(QWidget):
             return widget.value()
         if isinstance(widget, QComboBox):
             return widget.currentText()
+        if isinstance(widget, QPlainTextEdit):
+            # и перевод строки, и запятая: человек мог вставить список откуда угодно
+            parts = widget.toPlainText().replace(",", "\n").split("\n")
+            return [p.strip() for p in parts if p.strip()]
         text = widget.text().strip()
         if isinstance(default, (list, tuple)):
             return [p.strip() for p in text.split(",") if p.strip()]

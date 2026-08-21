@@ -3178,590 +3178,605 @@ Translations are not deleted: they stay in the archive and in the translation me
     <message>
         <location filename="../rules_window.py" line="+40" />
         <source>all projects</source>
-        <translation>所有项目</translation>
+        <translation type="unfinished">所有项目</translation>
     </message>
     <message>
         <location line="+1" />
         <source>this project</source>
-        <translation>本项目</translation>
+        <translation type="unfinished">本项目</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Error</source>
-        <translation>错误</translation>
+        <translation type="unfinished">错误</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Warning</source>
-        <translation>警告</translation>
+        <translation type="unfinished">警告</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Signal</source>
-        <translation>提示</translation>
+        <translation type="unfinished">提示</translation>
     </message>
     <message>
-        <location filename="../rules_param_editors.py" line="+36" />
+        <location filename="../rules_param_editors.py" line="+37" />
         <source>Comma separated: Concept, Select_CString</source>
-        <translation>以逗号分隔：Concept, Select_CString</translation>
+        <translation type="unfinished">以逗号分隔：Concept, Select_CString</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Comma separated: #L, #P</source>
-        <translation>以逗号分隔：#L, #P</translation>
+        <translation type="unfinished">以逗号分隔：#L, #P</translation>
     </message>
     <message>
         <location line="+2" />
         <location line="+1" />
         <location line="+1" />
         <source>Comma separated</source>
-        <translation>以逗号分隔</translation>
+        <translation type="unfinished">以逗号分隔</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Comma separated; fragments of a regular expression are allowed</source>
-        <translation>以逗号分隔；允许使用正则表达式片段</translation>
+        <translation type="unfinished">以逗号分隔；允许使用正则表达式片段</translation>
     </message>
     <message>
         <location line="+3" />
         <source>multiset — with counts, set — composition only, count — the number only</source>
-        <translation>multiset——计入数量，set——只看组成，count——只看总数</translation>
+        <translation type="unfinished">multiset——计入数量，set——只看组成，count——只看总数</translation>
     </message>
     <message>
         <location line="+3" />
         <source>any — any discrepancy, fewer — lost ones only, more — extra ones only</source>
-        <translation>any——任何差异，fewer——只看缺少的，more——只看多出的</translation>
+        <translation type="unfinished">any——任何差异，fewer——只看缺少的，more——只看多出的</translation>
     </message>
     <message>
         <location line="+3" />
         <source>The wrapper is not «on top of» but «instead of» the reference — 59% of all bracket discrepancies</source>
-        <translation>包裹不是「叠加在」引用之上，而是「取代」了它——占括号差异的 59%</translation>
+        <translation type="unfinished">包裹不是「叠加在」引用之上，而是「取代」了它——占括号差异的 59%</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Stay silent if the same space is in the original</source>
-        <translation>如果原文中也有同样的空格则不报</translation>
+        <translation type="unfinished">如果原文中也有同样的空格则不报</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Stay silent if the original itself is unbalanced</source>
-        <translation>如果原文本身就不配对则不报</translation>
+        <translation type="unfinished">如果原文本身就不配对则不报</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Stay silent if the double space is in the original</source>
-        <translation>如果原文中也有连续空格则不报</translation>
+        <translation type="unfinished">如果原文中也有连续空格则不报</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Do not count formatting flags like |E as a discrepancy</source>
-        <translation>不把 |E 这类格式标志算作差异</translation>
+        <translation type="unfinished">不把 |E 这类格式标志算作差异</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Count brackets after stripping the markup</source>
-        <translation>去除标记后再统计括号</translation>
+        <translation type="unfinished">去除标记后再统计括号</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Complain only when not a single variable is left in the translation, and stay silent when the set merely differs</source>
-        <translation>只有当译文中一个变量都不剩时才报，集合仅仅不同则不报</translation>
+        <translation type="unfinished">只有当译文中一个变量都不剩时才报，集合仅仅不同则不报</translation>
     </message>
     <message>
         <location line="+5" />
         <source>A regular expression; a match counts whole, brackets inside do not change that</source>
-        <translation>正则表达式；匹配整体计数，其中的括号不改变这一点</translation>
+        <translation type="unfinished">正则表达式；匹配整体计数，其中的括号不改变这一点</translation>
     </message>
     <message>
         <location line="+3" />
         <source>A regular expression over the original</source>
-        <translation>针对原文的正则表达式</translation>
+        <translation type="unfinished">针对原文的正则表达式</translation>
     </message>
     <message>
         <location line="+2" />
         <source>What must be in the translation. Groups of the original are substituted as \1</source>
-        <translation>译文中必须出现的内容。原文的捕获组以 \1 的形式代入</translation>
+        <translation type="unfinished">译文中必须出现的内容。原文的捕获组以 \1 的形式代入</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Treat the answer as a regular expression too. Off, the answer is searched as plain text — that is why $\1$ works</source>
-        <translation>把答案也当作正则表达式。关闭时按纯文本查找——因此 $\1$ 才有效</translation>
+        <translation type="unfinished">把答案也当作正则表达式。关闭时按纯文本查找——因此 $\1$ 才有效</translation>
     </message>
     <message>
         <location line="+4" />
         <source>forbid — fires when found, require — fires when missing</source>
-        <translation>forbid——找到即报，require——找不到才报</translation>
+        <translation type="unfinished">forbid——找到即报，require——找不到才报</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Ignore the case</source>
-        <translation>忽略大小写</translation>
+        <translation type="unfinished">忽略大小写</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Comma separated, two characters each: «», ()</source>
-        <translation>以逗号分隔，每对两个字符：«»、()</translation>
+        <translation type="unfinished">以逗号分隔，每对两个字符：«»、()</translation>
     </message>
     <message>
         <location line="+2" />
         <source>In a row, without separators: …—</source>
-        <translation>连续写出，不加分隔符：…—</translation>
+        <translation type="unfinished">连续写出，不加分隔符：…—</translation>
     </message>
     <message>
         <location line="+2" />
         <source>How big a difference is still not an issue</source>
-        <translation>多大的差异仍然不算问题</translation>
+        <translation type="unfinished">多大的差异仍然不算问题</translation>
+    </message>
+    <message>
+        <location line="+76" />
+        <source>One per line</source>
+        <translation type="unfinished">每行一个</translation>
+    </message>
+    <message>
+        <location line="+1" />
+        <source>Values: %1</source>
+        <translation type="unfinished">条目数：%1</translation>
     </message>
     <message>
         <location filename="../rules_window.py" line="+107" />
         <source>Preset:</source>
-        <translation>预设：</translation>
+        <translation type="unfinished">预设：</translation>
     </message>
     <message>
         <location line="+18" />
         <source>Scope:</source>
-        <translation>范围：</translation>
+        <translation type="unfinished">范围：</translation>
     </message>
     <message>
         <location line="+7" />
         <source>Where to record the setting: into a file next to the application or inside this project</source>
-        <translation>设置保存到何处：应用程序旁边的文件，还是本项目内部</translation>
+        <translation type="unfinished">设置保存到何处：应用程序旁边的文件，还是本项目内部</translation>
     </message>
     <message>
         <location line="+7" />
         <source>Import…</source>
-        <translation>导入…</translation>
+        <translation type="unfinished">导入…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Take the setting from a file — someone else's or your own from another machine</source>
-        <translation>从文件读取设置——别人的，或自己另一台机器上的</translation>
+        <translation type="unfinished">从文件读取设置——别人的，或自己另一台机器上的</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Export…</source>
-        <translation>导出…</translation>
+        <translation type="unfinished">导出…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Write the setting to a file to pass it on</source>
-        <translation>把设置写入文件以便传给他人</translation>
+        <translation type="unfinished">把设置写入文件以便传给他人</translation>
     </message>
     <message>
         <location line="+32" />
         <source>Own rule…</source>
-        <translation>自定义规则…</translation>
+        <translation type="unfinished">自定义规则…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>A rule of your own: an expression instead of a built-in check</source>
-        <translation>自己写的规则：用表达式代替内置检查</translation>
+        <translation type="unfinished">自己写的规则：用表达式代替内置检查</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Duplicate</source>
-        <translation>创建副本</translation>
+        <translation type="unfinished">创建副本</translation>
     </message>
     <message>
         <location line="+1" />
         <source>A copy of your own rule to edit without losing the original. A built-in rule cannot be copied — its check is code, not an expression</source>
-        <translation>复制一份自定义规则，改动副本而不丢失原来的。内置规则无法复制——它的检查是代码，不是表达式</translation>
+        <translation type="unfinished">复制一份自定义规则，改动副本而不丢失原来的。内置规则无法复制——它的检查是代码，不是表达式</translation>
     </message>
     <message>
         <location line="+6" />
         <source>Delete</source>
-        <translation>删除</translation>
+        <translation type="unfinished">删除</translation>
     </message>
     <message>
         <location line="+10" />
         <source>Rule</source>
-        <translation>规则</translation>
+        <translation type="unfinished">规则</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Hits</source>
-        <translation>触发次数</translation>
+        <translation type="unfinished">触发次数</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Severity</source>
-        <translation>严重程度</translation>
+        <translation type="unfinished">严重程度</translation>
     </message>
     <message>
         <location line="+2" />
         <source>How many times the rule fires on this project</source>
-        <translation>该规则在本项目中触发的次数</translation>
+        <translation type="unfinished">该规则在本项目中触发的次数</translation>
     </message>
     <message>
         <location line="+33" />
-        <location line="+560" />
+        <location line="+569" />
         <source>Check</source>
-        <translation>检查</translation>
+        <translation type="unfinished">检查</translation>
     </message>
     <message>
-        <location line="-538" />
+        <location line="-547" />
         <source>Setting</source>
-        <translation>设置</translation>
+        <translation type="unfinished">设置</translation>
     </message>
     <message>
         <location line="+11" />
         <source>Return the rule to the preset</source>
-        <translation>将该规则恢复为预设</translation>
+        <translation type="unfinished">将该规则恢复为预设</translation>
     </message>
     <message>
-        <location line="+519" />
+        <location line="+528" />
         <source>Check · %1</source>
-        <translation>检查 · %1</translation>
+        <translation type="unfinished">检查 · %1</translation>
     </message>
     <message>
         <location line="+10" />
         <source>🔒 Built-in rule: the check and its wording live in the application. It can be switched off and made more lenient, but not rewritten or deleted.</source>
-        <translation>🔒 内置规则：检查本身及其措辞都在应用程序中。可以关闭、可以放宽，但无法改写或删除。</translation>
+        <translation type="unfinished">🔒 内置规则：检查本身及其措辞都在应用程序中。可以关闭、可以放宽，但无法改写或删除。</translation>
     </message>
     <message>
         <location line="+207" />
         <source>Own rule</source>
-        <translation>自定义规则</translation>
+        <translation type="unfinished">自定义规则</translation>
     </message>
     <message>
-        <location line="-758" />
-        <location line="+765" />
+        <location line="-767" />
+        <location line="+774" />
         <source>Name:</source>
-        <translation>名称：</translation>
+        <translation type="unfinished">名称：</translation>
     </message>
     <message>
-        <location line="-859" />
+        <location line="-868" />
         <source>Reset…</source>
-        <translation>重置…</translation>
+        <translation type="unfinished">重置…</translation>
     </message>
     <message>
         <location line="+4" />
         <location line="+388" />
         <location line="+5" />
         <source>Return built-in rules to the preset</source>
-        <translation>将内置规则恢复为预设</translation>
+        <translation type="unfinished">将内置规则恢复为预设</translation>
     </message>
     <message>
         <location line="-388" />
         <location line="+403" />
         <location line="+4" />
         <source>Delete all own rules</source>
-        <translation>删除全部自定义规则</translation>
+        <translation type="unfinished">删除全部自定义规则</translation>
     </message>
     <message>
         <location line="-319" />
         <source>same as the name</source>
-        <translation>与名称相同</translation>
+        <translation type="unfinished">与名称相同</translation>
     </message>
     <message>
         <location line="+1" />
         <source>What the check will say about the row</source>
-        <translation>检查将如何描述该行</translation>
+        <translation type="unfinished">检查将如何描述该行</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Message:</source>
-        <translation>提示语：</translation>
+        <translation type="unfinished">提示语：</translation>
     </message>
     <message>
         <location line="+7" />
         <source>Severity:</source>
-        <translation>严重程度：</translation>
+        <translation type="unfinished">严重程度：</translation>
     </message>
     <message>
         <location line="+13" />
         <source>Leniency</source>
-        <translation>宽松度</translation>
+        <translation type="unfinished">宽松度</translation>
     </message>
     <message>
         <location line="+5" />
         <source>This rule has no settings.</source>
-        <translation>该规则没有可调设置。</translation>
+        <translation type="unfinished">该规则没有可调设置。</translation>
     </message>
     <message>
         <location line="+13" />
-        <location line="+560" />
+        <location line="+569" />
         <source>Examples — the rule checks itself with them:</source>
-        <translation>示例——规则以此自检：</translation>
+        <translation type="unfinished">示例——规则以此自检：</translation>
     </message>
     <message>
-        <location line="-554" />
+        <location line="-563" />
         <source>Original</source>
-        <translation>原文</translation>
+        <translation type="unfinished">原文</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Translation</source>
-        <translation>译文</translation>
+        <translation type="unfinished">译文</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Expected</source>
-        <translation>预期</translation>
+        <translation type="unfinished">预期</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Now</source>
-        <translation>当前</translation>
+        <translation type="unfinished">当前</translation>
     </message>
     <message>
         <location line="+14" />
         <source>Check on a pair</source>
-        <translation>在一对文本上检查</translation>
+        <translation type="unfinished">在一对文本上检查</translation>
     </message>
     <message>
         <location line="+4" />
         <source>original</source>
-        <translation>原文</translation>
+        <translation type="unfinished">原文</translation>
     </message>
     <message>
         <location line="+2" />
         <source>translation</source>
-        <translation>译文</translation>
+        <translation type="unfinished">译文</translation>
     </message>
     <message>
         <location line="+8" />
         <source>Take the current row</source>
-        <translation>取当前行</translation>
+        <translation type="unfinished">取当前行</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Insert the pair from the row selected in the project table</source>
-        <translation>插入项目表格中选中行的原文与译文</translation>
+        <translation type="unfinished">插入项目表格中选中行的原文与译文</translation>
     </message>
     <message>
         <location line="+24" />
         <source>Built-in rules</source>
-        <translation>内置规则</translation>
+        <translation type="unfinished">内置规则</translation>
     </message>
     <message>
         <location line="+1" />
         <source>The check is written in the application: it can be switched on and off and made more lenient, but not rewritten or deleted</source>
-        <translation>检查由应用程序编写：可以开关、可以放宽，但无法改写或删除</translation>
+        <translation type="unfinished">检查由应用程序编写：可以开关、可以放宽，但无法改写或删除</translation>
     </message>
     <message>
         <location line="+20" />
         <source>Other languages</source>
-        <translation>其他语言</translation>
+        <translation type="unfinished">其他语言</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Rules of a language other than this project's: they stay silent, but can be switched on by hand</source>
-        <translation>并非本项目译文语言的规则：它们保持沉默，但可以手动启用</translation>
+        <translation type="unfinished">并非本项目译文语言的规则：它们保持沉默，但可以手动启用</translation>
     </message>
     <message>
         <location line="+7" />
         <source>Rules of your own: they can be added, edited, duplicated and deleted</source>
-        <translation>你自己的规则：可以添加、编辑、复制和删除</translation>
+        <translation type="unfinished">你自己的规则：可以添加、编辑、复制和删除</translation>
     </message>
     <message>
         <location line="+87" />
         <source>Set by hand — differs from the preset</source>
-        <translation>已手动设置——与预设不同</translation>
+        <translation type="unfinished">已手动设置——与预设不同</translation>
     </message>
     <message>
         <location line="+74" />
         <source>The built-in rules already match the preset.</source>
-        <translation>内置规则已经与预设一致。</translation>
+        <translation type="unfinished">内置规则已经与预设一致。</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Return %1 rules to the preset values? Own rules stay as they are.</source>
-        <translation>将 %1 条规则恢复为预设值？自定义规则保持不变。</translation>
+        <translation type="unfinished">将 %1 条规则恢复为预设值？自定义规则保持不变。</translation>
     </message>
     <message>
         <location line="+15" />
         <source>There are no own rules in this layer.</source>
-        <translation>该层中没有任何自定义规则。</translation>
+        <translation type="unfinished">该层中没有任何自定义规则。</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Delete %1 own rules? This cannot be undone.</source>
-        <translation>删除 %1 条自定义规则？此操作无法撤销。</translation>
+        <translation type="unfinished">删除 %1 条自定义规则？此操作无法撤销。</translation>
     </message>
     <message>
         <location line="+48" />
         <source>%1 (copy)</source>
-        <translation>%1（副本）</translation>
+        <translation type="unfinished">%1（副本）</translation>
     </message>
     <message>
         <location line="+38" />
         <source>Delete the rule</source>
-        <translation>删除规则</translation>
+        <translation type="unfinished">删除规则</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Delete the rule «%1»?</source>
-        <translation>删除规则「%1」？</translation>
+        <translation type="unfinished">删除规则「%1」？</translation>
     </message>
     <message>
         <location line="+10" />
         <location line="+12" />
         <location line="+3" />
         <source>Export check settings</source>
-        <translation>导出检查设置</translation>
+        <translation type="unfinished">导出检查设置</translation>
     </message>
     <message>
         <location line="-13" />
         <source>Check settings (*%1)</source>
-        <translation>检查设置 (*%1)</translation>
+        <translation type="unfinished">检查设置 (*%1)</translation>
     </message>
     <message>
         <location line="+14" />
         <source>Written: %1</source>
-        <translation>已写入：%1</translation>
+        <translation type="unfinished">已写入：%1</translation>
     </message>
     <message>
         <location line="+4" />
         <location line="+10" />
         <location line="+20" />
         <source>Import check settings</source>
-        <translation>导入检查设置</translation>
+        <translation type="unfinished">导入检查设置</translation>
     </message>
     <message>
         <location line="-28" />
         <source>Check settings (*%1);;All files (*)</source>
-        <translation>检查设置 (*%1);;所有文件 (*)</translation>
+        <translation type="unfinished">检查设置 (*%1);;所有文件 (*)</translation>
     </message>
     <message>
         <location line="+9" />
         <source>The file cannot be read: %1</source>
-        <translation>无法读取文件：%1</translation>
+        <translation type="unfinished">无法读取文件：%1</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Preset: %1</source>
-        <translation>预设：%1</translation>
+        <translation type="unfinished">预设：%1</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Rules edited: %1</source>
-        <translation>有改动的规则：%1</translation>
+        <translation type="unfinished">有改动的规则：%1</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Own rules: %1</source>
-        <translation>自定义规则：%1</translation>
+        <translation type="unfinished">自定义规则：%1</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Not understood and skipped: %1 (%2)</source>
-        <translation>无法识别已跳过：%1（%2）</translation>
+        <translation type="unfinished">无法识别已跳过：%1（%2）</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Replace the setting for «%1»?</source>
-        <translation>替换「%1」的设置？</translation>
+        <translation type="unfinished">替换「%1」的设置？</translation>
     </message>
     <message>
-        <location line="+100" />
+        <location line="+56" />
+        <source>The inflection helpers of the target language are added when a project is open — they come with its translation language.</source>
+        <translation type="unfinished">译文语言的变格函数在打开项目后才会加入——它们随项目的译文语言而来。</translation>
+    </message>
+    <message>
+        <location line="+53" />
         <source>The rule is set for all projects — here it can only be switched off</source>
-        <translation>该规则设定于所有项目——在这里只能将其关闭</translation>
+        <translation type="unfinished">该规则设定于所有项目——在这里只能将其关闭</translation>
     </message>
     <message>
         <location line="+40" />
         <source>This rule has no self-check examples — try it on a pair above.</source>
-        <translation>该规则没有自检示例——请在上方的一对文本上试用它。</translation>
+        <translation type="unfinished">该规则没有自检示例——请在上方的一对文本上试用它。</translation>
     </message>
     <message>
         <location line="+7" />
         <source>fires</source>
-        <translation>触发</translation>
+        <translation type="unfinished">触发</translation>
     </message>
     <message>
         <location line="+1" />
         <source>silent</source>
-        <translation>不触发</translation>
+        <translation type="unfinished">不触发</translation>
     </message>
     <message>
         <location line="+19" />
         <source>No issues.</source>
-        <translation>没有问题。</translation>
+        <translation type="unfinished">没有问题。</translation>
     </message>
     <message>
         <location line="+64" />
         <source>project-wide</source>
-        <translation>全项目</translation>
+        <translation type="unfinished">全项目</translation>
     </message>
     <message>
         <location line="+10" />
         <source>The hit counter needs an open project.</source>
-        <translation>统计触发次数需要先打开项目。</translation>
+        <translation type="unfinished">统计触发次数需要先打开项目。</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Counting the hits…</source>
-        <translation>正在统计触发次数…</translation>
+        <translation type="unfinished">正在统计触发次数…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Hits counted on %1 translated rows of the project.</source>
-        <translation>已在项目的 %1 行已翻译内容上统计触发次数。</translation>
+        <translation type="unfinished">已在项目的 %1 行已翻译内容上统计触发次数。</translation>
     </message>
     <message>
         <location line="+52" />
         <source>for example: No ellipsis as one character</source>
-        <translation>例如：不要用单字符省略号</translation>
+        <translation type="unfinished">例如：不要用单字符省略号</translation>
     </message>
     <message>
         <location line="+7" />
         <source>Kind:</source>
-        <translation>类型：</translation>
+        <translation type="unfinished">类型：</translation>
     </message>
     <message>
         <location filename="../rules_ignores_tab.py" line="+40" />
         <source>Nothing has been silenced yet.
 
 This is where issues go after the «Not an error» button in the check report (F6): a silenced issue stops showing up both in the report and in the «!» column of the table. From here it can be put back into the check.</source>
-        <translation>目前还没有屏蔽任何问题。
+        <translation type="unfinished">目前还没有屏蔽任何问题。
 
 在检查报告（F6）中按下「不是错误」后，问题就会来到这里：被屏蔽的问题不再出现在报告中，也不再出现在表格的「!」列中。可以从这里把它重新纳入检查。</translation>
     </message>
     <message>
         <location line="+17" />
         <source>Return to the check</source>
-        <translation>重新纳入检查</translation>
+        <translation type="unfinished">重新纳入检查</translation>
     </message>
     <message>
         <location line="+3" />
         <location line="+55" />
         <source>Return all</source>
-        <translation>全部恢复</translation>
+        <translation type="unfinished">全部恢复</translation>
     </message>
     <message>
         <location line="-18" />
         <source>Nothing is marked «not an error».</source>
-        <translation>没有标记为「不是错误」的内容。</translation>
+        <translation type="unfinished">没有标记为「不是错误」的内容。</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Marked «not an error»: %1.</source>
-        <translation>标记为「不是错误」：%1。</translation>
+        <translation type="unfinished">标记为「不是错误」：%1。</translation>
     </message>
     <message>
         <location line="+18" />
         <source>Return all %1 issues to the check?</source>
-        <translation>将全部 %1 个问题重新纳入检查？</translation>
+        <translation type="unfinished">将全部 %1 个问题重新纳入检查？</translation>
     </message>
     <message>
         <location filename="../rules_window.py" line="+44" />
         <source>Check settings</source>
-        <translation>检查设置</translation>
+        <translation type="unfinished">检查设置</translation>
     </message>
     <message>
         <location line="+7" />
         <source>Rules</source>
-        <translation>规则</translation>
+        <translation type="unfinished">规则</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Marked «not an error»</source>
-        <translation>标记为「不是错误」</translation>
+        <translation type="unfinished">标记为「不是错误」</translation>
     </message>
     <message>
         <location line="+10" />
         <source>Apply and close</source>
-        <translation>应用并关闭</translation>
+        <translation type="unfinished">应用并关闭</translation>
     </message>
 </context>
 <context>

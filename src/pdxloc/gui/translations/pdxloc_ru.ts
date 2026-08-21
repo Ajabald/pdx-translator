@@ -3201,7 +3201,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Сигнал</translation>
     </message>
     <message>
-        <location filename="../rules_param_editors.py" line="+36" />
+        <location filename="../rules_param_editors.py" line="+37" />
         <source>Comma separated: Concept, Select_CString</source>
         <translation>Через запятую: Concept, Select_CString</translation>
     </message>
@@ -3313,6 +3313,16 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Насколько велика разница, которая ещё не замечание</translation>
     </message>
     <message>
+        <location line="+76" />
+        <source>One per line</source>
+        <translation>По одному в строке</translation>
+    </message>
+    <message>
+        <location line="+1" />
+        <source>Values: %1</source>
+        <translation>Значений: %1</translation>
+    </message>
+    <message>
         <location filename="../rules_window.py" line="+107" />
         <source>Preset:</source>
         <translation>Набор:</translation>
@@ -3394,12 +3404,12 @@ Translations are not deleted: they stay in the archive and in the translation me
     </message>
     <message>
         <location line="+33" />
-        <location line="+560" />
+        <location line="+569" />
         <source>Check</source>
         <translation>Проверка</translation>
     </message>
     <message>
-        <location line="-538" />
+        <location line="-547" />
         <source>Setting</source>
         <translation>Настройка</translation>
     </message>
@@ -3409,7 +3419,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Вернуть правило к набору</translation>
     </message>
     <message>
-        <location line="+519" />
+        <location line="+528" />
         <source>Check · %1</source>
         <translation>Проверка · %1</translation>
     </message>
@@ -3424,13 +3434,13 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Своё правило</translation>
     </message>
     <message>
-        <location line="-758" />
-        <location line="+765" />
+        <location line="-767" />
+        <location line="+774" />
         <source>Name:</source>
         <translation>Название:</translation>
     </message>
     <message>
-        <location line="-859" />
+        <location line="-868" />
         <source>Reset…</source>
         <translation>Сбросить…</translation>
     </message>
@@ -3480,12 +3490,12 @@ Translations are not deleted: they stay in the archive and in the translation me
     </message>
     <message>
         <location line="+13" />
-        <location line="+560" />
+        <location line="+569" />
         <source>Examples — the rule checks itself with them:</source>
         <translation>Примеры — правило проверяет себя ими само:</translation>
     </message>
     <message>
-        <location line="-554" />
+        <location line="-563" />
         <source>Original</source>
         <translation>Оригинал</translation>
     </message>
@@ -3654,7 +3664,12 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Заменить настройку для области «%1»?</translation>
     </message>
     <message>
-        <location line="+100" />
+        <location line="+56" />
+        <source>The inflection helpers of the target language are added when a project is open — they come with its translation language.</source>
+        <translation>Функции склонения языка перевода подключаются при открытом проекте — они приходят вместе с его языком.</translation>
+    </message>
+    <message>
+        <location line="+53" />
         <source>The rule is set for all projects — here it can only be switched off</source>
         <translation>Правило задано на все проекты — здесь его можно только выключить</translation>
     </message>

@@ -837,6 +837,12 @@ RU["Export"] = {
 }
 
 RU["RulesWindow"] = {
+    "One per line":
+        "По одному в строке",
+    "Values: %1":
+        "Значений: %1",
+    "The inflection helpers of the target language are added when a project is open — they come with its translation language.":
+        "Функции склонения языка перевода подключаются при открытом проекте — они приходят вместе с его языком.",
     "all projects": "все проекты",
     "this project": "этот проект",
     "Error": "Ошибка",

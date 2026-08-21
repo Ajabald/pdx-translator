@@ -60,7 +60,9 @@ CHECKED: dict[str, int] = {
     # перечитает контекст, а не тот, кто дописал строки.
     "Relocate": 19,
     "RootDialog": 11,
-    "RulesWindow": 114,
+    # RulesWindow вычитывался при 114 строках; в 0.1.2 в него добавились поле
+    # длинного списка и пояснение про языковой слой. Пометка снята целиком:
+    # вернуть её должен тот, кто перечитает контекст, а не тот, кто дописал.
     "ScanDialog": 30,
     "ScanStats": 14,
     "Scanner": 2,
@@ -1274,6 +1276,12 @@ ZH["RootDialog"] = {
 }
 
 ZH["RulesWindow"] = {
+    "One per line":
+        "每行一个",
+    "Values: %1":
+        "条目数：%1",
+    "The inflection helpers of the target language are added when a project is open — they come with its translation language.":
+        "译文语言的变格函数在打开项目后才会加入——它们随项目的译文语言而来。",
     "all projects":
         "所有项目",
     "this project":
