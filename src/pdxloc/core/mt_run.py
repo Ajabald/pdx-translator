@@ -1,20 +1,21 @@
-"""Прогон машинного перевода: пачки, ожидание, отчёт.
+"""A machine translation run: batches, waiting, the report.
 
-Разделение с `core/mt.py` простое: там защита разметки и реестр, здесь всё, что
-касается **прогона на много строк** — как их делить, что делать при отказе и что
-показать в конце.
+The split from `core/mt.py` is simple: markup shielding and the registry live
+there, and everything about **a run over many rows** lives here — how to divide
+them, what to do about a refusal and what to show at the end.
 
-Три решения, каждое куплено чужим опытом:
+Three decisions, each bought with somebody else's experience:
 
-* **пачки считаются по символам, а не по строкам.** У сервисов ограничение на
-  объём запроса, а длина строк в локализации гуляет от `Yes` до абзаца;
-* **ждать между запросами обязательно.** ModTranslationHelper шлёт запросы
-  примерно раз в 150 мс и упирается в лимиты — отсюда и его сообщение про
-  исчерпанный лимит. Четверть секунды по умолчанию стоит дешевле разбора,
-  почему половина прогона не удалась;
-* **пачка, которую не удалось разобрать, не применяется целиком.** Перевод,
-  приземлившийся на чужой ключ, — худшее, что здесь может случиться: он
-  выглядит как работа и находится через недели.
+* **batches are measured in characters, not in rows.** Services limit the size of
+  a request, while the length of a localisation row wanders from `Yes` to a whole
+  paragraph;
+* **waiting between requests is mandatory.** ModTranslationHelper fires a request
+  about every 150 ms and runs into the limits — hence its own message about an
+  exhausted quota. A quarter of a second by default is cheaper than working out
+  why half a run failed;
+* **a batch that could not be parsed is not applied at all.** A translation that
+  landed on somebody else's key is the worst thing that can happen here: it looks
+  like work and is found weeks later.
 """
 from __future__ import annotations
 
@@ -27,21 +28,23 @@ from pdxloc.core.i18n import fill, translate
 from pdxloc.core.mt_errors import MtCancelled, MtError, MtQuotaError
 from pdxloc.core.progress import ProgressCb, throttled
 
-# Сколько строк максимум в одном запросе, даже если по символам влезло больше.
-# Ограничение не техническое, а на понятность: при отказе теряется меньше, а
-# прогресс не скачет через полсотни строк.
+# The most rows in one request, even when more would fit by characters. The
+# limit is not technical but a matter of legibility: less is lost on a refusal,
+# and the progress does not leap fifty rows at a time.
 MAX_ROWS_PER_BATCH = 50
 
-# Ждать дольше минуты по чужой просьбе не станем: человек смотрит на окно.
+# We will not wait longer than a minute on somebody else's request: a person is
+# looking at the window.
 MAX_RETRY_WAIT_SEC = 60.0
 
-# Ожидание режется на такие куски, чтобы «Прервать» отвечал и во время паузы.
+# The wait is cut into slices this size so that «Interrupt» answers during a
+# pause as well.
 _SLEEP_SLICE_SEC = 0.2
 
 
 @dataclass
 class MtRow:
-    """Строка, отданная на перевод. `unit_id` и `key` нужны только отчёту."""
+    """A row handed over for translation. `unit_id` and `key` are for the report only."""
 
     unit_id: int
     key: str
@@ -50,7 +53,7 @@ class MtRow:
 
 @dataclass
 class MtReport:
-    """Итог прогона — показывается в сводке и отвечает на «что пошло не так»."""
+    """The outcome of a run: shown in the summary and answering «what went wrong»."""
 
     rows_sent: int = 0
     rows_translated: int = 0
@@ -59,9 +62,9 @@ class MtReport:
     requests: int = 0
     seconds: float = 0.0
     cancelled: bool = False
-    # строки, где перевод потерял подстановку: записаны, но сломаны
+    # rows where the translation lost a substitution: written, but broken
     placeholders_lost: list[tuple[int, str, list[str]]] = field(default_factory=list)
-    # строки, которые не удалось перевести вовсе, с причиной
+    # rows that could not be translated at all, with the reason
     failures: list[tuple[int, str, str]] = field(default_factory=list)
 
     def summary(self) -> str:
@@ -93,14 +96,14 @@ def plan_batches(
     max_rows: int = MAX_ROWS_PER_BATCH,
     hard_limit: int | None = None,
 ) -> tuple[list[list[int]], list[int]]:
-    """Разложить строки по запросам. Возвращает (пачки индексов, негабаритные).
+    """Lay the rows out into requests. Returns (batches of indices, oversized ones).
 
-    Индексы, а не тексты: одинаковые оригиналы в проекте — обычное дело, и
-    сопоставлять результат по тексту значило бы их перепутать.
+    Indices rather than texts: identical originals are an everyday matter in a
+    project, and matching the result by text would mix them up.
 
-    Строка, не влезающая в жёсткий предел провайдера, **не режется**: обрезка
-    выглядела бы как успех, а на деле теряла бы половину смысла. Такая строка
-    возвращается отдельным списком, и прогон отметит её неудачей.
+    A row that does not fit the provider's hard limit is **not cut**: truncation
+    would look like success while losing half the meaning. Such a row comes back
+    in a list of its own, and the run marks it a failure.
     """
     batches: list[list[int]] = []
     oversized: list[int] = []
@@ -124,11 +127,12 @@ def plan_batches(
 
 
 def _wait(seconds: float, should_cancel: Callable[[], bool]) -> None:
-    """Подождать, не переставая слышать «Прервать».
+    """Wait without going deaf to «Interrupt».
 
-    Ожидание отсчитывается **сложением ломтей**, а не по часам: так подменённый
-    в тестах `time.sleep` делает паузу мгновенной. Крутись здесь цикл по
-    `monotonic`, набор ждал бы бэкофф по-настоящему — и его перестали бы гонять.
+    The wait is counted **by adding up the slices** rather than by the clock: that
+    way a `time.sleep` replaced in the tests makes the pause instant. Were there a
+    loop on `monotonic` here, the suite would wait out the backoff for real — and
+    people would stop running it.
     """
     remaining = seconds
     while remaining > 0:
@@ -148,10 +152,10 @@ def _translate_batch_with_retries(
     retries: int,
     should_cancel: Callable[[], bool],
 ) -> list[tuple[str, list[str]]]:
-    """Один запрос с повторами по исчерпанной квоте.
+    """One request, with retries on an exhausted quota.
 
-    Повторяем только квоту: неверный ключ и нечитаемый ответ от повтора не
-    исправятся, а время потратят.
+    Only a quota is retried: a wrong key and an unreadable answer will not be
+    cured by a retry, and would spend the time anyway.
     """
     attempt = 0
     while True:
@@ -180,14 +184,15 @@ def run(
     progress_cb: ProgressCb | None = None,
     should_cancel: Callable[[], bool] | None = None,
 ) -> MtReport:
-    """Перевести строки и записать результат через `write`.
+    """Translate the rows and write the result through `write`.
 
-    Запись отдана наружу намеренно: ядро не знает ни про пачку отката, ни про
-    статусы — этим ведает вызывающая сторона, и её же дело решить, что делать
-    со строкой, потерявшей подстановку.
+    Writing is handed outwards deliberately: the core knows nothing about the undo
+    batch or the statuses — the caller governs those, and it is also the caller's
+    business to decide what to do about a row that lost a substitution.
 
-    Прерывание не откатывает уже записанное: всё, что записано, лежит в одной
-    пачке и снимается одним Ctrl+Z. Об этом говорит и `MtReport.summary`.
+    Interrupting does not roll back what is already written: everything written
+    lies in one batch and comes back with one Ctrl+Z. `MtReport.summary` says so
+    as well.
     """
     report = MtReport(rows_sent=len(rows))
     if not rows:
@@ -221,8 +226,8 @@ def run(
             except MtCancelled:
                 raise
             except (MtError, RuntimeError) as error:
-                # Пачку не применяем целиком: разобрать её нечем, а угадывать
-                # соответствие строк — способ приземлить перевод на чужой ключ.
+                # The batch is not applied at all: there is nothing to parse it with, and
+                # guessing which row is which is a way to land a translation on the wrong key.
                 message = getattr(error, "message", None) or str(error)
                 for i in batch:
                     row = rows[i]
@@ -237,9 +242,9 @@ def run(
             for i, (translated, lost) in zip(batch, results, strict=True):
                 row = rows[i]
                 if translated is None:
-                    # Провайдер честно сказал, что эту строку не осилил.
-                    # Записывать оригинал под видом перевода нельзя: он выглядел
-                    # бы работой и уехал бы в мод.
+                    # The provider said honestly that it could not manage this row. Writing the
+                    # original in the guise of a translation is not allowed: it would look like
+                    # work and would travel into the mod.
                     report.rows_failed += 1
                     report.failures.append((row.unit_id, row.key, translate(
                         "MtRun", "The service returned nothing for this row.")))

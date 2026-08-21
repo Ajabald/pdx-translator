@@ -1,25 +1,26 @@
-"""Общее для языковых моделей: договор о формате и разбор ответа.
+"""What the language models share: the format contract and parsing the answer.
 
-Языковая модель — единственный провайдер, которого можно попросить учесть
-контекст мода и сохранить теги. За это она платит ненадёжностью: на N строк
-она **не обязана** вернуть N ответов, может пронумеровать их по-своему или
-добавить пояснение от себя.
+A language model is the only provider you can ask to take the context of a mod
+into account and to keep the tags. It pays for that with unreliability: for N rows
+it is **not obliged** to return N answers, it may number them its own way, or add
+an explanation of its own.
 
-Отсюда три решения.
+Hence three decisions.
 
-**Промпт разделён надвое.** Договор о формате — наш и неизменяемый: массив
-объектов на входе, массив объектов на выходе, у каждого свой `id`, метки
-`⟦N⟧` переносятся дословно. Пожелания пользователя (тон, обращение, глоссарий)
-дописываются отдельным куском и на формат влиять не могут. Дай человеку править
-весь промпт целиком — и первая же правка сломает разбор, причём молча.
+**The prompt is split in two.** The format contract is ours and immutable: an
+array of objects in, an array of objects out, each with its own `id`, the `⟦N⟧`
+placeholders carried over verbatim. The user's wishes — tone, forms of address, a
+glossary — are appended as a separate piece and cannot affect the format. Let a
+person edit the whole prompt and the very first edit breaks the parsing, silently
+at that.
 
-**Разбираем по `id`, а не по порядку.** Модель охотно меняет порядок и
-пропускает строки; позиционное сопоставление в этом случае не ошибается — оно
-приземляет перевод на чужой ключ, что гораздо хуже.
+**Parsing goes by `id`, not by order.** The model happily reorders and skips
+rows; positional matching does not err in that case — it lands a translation on
+somebody else's key, which is far worse.
 
-**Не разобралось — переспрашиваем, потом идём по одной.** И только та строка,
-что не далась и поодиночке, возвращается как `None`. Ронять из-за неё пачку в
-полсотни строк расточительно.
+**If it did not parse, ask again, then go one at a time.** And only the row that
+would not come even alone is returned as `None`. Dropping a batch of fifty over
+it would be wasteful.
 """
 from __future__ import annotations
 
@@ -28,10 +29,11 @@ import re
 
 from pdxloc.core.mt_errors import MtResponseError
 
-# Схема ответа для провайдеров, умеющих структурированный вывод. Там, где она
-# поддерживается, разбирать становится почти нечего: сервис сам гарантирует
-# форму, и деградация до запроса по строке остаётся редким путём, а не обычным.
-# Верхний уровень — объект, а не массив: этого требуют оба сервиса.
+# The answer schema for the providers that can do structured output. Where it
+# is supported there is almost nothing left to parse: the service guarantees
+# the shape itself, and falling back to one request per row stays a rare path
+# rather than the usual one. The top level is an object rather than an array:
+# both services require that.
 SCHEMA = {
     "type": "object",
     "properties": {
@@ -53,13 +55,14 @@ SCHEMA = {
 }
 
 CONTRACT = (
-    # Игра здесь не названа намеренно. Раньше стояло «a Crusader Kings III
-    # mod», и при переводе мода HOI4 или Stellaris модели сообщали заведомую
-    # неправду — а домен она из промпта и берёт. Прокинуть настоящую игру
-    # сюда мешает подпись `build_prompt`: до провайдера доходят только языки
-    # (см. бэклог, «Игра проекта не доходит до промпта»). Пока — общая
-    # формулировка, которая верна для всех семи игр, а уточнить домен
-    # переводчик может своим текстом в «Параметрах».
+    # The game is deliberately not named here. It used to say «a Crusader Kings III
+    # mod», and when translating a HOI4 or Stellaris mod the models were told a
+    # plain untruth — while the domain is exactly what they take from the prompt.
+    # Passing the real game through is blocked by the signature of `build_prompt`:
+    # only the languages reach the provider (see the backlog, «The project game does
+    # not reach the prompt»). For now the wording is general enough to be true for
+    # all seven games, and a translator can narrow the domain with their own text in
+    # «Preferences».
     "You translate strings from a mod for a Paradox Interactive "
     "grand-strategy game.\n"
     "Input is a JSON array of objects: {\"id\": <number>, \"text\": <string>}.\n"
@@ -73,13 +76,14 @@ CONTRACT = (
     "- answer with the JSON array and nothing else."
 )
 
-# Модель любит обернуть ответ в ```json … ``` — снимаем, не мешая остальному.
+# The model is fond of wrapping the answer in ```json … ``` — strip that without
+# disturbing the rest.
 _FENCE_RE = re.compile(r"^\s*```(?:json)?\s*(.*?)\s*```\s*$", re.S)
 _ARRAY_RE = re.compile(r"\[.*\]", re.S)
 
 
 def build_prompt(guidance: str, src_locale: str, tgt_locale: str) -> str:
-    """Договор плюс пожелания пользователя — именно в таком порядке."""
+    """The contract plus the user's wishes, in exactly that order."""
     lines = [CONTRACT,
              f"Source language: {src_locale}. Target language: {tgt_locale}."]
     if guidance.strip():
@@ -95,10 +99,10 @@ def build_payload(texts: list[str]) -> str:
 
 
 def parse_answer(raw: str, expected: int) -> dict[int, str]:
-    """Разобрать ответ в {номер: перевод}. Что не разобралось — просто нет.
+    """Parse the answer into {number: translation}. What did not parse is absent.
 
-    Ошибку не возбуждаем: решение, что делать с недостачей, принимает
-    `translate_with_fallback` — он умеет переспросить.
+    No error is raised: the decision about what to do with a shortfall belongs to
+    `translate_with_fallback`, which knows how to ask again.
     """
     text = raw.strip()
     fenced = _FENCE_RE.match(text)
@@ -113,8 +117,8 @@ def parse_answer(raw: str, expected: int) -> dict[int, str]:
         parsed = json.loads(text)
     except ValueError:
         return {}
-    # Со структурированным выводом приходит {"rows": [...]}, без него модель
-    # с равным успехом отдаёт голый массив. Принимаем обе формы.
+    # With structured output {"rows": [...]} arrives; without it the model returns
+    # a bare array just as readily. Both forms are accepted.
     if isinstance(parsed, dict):
         parsed = parsed.get("rows")
     if not isinstance(parsed, list):
@@ -135,12 +139,12 @@ def parse_answer(raw: str, expected: int) -> dict[int, str]:
 
 
 def _attempt(ask, chunk: list[str], expected: int) -> dict[int, str]:
-    """Один заход. Нечитаемый ответ — это «ничего не разобралось», не крах.
+    """One attempt. An unreadable answer means «nothing parsed», not a crash.
 
-    Ловим только `MtResponseError`: нечитаемый ответ и отказ на пачке лечатся
-    повтором и разбивкой, а неверный ключ, исчерпанная квота и отсутствие сети
-    — нет. Пойди мы дробить пачку при неверном ключе, получили бы полсотни
-    бессмысленных запросов вместо одного внятного отказа.
+    Only `MtResponseError` is caught: an unreadable answer and a refusal on a
+    batch are cured by a retry and by splitting, while a wrong key, an exhausted
+    quota and a missing network are not. Were we to split a batch on a wrong key,
+    we would get fifty pointless requests instead of one clear refusal.
     """
     try:
         return parse_answer(ask(chunk), expected)
@@ -149,13 +153,13 @@ def _attempt(ask, chunk: list[str], expected: int) -> dict[int, str]:
 
 
 def translate_with_fallback(ask, texts: list[str]) -> list[str | None]:
-    """Спросить пачкой, потом ещё раз, потом по одной.
+    """Ask as a batch, then again, then one at a time.
 
-    `ask(list[str]) -> str` — сырой ответ модели на переданные строки.
+    `ask(list[str]) -> str` is the model's raw answer to the rows passed in.
 
-    Разбивка нужна не только на случай оборванного ответа: сервис способен
-    отказаться переводить пачку целиком из-за одной строки в ней. Пятьдесят
-    строк, потерянных из-за одной, — не та цена, которую стоит платить.
+    Splitting is not only for a truncated answer: a service can refuse to
+    translate a whole batch because of one row in it. Fifty rows lost over one is
+    not a price worth paying.
     """
     answers = _attempt(ask, texts, len(texts))
     missing = [i for i in range(len(texts)) if i not in answers]
