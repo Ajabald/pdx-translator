@@ -1,4 +1,4 @@
-"""Тесты памяти переводов."""
+"""Tests of the translation memory."""
 from __future__ import annotations
 
 from pdxloc.core import tm
@@ -28,6 +28,6 @@ def test_lookup_user_before_vanilla(db):
 
 def test_lookup_groups_duplicates(db):
     tm.upsert(db, "Hello", "Привет", key="a")
-    tm.upsert(db, "Hello", "Привет", key="b")   # тот же перевод -> conflict update
+    tm.upsert(db, "Hello", "Привет", key="b")   # the same translation -> conflict update
     hits = tm.lookup(db, "Hello")
     assert len(hits) == 1

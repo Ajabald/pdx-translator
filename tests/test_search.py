@@ -1,4 +1,4 @@
-"""Тесты поиска: регистронезависимость для кириллицы и экранирование LIKE."""
+"""Tests of the search: case-insensitivity for Cyrillic and the escaping of LIKE."""
 from __future__ import annotations
 
 import os
@@ -49,7 +49,7 @@ def test_latin_case_insensitive(db, qtbot):
 
 def test_underscore_is_literal(db, qtbot):
     seed(db)
-    # '_' не должен работать как «любой символ»
+    # '_' must not work as «any character»
     assert found_keys(db, "agot_bla") == {"agot_bla_key"}
 
 

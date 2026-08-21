@@ -158,7 +158,7 @@ def test_close_is_blocked_while_a_build_is_running(window, monkeypatch) -> None:
     monkeypatch.setattr(window.build, "is_busy", lambda: True)
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.No)
     window.done(0)
-    assert window.isVisible() or window.result() == 0     # окно не закрылось
+    assert window.isVisible() or window.result() == 0     # the window did not close
 
     asked = []
     monkeypatch.setattr(QMessageBox, "question",
