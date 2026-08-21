@@ -1,16 +1,16 @@
-"""Реестр правил обязан повторять прежнее поведение проверки.
+"""The rule registry is obliged to repeat the former behaviour of the check.
 
-Проверки переехали из тела `check_unit` в таблицу правил с параметрами. Сам по
-себе переезд не должен изменить ни одного вердикта: смена дефолтов делается
-отдельно и подтверждается замером на живых данных.
+The checks moved out of the body of `check_unit` into a table of rules with
+parameters. The move by itself must not change a single verdict: a change of the
+defaults is done separately and is confirmed by a measurement on live data.
 
-Корпус собран из каверзных случаев, ради которых писались прежние тесты, —
-если реестр где-то соврёт, упадёт именно здесь, а не в живом проекте через
-неделю.
+The corpus is put together out of the tricky cases the former tests were written
+for — should the registry lie somewhere, it will fall over here and not in a live
+project a week later.
 
-Два дефолта с тех пор изменены осознанно (`edge_space.compare_with_source`,
-`unbalanced_quotes.only_if_source_balanced`) — они только гасят срабатывания;
-что ни одного нового при этом не появляется, проверяет `test_qa_defaults.py`.
+Two defaults have been changed deliberately since (`edge_space.compare_with_source`,
+`unbalanced_quotes.only_if_source_balanced`) — they only quiet hits down; that not
+a single new one appears at that is checked by `test_qa_defaults.py`.
 """
 from __future__ import annotations
 
@@ -20,46 +20,46 @@ from pdxloc.core import qa, qa_rules
 
 TRAIT = "[GetTrait('loyal').GetName( GetNullCharacter )]"
 
-# (оригинал, перевод, ожидаемые коды) — ожидания сняты с поведения ДО реестра
+# (original, translation, expected codes) — the expectations are taken off the behaviour BEFORE the registry
 CORPUS: tuple[tuple[str, str, list[str]], ...] = (
-    # чистые строки
+    # clean rows
     ("Hello", "Привет", []),
     ("Cost: $VALUE|=+0$ £gold£", "Цена: $VALUE|=+0$ £gold£", []),
     ("#bold Text#!", "#bold Текст#!", []),
     ("[GetName] rules", "[GetName] правит", []),
     ("One\\ntwo", "Один\\nдва", []),
     ("A (b) c", "А (б) в", []),
-    # пустой перевод обрывает разбор — остальных замечаний быть не должно
+    # an empty translation breaks off the parsing — there must be no other remarks
     ("Text", "", ["empty_translated"]),
     ("Text", "   ", ["empty_translated"]),
-    # разметка
+    # the markup
     ("Cost: $VALUE$", "Цена", ["dollar_mismatch"]),
     ("£gold£ paid", "уплачено", ["icon_mismatch"]),
     ("@gold! paid", "уплачено", ["icon_mismatch"]),
     ("@gold! paid", "@gold! уплачено", []),
-    # тег с параметром: fmt_open по-прежнему видит голову и не начинает ругаться
+    # a tag with a parameter: fmt_open still sees the head and does not start complaining
     ("#indent_newline:2 Text", "#indent_newline:2 Текст", []),
     ("#TOOLTIP:hint Text", "#TOOLTIP:hint Текст", []),
     ("Rules [GetName]", "Правит", ["brackets_mismatch"]),
     ("One\\ntwo", "Один два", ["newline_mismatch"]),
-    # оформление
+    # the formatting
     ("#bold Text#!", "Текст", ["fmt_mismatch"]),
     ("#bold Text#!", "#bold Текст", ["fmt_broken"]),
-    ("#weak Text", "#weak Текст", []),          # оригинал не закрыт — не ошибка
+    ("#weak Text", "#weak Текст", []),          # the original is not closed — not an error
     ("#high;italic T#!", "#high;italic Т#!", []),
-    # типографика
+    # the typography
     ("Hello", "Hello", ["same_as_en"]),
     ("Hello", "Привет ", ["edge_space"]),
     ("Hello world", "Привет  мир", ["double_space"]),
-    ("Hello\\n\\nworld", "Привет\\n\\nмир", []),    # абзац — не двойной пробел
+    ("Hello\\n\\nworld", "Привет\\n\\nмир", []),    # a paragraph is not a double space
     ("A (b) c", "А (б в", ["unbalanced_quotes"]),
-    # русский язык
+    # the Russian language
     ("House [GetPlayer.GetDynasty.GetName]",
      "дома[GetPlayer.GetDynasty.GetName]", ["glued_markup"]),
     ("House [GetPlayer.GetDynasty.GetName]",
      "дома [GetPlayer.GetDynasty.GetName]", []),
-    # склейка окончания законна и не ловится как glued_markup; про лишнюю
-    # скобку правило пока ругается — это тот самый шум, который чинят параметры
+    # a glued ending is lawful and is not caught as glued_markup; about the extra
+    # bracket the rule still complains — that is the very noise the parameters mend
     ("[X.GetSheHe|U] granted",
      "[X.GetSheHe|U] даровал[Select_CString(X.IsFemale, 'а', '')]",
      ["brackets_mismatch"]),
@@ -90,14 +90,14 @@ def test_len_ratio_fires_when_asked() -> None:
 
 
 def test_enabled_narrows_the_set_strictly() -> None:
-    """Старый контракт: перечислили один код — получили только его."""
+    """The old contract: listed one code — got only it."""
     en, ru = "Hello world", "Привет  мир "
     assert qa.check_unit(en, ru, enabled={"double_space"}) == ["double_space"]
     assert set(qa.check_unit(en, ru)) == {"double_space", "edge_space"}
 
 
 def test_codes_dictionary_still_describes_every_rule() -> None:
-    """По qa.CODES ходят окно отчёта и колонка «!» — она обязана быть полной."""
+    """The report window and the «!» column go by qa.CODES — it is obliged to be complete."""
     assert set(qa.CODES) == {r.id for r in qa_rules.BUILTIN_RULES}
     for severity, message in qa.CODES.values():
         assert severity in qa_rules.SEVERITIES
@@ -108,7 +108,7 @@ def test_optional_codes_match_disabled_rules() -> None:
     assert {"len_ratio"} == qa.OPTIONAL_CODES
 
 
-# --- параметры заведены и работают --------------------------------------
+# --- the parameters are set up and work ---------------------------------
 
 
 def rule_with(code: str, **params) -> qa_rules.RuleSet:
@@ -117,7 +117,7 @@ def rule_with(code: str, **params) -> qa_rules.RuleSet:
 
 
 def test_brackets_can_forgive_a_grammar_wrapper() -> None:
-    """Обёртка ради склонения — приём, а не потеря ссылки."""
+    """A wrapper for the sake of declension is a device, not a lost reference."""
     en, ru = "Dusk King", "[Select_CString(CHARACTER.IsFemale, 'Королева', 'Король')]"
     assert qa.check_unit(en, ru) == ["brackets_mismatch"]
     quiet = rule_with("brackets_mismatch", ignore_extra_heads=["Select_CString"])
@@ -125,10 +125,10 @@ def test_brackets_can_forgive_a_grammar_wrapper() -> None:
 
 
 def test_brackets_can_forgive_a_wrapper_used_instead_of_a_reference() -> None:
-    """Замена подстановки на грамматическую обёртку — 59% всего шума по скобкам.
+    """Replacing a substitution with a grammatical wrapper is 59% of all the bracket noise.
 
-    Английское [CharAreIs(actor)] по-русски требует рода, и переводчик ставит
-    вместо него [Select_CString(actor.IsFemale, 'ведьма', 'колдун')].
+    The English [CharAreIs(actor)] demands a gender in Russian, and the translator
+    puts [Select_CString(actor.IsFemale, 'ведьма', 'колдун')] in its place.
     """
     en = "[CharAreIs(actor)] a witch"
     ru = "[Select_CString(actor.IsFemale, 'известная ведьма', 'известный колдун')]"
@@ -138,17 +138,17 @@ def test_brackets_can_forgive_a_wrapper_used_instead_of_a_reference() -> None:
                      ignore_extra_heads=["Select_CString"], allow_replacement=True)
     assert qa.check_unit(en, ru, ruleset=swap) == []
 
-    # но настоящая потеря ссылки прощаться не должна: обёрток нет, гасить нечем
+    # but a real lost reference must not be forgiven: there are no wrappers, nothing to quiet it with
     assert qa.check_unit("Rules [GetName] here", "Правит здесь", ruleset=swap) == \
         ["brackets_mismatch"]
 
 
 def test_replacement_budget_is_one_for_one() -> None:
-    """Прощаем столько потерь, сколько добавлено обёрток, — не больше."""
+    """We forgive as many losses as there are wrappers added — no more."""
     swap = rule_with("brackets_mismatch",
                      ignore_extra_heads=["Select_CString"], allow_replacement=True)
     en = "[A] [B] [C]"
-    ru = "[Select_CString(x.IsFemale, 'а', 'б')] [B]"    # одна обёртка, две потери
+    ru = "[Select_CString(x.IsFemale, 'а', 'б')] [B]"    # one wrapper, two losses
     assert qa.check_unit(en, ru, ruleset=swap) == ["brackets_mismatch"]
 
 
@@ -160,7 +160,7 @@ def test_brackets_can_ignore_flags() -> None:
 
 
 def test_format_can_allow_an_extra_tag() -> None:
-    """Переводчик дописывает #L ради падежа — это приём."""
+    """The translator adds #L for the sake of a case — that is a device."""
     en, ru = "[X.GetAdjective] war", "#L [X.GetAdjective]ая#! война"
     assert "fmt_mismatch" in qa.check_unit(en, ru)
     quiet = rule_with("fmt_mismatch", allow_extra_tags=["#L"])
@@ -175,10 +175,10 @@ def test_format_can_ignore_tag_case() -> None:
 
 
 def test_edge_space_compares_with_source_by_default() -> None:
-    """Краевой пробел бывает и в оригинале — так склеивают строки в игре."""
+    """An edge space happens in the original too — that is how rows are glued in the game."""
     en, ru = "Hello ", "Привет "
     assert "edge_space" not in qa.check_unit(en, ru)
-    # а вот пробел, которого в оригинале не было, ловится по-прежнему
+    # while a space that was not in the original is caught as before
     assert "edge_space" in qa.check_unit("Hello", "Привет ")
     strict = rule_with("edge_space", compare_with_source=False)
     assert "edge_space" in qa.check_unit(en, ru, ruleset=strict)
@@ -187,7 +187,7 @@ def test_edge_space_compares_with_source_by_default() -> None:
 def test_quotes_forgive_an_unbalanced_source_by_default() -> None:
     en, ru = 'He said "hello', 'Он сказал "привет'
     assert "unbalanced_quotes" not in qa.check_unit(en, ru)
-    # оригинал сбалансирован — за перевод отвечает переводчик
+    # the original is balanced — the translation is the translator's business
     assert "unbalanced_quotes" in qa.check_unit('He said "hello"', 'Он сказал "привет')
     strict = rule_with("unbalanced_quotes", only_if_source_balanced=False)
     assert "unbalanced_quotes" in qa.check_unit(en, ru, ruleset=strict)
@@ -200,7 +200,7 @@ def test_newline_can_watch_only_losses() -> None:
 
 
 def test_calque_verbs_are_editable() -> None:
-    """Чаще нужно расширить готовое правило, чем написать новое."""
+    """More often a ready rule needs widening than a new one needs writing."""
     en, ru = f"They appear {TRAIT}", f"Они выглядят {TRAIT}"
     assert qa.check_unit(en, ru) == []
     wider = rule_with("linking_calque",

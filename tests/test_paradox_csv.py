@@ -1,9 +1,10 @@
-"""Формат старых игр серии: таблица с точкой с запятой.
+"""The format of the older games of the series: a table with semicolons.
 
-Главное свойство, которое здесь стережётся: **чужие колонки неприкосновенны**.
-В одной строке с переводом живут французская, немецкая и испанская, маркер `x`
-и хвостовой комментарий; собери мы строку заново по своим правилам — всё это
-исчезло бы, и мод, собранный переводчиком, увёл бы у игроков три языка разом.
+The main property watched over here: **other people's columns are untouchable**.
+In one row with the translation live the French, the German and the Spanish ones,
+the `x` marker and a trailing comment; were we to assemble the row anew by our own
+rules, all of that would vanish, and a mod assembled by a translator would take
+three languages away from the players at once.
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ def test_parse_reads_the_english_column() -> None:
     assert [e.key for e in loc.entries] == ["d_cornwall", "b_truro"]
     assert loc.entries[0].text == "Cornwall"
     assert loc.warnings == []
-    # комментарии и шапка не теряются — они уедут обратно в файл
+    # the comments and the header are not lost — they will travel back into the file
     assert loc.entries[0].comment_before.startswith("#CODE;")
 
 
@@ -36,10 +37,10 @@ def test_parse_reads_another_language_by_column() -> None:
 
 
 def test_an_unknown_language_falls_back_to_english() -> None:
-    """Русского в формате нет — и деть перевод больше некуда.
+    """The format has no Russian — and there is nowhere else to put the translation.
 
-    Ровно так поступает живой русификатор CK2: колонка английского становится
-    колонкой перевода, остальные языки остаются на местах.
+    That is exactly what the live CK2 Russian pack does: the English column
+    becomes the column of the translation, the other languages stay where they are.
     """
     assert csv.column_of("russian") == csv.column_of("english") == 1
     assert csv.parse_text(VANILLA, language="russian").entries[0].text == "Cornwall"
@@ -57,11 +58,11 @@ def test_only_the_translated_column_changes() -> None:
     changed = out[2].split(";")
     original = VANILLA.splitlines()[2].split(";")
     assert changed[1] == "Корнуолл"
-    assert changed[2:] == original[2:]      # французская и далее — байт в байт
+    assert changed[2:] == original[2:]      # the French one and onwards — byte for byte
 
 
 def test_a_row_with_extra_separators_survives() -> None:
-    """В ванильной CK2 253 строки имеют лишние колонки, в 196 хвост после «x»."""
+    """In vanilla CK2 253 rows have extra columns, and 196 have a tail after the «x»."""
     line = "PROV1452;Beshbaliq;Beshbaliq;;;;;;;;x;;;;"
     loc = csv.parse_text(line + "\n")
     assert loc.entries[0].text == "Beshbaliq"
@@ -69,7 +70,7 @@ def test_a_row_with_extra_separators_survives() -> None:
 
 
 def test_a_trailing_comment_after_the_marker_survives() -> None:
-    """Русификатор дописывает за «x» английский оригинал — это его заметки."""
+    """The Russian pack writes the English original after the «x» — those are its notes."""
     line = "EVTTITLE20366;Коронация;x #[coronation_ruler.GetTitledFirstName];x"
     loc = csv.parse_text(line + "\n", language="russian")
     loc.entries[0].text = "Венчание на царство"
@@ -86,18 +87,18 @@ def test_a_line_without_a_separator_is_reported_not_swallowed() -> None:
 
 
 def test_a_new_key_gets_a_row_of_its_own() -> None:
-    """Ключа не было в оригинале — исходной строке взяться неоткуда."""
+    """The key was not in the original — there is nowhere for a source row to come from."""
     from pdxloc.core.models import LocEntry
 
     entry = LocEntry(key="my_key", version="", text="Мой текст")
     assert csv.render("russian", [entry]) == "my_key;Мой текст;x\n"
 
 
-# --- экранирование -------------------------------------------------------
+# --- escaping ------------------------------------------------------------
 
 
 def test_a_semicolon_in_the_translation_would_shift_the_columns() -> None:
-    """Разделитель внутри текста формат не переживает — меняем на запятую."""
+    """A separator inside the text the format does not survive — we change it for a comma."""
     assert csv.escape_value("раз; два") == "раз, два"
 
 
@@ -106,15 +107,15 @@ def test_a_real_newline_becomes_the_paradox_one() -> None:
     assert csv.unescape("раз\\nдва") == "раз\nдва"
 
 
-# --- кодировки -----------------------------------------------------------
+# --- the encodings -------------------------------------------------------
 
 
 def test_encoding_is_told_by_the_content_of_the_tree(tmp_path) -> None:
-    """cp1251 и cp1252 декодируют что угодно, поэтому смотрим на текст.
+    """cp1251 and cp1252 decode anything at all, so we look at the text.
 
-    Порог берётся с запасом: у ванильной CK2 доля строк с русским словом не
-    превышает 0,0006 (одиночные `ö` и `é`, прочитанные как кириллица), у
-    перевода доходит до 0,99.
+    The threshold is taken with room to spare: in vanilla CK2 the share of rows
+    with a Russian word does not exceed 0.0006 (single `ö` and `é` read as
+    Cyrillic), while in the translation it reaches 0.99.
     """
     english = tmp_path / "en"
     english.mkdir()
@@ -129,10 +130,10 @@ def test_encoding_is_told_by_the_content_of_the_tree(tmp_path) -> None:
 
 
 def test_a_file_of_links_alone_does_not_decide_for_the_tree(tmp_path) -> None:
-    """В русификаторе CK2 есть `WikipediaLinks.csv` из одной латиницы.
+    """In the CK2 Russian pack there is a `WikipediaLinks.csv` of Latin letters alone.
 
-    Реши мы по нему, вывод был бы обратный — поэтому кодировку определяет
-    дерево целиком, а не первый попавшийся файл.
+    Were we to decide by it, the conclusion would be the opposite — that is why the
+    encoding is decided by the tree whole and not by the first file that turns up.
     """
     tree = tmp_path / "ru"
     tree.mkdir()
@@ -142,7 +143,7 @@ def test_a_file_of_links_alone_does_not_decide_for_the_tree(tmp_path) -> None:
 
 
 def test_written_file_keeps_the_encoding_and_the_line_endings(tmp_path) -> None:
-    """Игра читает cp1251 своими шрифтами, а все её файлы — CRLF."""
+    """The game reads cp1251 with its own fonts, and all of its files are CRLF."""
     from pdxloc.core.models import LocEntry
 
     path = tmp_path / "out.csv"
@@ -152,7 +153,7 @@ def test_written_file_keeps_the_encoding_and_the_line_endings(tmp_path) -> None:
     assert raw == "k;Текст;x\r\n".encode("cp1251")
 
 
-# --- опознание формата ---------------------------------------------------
+# --- recognising the format ----------------------------------------------
 
 
 def test_detect_knows_localisation_from_a_data_table(tmp_path) -> None:
@@ -170,18 +171,19 @@ def test_detect_knows_localisation_from_a_data_table(tmp_path) -> None:
     ("english", 1), ("french", 2), ("german", 3), ("spanish", 5),
 ])
 def test_column_order_matches_the_vanilla_header(language, column) -> None:
-    """Пятая колонка пропущена в самой игре: `GERMAN;;SPANISH`."""
+    """The fifth column is skipped in the game itself: `GERMAN;;SPANISH`."""
     assert csv.column_of(language) == column
     assert csv.column_of(language, VANILLA.splitlines()[0]) == column
 
 
 def test_other_languages_are_kept_only_if_the_encoding_allows(tmp_path) -> None:
-    """Французскую колонку сохраняем, пока она переживает кодировку перевода.
+    """We keep the French column as long as it survives the encoding of the translation.
 
-    В cp1251 нет ни `ê`, ни `ü`: сохрани мы там французский текст, `Reconquête`
-    молча стало бы `Reconquкte` — и записалось бы обратно без единой ошибки.
-    Поэтому такая строка ужимается до «ключ; перевод; x», ровно как делает
-    живой русификатор CK2. Строку, которая в кодировку лезет, не трогаем.
+    cp1251 has neither `ê` nor `ü`: were we to keep the French text there,
+    `Reconquête` would silently become `Reconquкte` — and would be written back
+    without a single error. That is why such a row is squeezed down to «key;
+    translation; x», exactly as the live CK2 Russian pack does. A row that fits the
+    encoding we leave alone.
     """
     from pdxloc.core.models import LocEntry
 
@@ -191,20 +193,20 @@ def test_other_languages_are_kept_only_if_the_encoding_allows(tmp_path) -> None:
                LocEntry("k2", "", "Реконкиста", raw=accented)]
 
     out = csv.render("russian", entries, encoding="cp1251").splitlines()
-    assert out[0].split(";")[2:] == latin.split(";")[2:]     # уцелела целиком
-    assert out[1] == "k2;Реконкиста;x"                       # ужата
+    assert out[0].split(";")[2:] == latin.split(";")[2:]     # survived whole
+    assert out[1] == "k2;Реконкиста;x"                       # squeezed
 
-    # перевод на язык той же кодировки ничего не ужимает
+    # a translation into a language of the same encoding squeezes nothing
     entries[1].text = "Reconquête de Castille"
     french = csv.render("french", entries[1:], encoding="cp1252").splitlines()
     assert french[0].split(";")[3:] == accented.split(";")[3:]
 
 
 def test_bytes_foreign_to_the_encoding_survive_the_round_trip(tmp_path) -> None:
-    """В ванильной CK2 есть чешские строки в cp1250 посреди cp1252-файла.
+    """In vanilla CK2 there are Czech rows in cp1250 in the middle of a cp1252 file.
 
-    Читаем с `surrogateescape` и пишем так же — иначе перевод одной строки
-    испортил бы соседние языки во всём файле.
+    We read with `surrogateescape` and write the same way — otherwise translating
+    one row would spoil the neighbouring languages in the whole file.
     """
     path = tmp_path / "text1.csv"
     original = b"k;Peace;Mir;;;;;;;;x\r\nk2;War;V\x9dlka;;;;;;;;x\r\n"

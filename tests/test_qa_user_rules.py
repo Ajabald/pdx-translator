@@ -1,10 +1,11 @@
-"""Свои правила проверки: шесть декларативных видов и их хранение.
+"""Check rules of one's own: six declarative kinds and how they are stored.
 
-Главное свойство, ради которого виды сделаны именно такими: **чужое правило —
-данные, а не код**. Оно приезжает из файла проекта, из глобальной настройки и из
-файла обмена, и любое из трёх мест может оказаться написанным другой версией
-приложения или просто испорченным. Ни один такой случай не имеет права ни
-уронить проход по сотне тысяч строк, ни подменить встроенную проверку.
+The main property the kinds were made this way for: **somebody else's rule is
+data, not code**. It arrives from a project file, from the global setting and
+from an exchange file, and any of the three places may turn out to be written by
+another version of the application or simply spoilt. Not one such case has the
+right either to bring down a pass over a hundred thousand rows or to substitute a
+built-in check.
 """
 from __future__ import annotations
 
@@ -23,13 +24,13 @@ def check(rule_obj, en: str, ru: str) -> list[str]:
     return qa_rules.RuleSet([rule_obj]).check(en, ru)
 
 
-# --- шесть видов ---------------------------------------------------------
+# --- the six kinds -------------------------------------------------------
 
 
 CASES = [
-    # (вид, параметры, оригинал, перевод-с-ошибкой, перевод-без-ошибки)
-    # мультимножество — для того, что обязано остаться дословно; счёт — для
-    # того, что переводится, и совпадать может только числом
+    # (kind, parameters, original, translation-with-an-error, translation-without-one)
+    # a multiset is for what is obliged to stay word for word; a count is for what
+    # gets translated and can only match by number
     ("token_multiset", {"pattern": r"%\w+%"},
      "Hi %NAME%", "Привет", "Привет, %NAME%"),
     ("token_count", {"pattern": "«[^»]*»"},
@@ -55,7 +56,7 @@ def test_kind_fires_and_stays_silent(kind, params, en, bad, ok) -> None:
 
 
 def test_every_kind_is_described_and_has_a_check() -> None:
-    """Вид без подписи невозможно выбрать, вид без проверки молчит всегда."""
+    """A kind without a label cannot be chosen, a kind without a check keeps quiet always."""
     for kind_id in qa_rules.KIND_ORDER:
         kind = qa_rules.KINDS[kind_id]
         assert kind.title and kind.hint
@@ -69,7 +70,7 @@ def test_count_direction_ignores_extra_matches() -> None:
 
 
 def test_pair_regex_answer_is_plain_text_by_default() -> None:
-    """`$\\1$` в роли выражения означал бы «конец строки» и не нашёл бы ничего."""
+    """`$\\1$` in the role of an expression would mean «end of row» and would find nothing."""
     own = rule("pair_regex", source=r"\$(\w+)\$", target=r"$\1$")
     assert check(own, "Cost: $GOLD$", "Цена: $GOLD$") == []
 
@@ -80,7 +81,7 @@ def test_pair_regex_survives_a_template_without_a_group() -> None:
 
 
 def test_balance_counts_identical_halves_by_parity() -> None:
-    """Для «"» равенство счётчиков выполняется всегда и не значит ничего."""
+    """For «"» the equality of the counters holds always and means nothing."""
     own = rule("balance", pairs=['""'])
     assert check(own, "plain", 'Он сказал "да') == ["own"]
     assert check(own, "plain", 'Он сказал "да"') == []
@@ -93,14 +94,14 @@ def test_forbidden_chars_can_forgive_the_original() -> None:
 
 
 def test_groups_in_the_pattern_do_not_change_what_is_counted() -> None:
-    """`findall` отдал бы группы вместо совпадений, и правило поменяло бы смысл."""
+    """`findall` would hand back the groups instead of the matches, and the rule would change its meaning."""
     with_group = rule("token_multiset", pattern=r"%(\w+)%")
     without = rule("token_multiset", pattern=r"%\w+%")
     en, ru = "%NAME%", "%ИМЯ%"
     assert check(with_group, en, ru) == check(without, en, ru) == ["own"]
 
 
-# --- битое выражение ------------------------------------------------------
+# --- a broken expression -------------------------------------------------
 
 
 @pytest.mark.parametrize("kind,params", [
@@ -110,27 +111,27 @@ def test_groups_in_the_pattern_do_not_change_what_is_counted() -> None:
     ("pair_regex", {"source": "([a-z"}),
 ])
 def test_broken_expression_silences_only_its_own_rule(kind, params) -> None:
-    """Падать посреди прохода по проекту из-за чужой опечатки нельзя."""
+    """Falling over mid-pass through a project because of somebody's typo will not do."""
     own = rule(kind, **params)
     rules = qa_rules.with_user_rules(qa_rules.default_ruleset(), [own])
     codes = rules.check("Cost: $V$", "Цена")
     assert "own" not in codes
-    assert "dollar_mismatch" in codes        # остальные работают как работали
+    assert "dollar_mismatch" in codes        # the rest work as they worked
 
 
 def test_empty_expression_is_not_an_error_yet() -> None:
-    """Правило только что заведено — ругаться на каждую строку оно не должно."""
+    """The rule has only just been set up — it must not complain about every row."""
     assert check(rule("token_multiset"), "a", "b") == []
     assert check(rule("target_regex"), "a", "b") == []
 
 
 def test_a_broken_parameter_silences_its_rule_not_the_whole_pass() -> None:
-    """Опечатка в числе гасит своё правило, а не проход по сотне тысяч строк.
+    """A typo in a number quiets its own rule, not a pass over a hundred thousand rows.
 
-    `qa_rules.json` носят между машинами, `.pdxqa` пересылают друг другу — оба
-    файла правят руками, ради этого они и заведены. Значение не того типа
-    доезжает до `int()` уже внутри проверки; раньше это роняло всю проверку
-    целиком, вместе с колонкой замечаний и отчётом F6.
+    `qa_rules.json` is carried between machines, `.pdxqa` files are sent to one
+    another — both files are edited by hand, that is what they are for. A value of
+    the wrong type reaches `int()` already inside the check; that used to bring
+    the whole check down, together with the column of remarks and the F6 report.
     """
     broken = qa_rules.apply_delta(
         qa_rules.default_ruleset(),
@@ -138,8 +139,8 @@ def test_a_broken_parameter_silences_its_rule_not_the_whole_pass() -> None:
 
     codes = broken.check("Hi $NAME$", "Привет")
 
-    assert "dollar_mismatch" in codes       # соседние правила работают
-    assert "glued_markup" not in codes      # сломанное молчит
+    assert "dollar_mismatch" in codes       # the neighbouring rules work
+    assert "glued_markup" not in codes      # the broken one keeps quiet
 
 
 def test_regex_error_tells_what_is_wrong() -> None:
@@ -149,31 +150,31 @@ def test_regex_error_tells_what_is_wrong() -> None:
 
 
 def test_a_pattern_that_can_hang_the_check_is_flagged() -> None:
-    """Повтор внутри повторяемой группы — экспоненциальный перебор.
+    """A repeat inside a repeated group is an exponential search.
 
-    Прервать `re` нечем: таймаута у него нет, а сигналы на Windows не работают.
-    Значит единственная защита — сказать об этом в окне правил, до того как
-    проверка пойдёт по сотне тысяч строк. Правила ещё и ездят между людьми
-    файлом `.pdxqa`, так что предупреждение нужно и для чужого правила.
+    There is nothing to interrupt `re` with: it has no timeout, and signals do not
+    work on Windows. So the only protection is to say so in the rules window,
+    before the check goes over a hundred thousand rows. Rules also travel between
+    people in a `.pdxqa` file, so the warning is needed for a foreign rule too.
     """
     assert qa_rules.regex_warning(r"(\w+)+$")
     assert qa_rules.regex_warning(r"(a*)*")
     assert qa_rules.regex_warning(r"(\d+\s?)+")
 
-    # обычные выражения молчат
+    # ordinary expressions keep quiet
     assert qa_rules.regex_warning(r"\d+") == ""
     assert qa_rules.regex_warning(r"(?:\w+)\s*") == ""
     assert qa_rules.regex_warning(r"\[[^\]]+\]") == ""
     assert qa_rules.regex_warning("") == ""
-    # битое выражение — забота regex_error, здесь молчим
+    # a broken expression is the business of regex_error, here we keep quiet
     assert qa_rules.regex_warning("([a-z") == ""
 
 
-# --- чтение чужой записи --------------------------------------------------
+# --- reading somebody else's record --------------------------------------
 
 
 def test_user_rule_cannot_shadow_a_builtin_check() -> None:
-    """Иначе чужой файл подменил бы проверку скобок своим выражением."""
+    """Otherwise somebody else's file would substitute its own expression for the bracket check."""
     assert qa_rules.load_user_rule(
         {"id": "brackets_mismatch", "kind": "target_regex", "title": "x"}) is None
 
@@ -196,7 +197,7 @@ def test_unknown_params_and_categories_do_not_travel() -> None:
     })
     assert "такого_нет" not in loaded.params
     assert loaded.params["chars"] == "…"
-    # незнакомая категория увела бы правило из дерева окна целиком
+    # an unknown category would take the rule out of the window tree entirely
     assert loaded.category in qa_rules.CATEGORIES
 
 
@@ -206,7 +207,7 @@ def test_unknown_severity_falls_back_to_warning() -> None:
     assert loaded.severity == qa_rules.WARNING
 
 
-# --- хранение в оверлее ---------------------------------------------------
+# --- storage in the overlay ----------------------------------------------
 
 
 def test_user_rule_is_stored_whole_and_restored() -> None:
@@ -221,7 +222,7 @@ def test_user_rule_is_stored_whole_and_restored() -> None:
 
 
 def test_project_layer_does_not_copy_a_global_user_rule() -> None:
-    """Правило заведено на все проекты — жить оно должно там же."""
+    """The rule is set up for all the projects — that is where it is to live."""
     own = rule("forbidden_chars", chars="…")
     glob = qa_rules.make_overlay(qa_rules.CUSTOM,
                                  qa_rules.with_user_rules(
@@ -264,7 +265,7 @@ def test_junk_custom_records_do_not_make_an_overlay_worth_storing() -> None:
 
 
 def test_user_rule_of_another_language_is_switched_off_not_dropped() -> None:
-    """Как и у встроенных языковых правил: видно в окне, включается руками."""
+    """As with the built-in language rules: it shows in the window, it is switched on by hand."""
     own = qa_rules.make_user_rule("own", "forbidden_chars", title="Своё",
                                   locale="ru", params={"chars": "…"})
     overlay = {"custom": [qa_rules.dump_user_rule(own)]}
