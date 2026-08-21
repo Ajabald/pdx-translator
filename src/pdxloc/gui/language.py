@@ -95,10 +95,11 @@ def system_default() -> str:
 def apply(app, code: str, *, save: bool = True) -> None:
     """Переключить язык интерфейса и сообщить об этом подписчикам.
 
-    Смена на тот же язык — не событие. Перерисовка стоит дорого (пересборка
-    меню, перечитывание стартового экрана, обход всей модели таблицы), а
-    подписчиков у сигнала много; без этой проверки повторный вызов заставлял
-    окно перестраиваться на ровном месте. Тот же приём, что в `prefs.set`.
+    Switching to the language already in force is not an event. A repaint costs
+    a lot — the menu is rebuilt, the start screen re-read, the whole table model
+    walked — and the signal has many subscribers; without this check a repeated
+    call made the window rebuild itself for nothing. The same trick as in
+    `prefs.set`.
     """
     global _current
     if code not in LANGUAGES:
@@ -112,9 +113,9 @@ def apply(app, code: str, *, save: bool = True) -> None:
             app.removeTranslator(translator)
         _translators.clear()
         if code != SOURCE:
-            # свой перевод и штатный перевод Qt: без второго кнопки диалогов и
-            # контекстное меню полей ввода остаются английскими посреди чужого
-            # интерфейса
+            # our own translation and Qt's stock one: without the second the dialog buttons
+            # and the context menu of input fields stay English in the middle of another
+            # language
             _load(app, str(_dir()), f"{PREFIX}{code}")
             qt_dir = QLibraryInfo.path(QLibraryInfo.TranslationsPath)
             for name in ("qtbase", "qt"):
@@ -126,7 +127,7 @@ def apply(app, code: str, *, save: bool = True) -> None:
 
 
 def _load(app, directory: str, name: str) -> None:
-    """Поставить один файл перевода. Ссылку держим: иначе Qt его выгрузит."""
+    """Install one translation file. We keep the reference, or Qt unloads it."""
     translator = QTranslator(app)
     if translator.load(name, directory):
         app.installTranslator(translator)
@@ -134,11 +135,12 @@ def _load(app, directory: str, name: str) -> None:
 
 
 def saved() -> str:
-    """Выбранный язык. Пусто — значит ещё не выбирали: берём язык системы."""
+    """The chosen language. Empty means nobody has chosen yet: take the system one."""
     value = settings.qsettings().value("language", "")
     value = str(value) if value else ""
-    # сверяемся с available(), а не со списком: перевод могли не доложить в
-    # сборку, и молча остаться на «выбранном» языке без перевода — враньё
+    # checked against available() rather than the list: a translation may not have
+    # been shipped in the build, and silently staying on a «chosen» language with
+    # no translation is a lie
     return value if value in available() else system_default()
 
 
@@ -147,10 +149,10 @@ def apply_saved(app) -> None:
 
 
 def on_change(slot) -> None:
-    """Подписаться на смену языка.
+    """Subscribe to a change of language.
 
-    Слот должен быть связанным методом QObject: такая связь сама разрывается
-    при удалении виджета. Лямбда пережила бы его и обратилась к мёртвому C++
-    объекту.
+    The slot must be a bound method of a QObject: such a connection breaks itself
+    when the widget is deleted. A lambda would outlive it and reach into a dead
+    C++ object.
     """
     notifier.changed.connect(slot)

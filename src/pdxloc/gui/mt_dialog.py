@@ -60,16 +60,16 @@ def collect_rows(
     selected_ids: list[int] | None = None,
     include_stale: bool = False,
 ) -> list[mt_run.MtRow]:
-    """Строки, которые пойдут в перевод.
+    """The rows that will go for translation.
 
-    Исключения одинаковы для всех охватов и не обсуждаются:
+    The exclusions are the same for every selection and are not up for debate:
 
-    * удалённые — их нет в оригинале;
-    * «Игнорируется», «Проверено», «Кастомный» — там уже принято решение;
-    * строки из одной разметки — отправлять голый `[GetName]` в платный сервис
-      значит платить за ничто;
-    * «Устарело» — только по отдельной галке: в них вложен труд человека, и
-      затирать его молча нельзя.
+    * deleted ones — the original no longer has them;
+    * «Ignored», «Reviewed», «Custom» — a decision has already been made there;
+    * rows of bare markup — sending a naked `[GetName]` to a paid service means
+      paying for nothing;
+    * «Outdated» — only under a checkbox of its own: somebody's work went into
+      those, and overwriting it in silence is not allowed.
     """
     wanted = next((group for name, _, group in SCOPES if name == scope), ())
     query = ["SELECT u.id, u.key, u.en_text FROM units u",
@@ -88,7 +88,7 @@ def collect_rows(
         query.append(f"AND u.status IN ({','.join('?' * len(wanted))})")
         params.extend(wanted)
 
-    # Что не переводим никогда — вне зависимости от охвата.
+    # What is never translated, whatever the selection.
     never = [Status.IGNORED.value, Status.REVIEWED.value, Status.CUSTOM.value]
     if not include_stale:
         never.append(Status.STALE.value)
@@ -102,9 +102,9 @@ def collect_rows(
 
 
 class MtDialog(QDialog):
-    """Окно пакетного перевода."""
+    """The batch translation window."""
 
-    translated = Signal()      # строки изменились — обновить таблицу и счётчики
+    translated = Signal()      # rows changed: refresh the table and the counters
     showUnitRequested = Signal(int)
 
     def __init__(self, conn: sqlite3.Connection, project_id: int,
@@ -140,12 +140,12 @@ class MtDialog(QDialog):
         self.interrupt = QPushButton(translate("MtDialog", "Interrupt"))
         self.buttons.addButton(self.interrupt, QDialogButtonBox.ActionRole)
         self.interrupt.clicked.connect(self._on_interrupt)
-        self.interrupt.hide()          # добавлять надо до скрытия, иначе не встанет
+        self.interrupt.hide()          # it has to be added before it is hidden, or it will not fit
         layout.addWidget(self.buttons)
 
         self._refresh_estimate()
 
-    # --- вкладка прогона ---
+    # --- the run tab ---
 
     def _run_tab(self) -> QWidget:
         page = QWidget()
@@ -179,8 +179,8 @@ class MtDialog(QDialog):
                         "translation will be replaced)"))
         box.addWidget(self.include_stale)
 
-        # Подписываемся, только когда все органы собраны: `setChecked` выше уже
-        # шлёт `toggled`, а пересчёт охвата читает и галку «устаревшие».
+        # We subscribe only once every control is built: `setChecked` above already
+        # emits `toggled`, and recomputing the selection reads the «outdated» box too.
         for button in self.scope_buttons.values():
             button.toggled.connect(self._refresh_estimate)
         self.include_stale.toggled.connect(self._refresh_estimate)
@@ -208,13 +208,13 @@ class MtDialog(QDialog):
         box.addStretch(1)
         return page
 
-    # --- ручной веб-режим ---
+    # --- the manual web route ---
 
     def _manual_tab(self) -> QWidget:
-        """Перевод через браузер: ключей не нужно, работает с чем угодно.
+        """Translation through a browser: no keys, works with anything.
 
-        Единственный режим, доступный тому, у кого нет ни одной подписки, — и
-        потому он полноправная вкладка, а не запасной выход.
+        The only route open to somebody with no subscription at all — and that is
+        why it is a tab in its own right rather than a fire exit.
         """
         page = QWidget()
         box = QVBoxLayout(page)
@@ -253,14 +253,14 @@ class MtDialog(QDialog):
         return page
 
     def _on_tab_changed(self, index: int) -> None:
-        # Кнопка «Перевести» относится к первой вкладке; на второй ей нечего делать
+        # «Translate» belongs to the first tab; on the second it has nothing to do
         manual = index == 1
         self.start_button.setVisible(not manual)
         if manual:
             self._manual_reset()
 
     def _manual_reset(self) -> None:
-        """Пересобрать очередь пачек по текущему охвату."""
+        """Rebuild the queue of batches for the current selection."""
         self._manual_rows = self.rows_for_run()
         budget = prefs.get("mt/char_budget")
         batches, _oversized = mt_run.plan_batches(
@@ -304,7 +304,7 @@ class MtDialog(QDialog):
         QApplication.clipboard().setText(self.manual_out.toPlainText())
 
     def _manual_apply(self) -> None:
-        """Разобрать вставленное и записать. Расхождение — не применяем ничего."""
+        """Parse what was pasted and write it. On a mismatch nothing is applied."""
         from pdxloc.core.mt_errors import MtResponseError
         from pdxloc.core.mt_providers import manual as manual_mode
 
@@ -334,7 +334,7 @@ class MtDialog(QDialog):
         if written:
             self.manual_note.clear()
 
-    # --- предполётная оценка ---
+    # --- the pre-flight estimate ---
 
     def current_scope(self) -> str:
         for name, button in self.scope_buttons.items():
@@ -369,7 +369,7 @@ class MtDialog(QDialog):
         else:
             self.status.clear()
 
-    # --- прогон ---
+    # --- the run ---
 
     def _start(self) -> None:
         rows = self.rows_for_run()
@@ -436,7 +436,7 @@ class MtDialog(QDialog):
         self._set_running(False)
         self.interrupt.setEnabled(True)
         self.status.clear()
-        # Соединение диалога не участвовало в записи — перечитываем счётчики
+        # the dialog connection took no part in the write: re-read the counters
         self.translated.emit()
         self.summary.setText(self._summary_html(report))
         self._refresh_estimate()
@@ -448,7 +448,7 @@ class MtDialog(QDialog):
         QMessageBox.critical(self, translate("MtDialog", "Machine translation"),
                              message)
 
-    # --- сводка ---
+    # --- the summary ---
 
     def _summary_html(self, report) -> str:
         lines = [report.summary().replace("\n", "<br>")]
@@ -471,10 +471,10 @@ class MtDialog(QDialog):
             return
         self.showUnitRequested.emit(unit_id)
 
-    # --- закрытие ---
+    # --- closing ---
 
     def closeEvent(self, event) -> None:
-        """Пока идёт прогон, окно не закрываем — сперва прерывание."""
+        """While a run is going the window does not close: interrupt it first."""
         if self._thread is not None and self._thread.isRunning():
             self._on_interrupt()
             event.ignore()
