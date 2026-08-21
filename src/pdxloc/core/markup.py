@@ -1,46 +1,51 @@
-"""Реестр разметки Paradox: единственное описание токенов на всё приложение.
+"""The Paradox markup registry: one description of the tokens for the whole app.
 
-До этого модуля описание жило в `core/qa.py`, и оттуда регулярки импортировали
-пятеро: подсветка полей, экранирование при машинном переводе, классификация
-правок оригинала, поиск похожих строк и авто-игнор при сканировании. Добавить
-токен означало пройтись по всем пятерым и нигде не забыть — а забыть легко,
-потому что каждый берёт свой поднабор и в своём порядке.
+Before this module the description lived in `core/qa.py`, and five callers
+imported the regexes from there: the field highlighting, the shielding for machine
+translation, the classification of edits to the original, the similar-rows search
+and the auto-ignore during a scan. Adding a token meant walking all five and
+forgetting none — and forgetting is easy, because each of them takes its own
+subset in its own order.
 
-Здесь у каждого токена сказано, кто его использует и как:
+Here every token says who uses it and how:
 
-* `color`      — имя цвета в `theme.py`; None значит «не подсвечивается»;
-* `shield`     — прятать от машинного перевода (`core/mt.py`);
-* `strip_with` — чем заменять при вычистке разметки; None значит «не трогать»;
-* `structural` — участвует в решении «правка смысловая или косметическая»
-                 (`core/textdiff.py`), а значит влияет на статус «Устарело».
+* `color`      — the colour name in `theme.py`; None means «not highlighted»;
+* `shield`     — hide it from machine translation (`core/mt.py`);
+* `strip_with` — what to replace it with when stripping markup; None means «leave
+                 it alone»;
+* `structural` — takes part in deciding «meaningful edit or cosmetic»
+                 (`core/textdiff.py`), and therefore affects the «Outdated»
+                 status.
 
-**Порядок (`order`) значим в трёх местах.** При экранировании закрывающий
-`#!` обязан искаться раньше открывающих тегов, иначе он останется голым в
-тексте, уехавшем в переводчик. Тег с параметром (`#TOOLTIP:KEY`) обязан
-искаться раньше простого `#tag`, иначе хвост после двоеточия уходит
-переводчику как обычный текст и тултип ломается. При подсветке позднее
-правило перекрывает раннее на пересекающихся кусках.
+**The `order` matters in three places.** When shielding, the closing `#!` must be
+searched for before the opening tags, or it is left bare in the text that goes to
+the translator. A tag with a parameter (`#TOOLTIP:KEY`) must be searched for
+before a plain `#tag`, or the tail after the colon goes to the translator as
+ordinary text and the tooltip breaks. When highlighting, a later rule overrides an
+earlier one where the two overlap.
 
-**Токены не одной игры.** Поле `game` говорит, чья это разметка: `§Y…§!` и
-`£icon` — HOI4/EU4/Stellaris, `@name!` и `#bold` — CK3. Ищутся все и всегда:
-формат у серии общий, мод к HOI4 переводят тем же окном, что и мод к CK3, а
-цена лишнего токена — ноль совпадений на чужих данных: ни `§`, ни `£` не
-встретились ни разу на 289 940 строках баз CK3 (ваниль плюс AGOT).
+**The tokens are not all from one game.** The `game` field says whose markup it
+is: `§Y…§!` and `£icon` belong to HOI4, EU4 and Stellaris, `@name!` and `#bold` to
+CK3. All of them are searched for, always: the format is shared across the series,
+a HOI4 mod is translated in the same window as a CK3 one, and the price of a
+superfluous token is zero matches on foreign data — neither `§` nor `£` occurred
+even once across 289 940 rows of the CK3 databases (vanilla plus AGOT).
 
-**Токен внутри токена решается порядком, а не вложенной регуляркой.** У HOI4
-таких сочетаний три, и каждое разбирается тем, кто идёт первым: `§[GetColour]`
-— цветом (`color_script`, до скобки), `[Select_CString(…'§Y'…)]` — скобкой
-(простой `§Y` ищется после неё), `£command_power£$COST$` — иконкой, а не
-«иконкой из переменной». Проверено на всём ванильном дереве HOI4: после
-`strip_markup` не остаётся ни одного `§` или `£`, и ни один из них не доезжает
-до машинного переводчика (129 087 строк).
+**A token inside a token is settled by order, not by a nested regex.** HOI4 has
+three such combinations, and each is taken by whoever comes first: `§[GetColour]`
+by the colour (`color_script`, ahead of the bracket), `[Select_CString(…'§Y'…)]`
+by the bracket (a plain `§Y` is searched for after it), `£command_power£$COST$` by
+the icon rather than by «an icon out of a variable». Checked over the whole
+vanilla HOI4 tree: after `strip_markup` not a single `§` or `£` is left, and none
+of them reaches the machine translator (129 087 rows).
 
-**И отдельно: `@name!` ищется после `[…]`.** `shield_tags` собирает
-непересекающиеся диапазоны в порядке токенов и отбрасывает всякий позднейший,
-который с чем-то пересёкся. Пойди иконка первой — она забрала бы `@gold!`
-внутри `[Select_CString(x,'@gold!','')]`, диапазон всей скобки был бы отброшен
-как пересекающийся, и весь скриптовый вызов уехал бы в переводчик сырым. На
-живых данных таких строк 12 в ванили и 18 в моде, то есть это не гипотеза.
+**And separately: `@name!` is searched for after `[…]`.** `shield_tags` collects
+non-overlapping ranges in token order and discards any later one that overlapped
+something. Let the icon go first and it would take the `@gold!` inside
+`[Select_CString(x,'@gold!','')]`, the range of the whole bracket would be
+discarded as overlapping, and the entire scripted call would go to the translator
+raw. On live data there are 12 such rows in the vanilla tree and 18 in the mod, so
+this is not a hypothesis.
 """
 from __future__ import annotations
 
@@ -48,7 +53,7 @@ import re
 from dataclasses import dataclass
 
 CK3 = "ck3"
-OTHER = "other"      # токен другой игры серии — в CK3 не встречается
+OTHER = "other"      # a token of another game in the series: never seen in CK3
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,10 +151,10 @@ TOKENS: tuple[Token, ...] = (
         id="color_close",
         title="Colour close §!",
         pattern=re.compile(r"§!"),
-        # Закрывающий раньше открывающего — по тому же правилу, что у `#!`.
-        # Пересечения здесь нет (после § стоит «!», а не буква), но порядок
-        # держим единым: иначе правило пришлось бы вспоминать заново на каждом
-        # новом парном токене.
+        # The closing one before the opening one, by the same rule as `#!`.
+        # There is no overlap here — a «!» follows the §, not a letter — but the order
+        # is kept uniform: otherwise the rule would have to be recalled from scratch on
+        # every new paired token.
         order=22,
         color="markup.format",
         bold=True,
@@ -179,16 +184,16 @@ TOKENS: tuple[Token, ...] = (
         id="grammar_variant",
         title="Grammar variant |||tag:",
         pattern=re.compile(r"\|\|\|[A-Za-z0-9_,]*:?"),
-        # После скобки: вариант живёт и внутри скриптового вызова —
-        # `[leader.GetAXX::вернулся|||fem:вернулась]`, — и там диапазон должен
-        # достаться вызову целиком, ровно как цвету внутри Select_CString.
+        # After the bracket: a variant also lives inside a scripted call —
+        # `[leader.GetAXX::вернулся|||fem:вернулась]` — and there the range must go to
+        # the call whole, exactly as a colour does inside Select_CString.
         order=26,
         color="markup.format",
         bold=True,
         shield=True,
-        # пробелом, а не пустотой: по разные стороны разделителя стоят два
-        # варианта одного слова, и «энергия|||gen:энергии» без него слипается
-        # в «энергияэнергии» — поиск похожих строк такого не прощает
+        # with a space rather than with nothing: on either side of the separator stand
+        # two forms of one word, and «энергия|||gen:энергии» without it congeals into
+        # «энергияэнергии» — the similar-rows search does not forgive that
         strip_with=" ",
         structural=True,
         game=OTHER,
@@ -216,7 +221,7 @@ TOKENS: tuple[Token, ...] = (
         id="icon_at",
         title="Icon @name!",
         pattern=re.compile(r"@[A-Za-z0-9_]+!"),
-        order=35,          # обязательно после bracket — см. шапку модуля
+        order=35,          # must come after bracket — see the module header
         color="markup.icon",
         shield=True,
         strip_with="",
@@ -230,7 +235,7 @@ TOKENS: tuple[Token, ...] = (
         id="fmt_close",
         title="Formatting close #!",
         pattern=re.compile(r"#!"),
-        order=40,          # раньше fmt_open — см. шапку модуля
+        order=40,          # before fmt_open — see the module header
         color="markup.format",
         bold=True,
         shield=True,
@@ -245,7 +250,7 @@ TOKENS: tuple[Token, ...] = (
             r"(?:\{[^{}\[\]]*\}"
             r"|[A-Za-z0-9_\-]+(?:\.[A-Za-z0-9_\-]+)*(?:,[A-Za-z0-9_\-]*)*)"
             r"(?:;[A-Za-z][A-Za-z_]*)*"),
-        order=45,          # раньше fmt_open — см. шапку модуля
+        order=45,          # before fmt_open — see the module header
         color="markup.format",
         bold=True,
         shield=True,
@@ -274,7 +279,7 @@ TOKENS: tuple[Token, ...] = (
         pattern=re.compile(r"\\n"),
         order=60,
         shield=True,
-        strip_with=" ",    # пробелом, иначе слова по краям переноса слипнутся
+        strip_with=" ",    # with a space, or the words on either side of the break congeal
         note="The two-character Paradox break, not a real \\n",
     ),
     Token(
@@ -296,40 +301,41 @@ def _ordered(tokens) -> tuple[Token, ...]:
 
 
 def shield_tokens() -> tuple[Token, ...]:
-    """Токены, которые прячутся от машинного перевода — в порядке поиска."""
+    """The tokens hidden from machine translation, in search order."""
     return _ordered(t for t in TOKENS if t.shield)
 
 
 def structural_patterns() -> tuple[re.Pattern, ...]:
-    """Разметка, изменение которой переводчик обязан перенести."""
+    """Markup whose change the translator must carry over."""
     return tuple(t.pattern for t in _ordered(t for t in TOKENS if t.structural))
 
 
 def highlight_rules() -> tuple[tuple[re.Pattern, str, bool], ...]:
-    """(шаблон, имя цвета, жирный) — в порядке наложения."""
+    """(pattern, colour name, bold), in the order they are laid on."""
     return tuple((t.pattern, t.color, t.bold)
                  for t in _ordered(t for t in TOKENS if t.color))
 
 
 def strip_tokens() -> tuple[Token, ...]:
-    """Токены, которые не являются прозой, — в порядке поиска.
+    """The tokens that are not prose, in search order.
 
-    Ровно те, что убирает `strip_markup`. Отдельным списком нужны там, где
-    разметку надо не убрать, а обойти: подсветка терминов ищет слова в живом
-    тексте и не должна подчёркивать нутро `[GetTrait…]`.
+    Exactly the ones `strip_markup` removes. A separate list is needed where the
+    markup has to be stepped around rather than removed: the term highlighting
+    looks for words in the living text and must not underline the innards of
+    `[GetTrait…]`.
     """
     return _ordered(t for t in TOKENS if t.strip_with is not None)
 
 
 def spans(text: str, tokens: tuple[Token, ...]) -> list[tuple[int, int]]:
-    """Непересекающиеся куски разметки, отсортированные по началу.
+    """Non-overlapping pieces of markup, sorted by their start.
 
-    Порядок токенов значим — он и решает, кто заберёт спорный кусок: диапазон
-    берётся, только если не пересекается с уже взятым, поэтому `@gold!` внутри
-    `[Select_CString(x,'@gold!','')]` не отрывает кусок у всей скобки (разбор —
-    в шапке модуля). Раньше этот проход жил внутри `mt.shield_tags`; вторая
-    копия в подсветке терминов разъехалась бы с первой на первом же новом
-    токене.
+    The order of the tokens matters — it is what decides who takes a disputed
+    piece: a range is taken only when it does not overlap one already taken, so
+    the `@gold!` inside `[Select_CString(x,'@gold!','')]` does not tear a piece
+    off the whole bracket (the reasoning is in the module header). This pass used
+    to live inside `mt.shield_tags`; a second copy in the term highlighting would
+    have drifted from the first on the very next new token.
     """
     found: list[tuple[int, int]] = []
     for token in tokens:
@@ -341,10 +347,11 @@ def spans(text: str, tokens: tuple[Token, ...]) -> list[tuple[int, int]]:
 
 
 def strip_markup(text: str) -> str:
-    """Убрать разметку, оставив только переводимый текст.
+    """Remove the markup, leaving only the translatable text.
 
-    Нужна там, где разметка мешает мерить: сравнение длин, поиск похожих строк
-    и вопрос «а есть ли тут что переводить вообще».
+    Needed where markup gets in the way of measuring: comparing lengths, the
+    similar-rows search, and the question «is there anything to translate here at
+    all».
     """
     for token in strip_tokens():
         text = token.pattern.sub(token.strip_with, text)
