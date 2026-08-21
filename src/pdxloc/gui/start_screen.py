@@ -332,7 +332,7 @@ class ProjectDialog(QDialog):
 
 
 class StartScreen(QWidget):
-    projectOpened = Signal(str)      # путь к файлу проекта
+    projectOpened = Signal(str)      # the path to the project file
     # deletion is handed upwards: the screen knows nothing about an open connection,
     # and a project file cannot be erased while it is open
     deleteRequested = Signal(str)
@@ -391,7 +391,7 @@ class StartScreen(QWidget):
 
     def retranslate(self) -> None:
         """The screen is shown between projects and lives for the whole session."""
-        # вызов вынесен из f-строки: внутри неё lupdate строку не видит
+        # the call is kept out of the f-string: lupdate cannot see it inside one
         title = translate("StartScreen", "Translation projects")
         self.title.setText(f"<h2>{title}</h2>")
         labels = {
@@ -406,7 +406,7 @@ class StartScreen(QWidget):
             self._buttons[key].setText(text)
         self._act_forget.setText(labels["forget"])
         self._act_delete.setText(labels["delete"])
-        self.reload()       # в строках списка есть «файл не найден»
+        self.reload()       # the list rows can say «file not found»
 
     def _show_menu(self, pos) -> None:
         if self.list.itemAt(pos) is None:
@@ -444,7 +444,7 @@ class StartScreen(QWidget):
         title = games.title(game_id) if game_id else translate(
             "StartScreen", "Game not specified")
         header = QListWidgetItem(title)
-        header.setFlags(Qt.NoItemFlags)         # заголовок не выбирается
+        header.setFlags(Qt.NoItemFlags)         # a header is not selectable
         font = header.font()
         font.setBold(True)
         header.setFont(font)
@@ -472,7 +472,7 @@ class StartScreen(QWidget):
 
     def _selected_path(self) -> Path | None:
         item = self.list.currentItem()
-        # у заголовка группы пути нет — и команды над ним бессмысленны
+        # a group header has no path, so commands over it mean nothing
         value = item.data(Qt.UserRole) if item else None
         return Path(value) if value else None
 
@@ -494,7 +494,7 @@ class StartScreen(QWidget):
                 src_lang=values["src_lang"], tgt_lang=values["tgt_lang"],
                 src_locale=values["src_locale"], tgt_locale=values["tgt_locale"])
             conn.close()
-        except Exception as e:      # noqa: BLE001 — показываем пользователю
+        except Exception as e:      # noqa: BLE001 — shown to the user
             QMessageBox.critical(
                 self, translate("StartScreen", "Project"),
                 fill(translate("StartScreen",
