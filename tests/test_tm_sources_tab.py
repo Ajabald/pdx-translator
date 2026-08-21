@@ -1,8 +1,9 @@
-"""Вкладка «Базы»: включение и отключение баз памяти.
+"""The «Databases» tab: switching memory databases on and off.
 
-Модуль не был покрыт вовсе, а через него проходит единственная в приложении
-дорога к тому, какие базы участвуют в подсказках. Ошибка тут не падает, а тихо
-меняет результат подсказок — то есть замечают её не сразу и не там.
+The module was not covered at all, while through it goes the only road in the
+application to which databases take part in the hints. An error here does not fall
+over but quietly changes the result of the hints — that is, it is noticed neither
+at once nor in the right place.
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ RU = 'l_russian:\n a:0 "Привет"\n b:0 "Мир"\n'
 
 @pytest.fixture
 def bdd(tmp_path, monkeypatch, make_tree):
-    """Папка баз с одной собранной базой, подходящей проекту."""
+    """A databases folder with one built database that suits the project."""
     root = tmp_path / "Bdd"
     monkeypatch.setattr(settings, "bdd_dir", lambda: root)
     (root / games.CK3.upper()).mkdir(parents=True, exist_ok=True)
@@ -56,7 +57,7 @@ def item_names(widget):
             for i in range(widget.list.count())]
 
 
-# --- список ----------------------------------------------------------------
+# --- the list --------------------------------------------------------------
 
 
 def test_a_built_database_shows_up(tab, bdd) -> None:
@@ -66,13 +67,13 @@ def test_a_built_database_shows_up(tab, bdd) -> None:
 
 
 def test_nothing_is_attached_until_asked(tab) -> None:
-    """Собранная база не подключается сама — это выбор переводчика."""
+    """A built database is not attached by itself — that is the translator's choice."""
     widget, conn = tab
     assert project_mod.get_tm_sources(conn) == []
     assert widget.list.item(0).checkState() == Qt.Unchecked
 
 
-# --- включение и отключение ------------------------------------------------
+# --- switching on and off --------------------------------------------------
 
 
 def test_ticking_attaches_the_database(tab) -> None:
@@ -80,7 +81,7 @@ def test_ticking_attaches_the_database(tab) -> None:
     widget.list.item(0).setCheckState(Qt.Checked)
 
     assert project_mod.get_tm_sources(conn) == [widget.list.item(0).data(Qt.UserRole)]
-    # представление пересобрано: база участвует в поиске прямо сейчас
+    # the view is rebuilt: the database takes part in the search right now
     assert conn.execute("SELECT COUNT(*) FROM tm_all").fetchone()[0] > 0
 
 
@@ -95,17 +96,17 @@ def test_unticking_detaches_it_again(tab) -> None:
 
 
 def test_a_change_is_announced_outwards(tab, qtbot) -> None:
-    """Сигнал наружу — то, чем шапка окна и подсказки узнают о смене набора."""
+    """The signal outwards is what the window header and the hints learn about a change of the set by."""
     widget, _conn = tab
     with qtbot.waitSignal(widget.sourcesChanged, timeout=1000):
         widget.list.item(0).setCheckState(Qt.Checked)
 
 
 def test_reload_does_not_fire_the_change_signal(tab, qtbot) -> None:
-    """Перечитывание списка — не действие пользователя.
+    """Rereading the list is not an action of the user.
 
-    Пункты при этом расставляются программно, и без защиты каждый из них
-    выглядел бы как щелчок галкой: набор баз переписывался бы сам собой.
+    The items are set programmatically at that, and without a guard each of them
+    would look like a click on a tick: the set of databases would rewrite itself.
     """
     widget, conn = tab
     widget.list.item(0).setCheckState(Qt.Checked)
@@ -118,7 +119,7 @@ def test_reload_does_not_fire_the_change_signal(tab, qtbot) -> None:
     assert project_mod.get_tm_sources(conn) == before
 
 
-# --- нижняя полоса ---------------------------------------------------------
+# --- the bottom bar --------------------------------------------------------
 
 
 def test_the_status_counts_what_is_attached(tab) -> None:
@@ -128,19 +129,19 @@ def test_the_status_counts_what_is_attached(tab) -> None:
 
 
 def test_a_database_gone_from_disk_is_still_listed(tab, bdd) -> None:
-    """Включённая база пропала с диска — сказать об этом, а не промолчать.
+    """An attached database vanished from the disk — say so instead of keeping quiet.
 
-    Молча выкинуть её из списка значило бы, что подсказки пропали, а почему —
-    неизвестно.
+    Throwing it out of the list silently would mean the hints are gone while why
+    is unknown.
     """
     widget, conn = tab
     _root, out = bdd
     widget.list.item(0).setCheckState(Qt.Checked)
 
-    # Отцепляем перед удалением: подключённый файл Windows держит, и просто так
-    # он не удалится. В жизни это и есть та самая последовательность — проект
-    # закрыли, базу унесли, проект открыли снова. Список включённых при этом
-    # живёт в самом проекте и отцепление его не трогает.
+    # We detach before deleting: an attached file Windows holds, and it will not
+    # simply be deleted. In life that is the very sequence — the project was
+    # closed, the database was carried off, the project was opened again. The list
+    # of the attached ones lives in the project itself and detaching does not touch it.
     project_mod.attach_tm_sources(conn, [])
     out.unlink()
     widget.reload()

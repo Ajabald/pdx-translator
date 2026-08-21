@@ -1,9 +1,10 @@
-"""Настройки приложения: перенос куста после переименования.
+"""The application settings: moving the hive after the rename.
 
-Переименование сменило `ORG`/`APP`, то есть весь куст QSettings. Список
-недавних проектов и тему потерять не страшно, а вот **ключи доступа к сервисам
-перевода** лежат там же — и пропасть молча они не должны: человек не поймёт,
-куда делся оплаченный ключ, и решит, что сломалось приложение.
+The rename changed `ORG`/`APP`, that is, the whole QSettings hive. Losing the
+list of recent projects and the theme is no disaster, but the **access keys to the
+translation services** lie there too — and they must not vanish silently: a human
+will not understand where the paid-for key has gone and will decide that the
+application is broken.
 """
 from __future__ import annotations
 
@@ -18,17 +19,17 @@ from PySide6.QtCore import QSettings  # noqa: E402
 
 from pdxloc import settings  # noqa: E402
 
-# Вызов конструктора, а не упоминание в комментарии или в аннотации типа.
+# A call of the constructor, not a mention in a comment or in a type annotation.
 CONSTRUCTOR = re.compile(r"\bQSettings\s*\(")
 
 
 @pytest.fixture
 def hives(tmp_path):
-    """Два куста в файлах рядом, а не в реестре пользователя.
+    """Two hives in files next to each other, not in the user's registry.
 
-    Настоящий QSettings, но в ini: проверяется работа именно с двумя кустами, и
-    подменять его заглушкой значило бы проверить заглушку. В реестр писать
-    нельзя — это машина пользователя.
+    A real QSettings, but in ini: what is checked is the work with two hives
+    exactly, and substituting a stub for it would mean checking the stub. Writing
+    into the registry will not do — that is the user's machine.
     """
     def hive(name: str) -> QSettings:
         return QSettings(str(tmp_path / f"{name}.ini"), QSettings.IniFormat)
@@ -45,14 +46,14 @@ def test_previous_settings_are_adopted_once(hives) -> None:
     assert target.value("mt/key/deepl") == "оплаченный ключ"
     assert target.value("theme") == "dark"
 
-    # второй раз — нет: сброшенная человеком настройка не должна воскресать
+    # the second time — no: a setting a human has reset must not rise from the dead
     source.setValue("mt/key/openai", "ещё один")
     assert settings.adopt_previous_settings(target, source) == 0
     assert target.value("mt/key/openai") is None
 
 
 def test_own_settings_win_over_the_adopted_ones(hives) -> None:
-    """Под новым именем уже могли настроить — затирать это нельзя."""
+    """Under the new name things may have been set up already — overwriting that will not do."""
     target, source = hives
     source.setValue("theme", "dark")
     source.setValue("mt/key/deepl", "оплаченный ключ")
@@ -64,10 +65,10 @@ def test_own_settings_win_over_the_adopted_ones(hives) -> None:
 
 
 def test_one_launch_under_the_new_name_does_not_block_the_move(hives) -> None:
-    """Хватает одного запуска, чтобы легли геометрия и тема.
+    """One launch is enough for the geometry and the theme to land.
 
-    Если считать признаком «куст не пуст», настоящие настройки — и ключи —
-    не переехали бы уже никогда.
+    Were «the hive is not empty» to count as the mark, the real settings — and the
+    keys — would never move over at all.
     """
     target, source = hives
     target.setValue("geometry", "…")
@@ -84,13 +85,14 @@ def test_nothing_to_adopt_is_not_an_error(hives) -> None:
 
 
 def test_qsettings_is_built_only_in_settings_module() -> None:
-    """`QSettings` собирается в одном месте — иначе тесты пишут в реестр.
+    """`QSettings` is built in one place — otherwise the tests write into the registry.
 
-    Изоляция прогона (`isolated_qsettings` в conftest) держится на том, что
-    весь код ходит через `settings.qsettings()`. Собранный напрямую
-    `QSettings(ORG, APP)` подмену обойдёт и молча уедет в куст пользователя —
-    так там уже оказались геометрия окна, тема и пути `pytest-of-*`. Проверка
-    грепом дешевле, чем сверять реестр после каждого прогона.
+    The isolation of a run (`isolated_qsettings` in conftest) rests on the whole
+    code going through `settings.qsettings()`. A `QSettings(ORG, APP)` built
+    directly gets round the substitution and travels silently into the user's hive
+    — that is how the window geometry, the theme and `pytest-of-*` paths ended up
+    there already. A check by grep is cheaper than going through the registry
+    after every run.
     """
     src = Path(settings.__file__).resolve().parent
     hits = [

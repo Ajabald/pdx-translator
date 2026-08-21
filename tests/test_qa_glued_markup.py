@@ -1,13 +1,14 @@
-"""Проверка «пропущен пробел перед подстановкой».
+"""The check «a space is missing before the substitution».
 
-Повод: в живом проекте нашлось 18 строк вида «дома[GetPlayer.GetDynasty…]» —
-в игре это склеивается в «домаСтарк». Ни одна из прежних проверок такого не
-видела: `edge_space` смотрит на края строки, `double_space` — на лишние
-пробелы, а не на пропущенный.
+The reason: in a live project 18 rows of the kind «дома[GetPlayer.GetDynasty…]»
+turned up — in the game that sticks together into «домаСтарк». Not one of the
+former checks saw such a thing: `edge_space` looks at the edges of a row,
+`double_space` at extra spaces and not at a missing one.
 
-Главная трудность правила в том, что склейка бывает НАМЕРЕННОЙ, и таких
-приёмов три. Каждый закрыт отдельным тестом — если правило начнёт их ловить,
-колонка «!» утонет в шуме, как это уже было с проверкой баланса тегов.
+The main difficulty of the rule is that a join happens to be DELIBERATE, and there
+are three such devices. Each is covered by a test of its own — should the rule
+start catching them, the «!» column will drown in noise, as already happened with
+the check of tag balance.
 """
 from __future__ import annotations
 
@@ -22,7 +23,7 @@ def codes(en: str, ru: str) -> list[str]:
     return check_unit(en, ru)
 
 
-# --- то, ради чего правило заведено -------------------------------------
+# --- what the rule was set up for ---------------------------------------
 
 
 def test_lost_space_before_name_substitution() -> None:
@@ -44,43 +45,43 @@ def test_lost_space_before_concept() -> None:
 
 
 def test_severity_is_warning_not_error() -> None:
-    """Текст читается криво, но игра не ломается — как и у соседних правил."""
+    """The text reads awkwardly, but the game does not break — as with the neighbouring rules."""
     assert CODES[GLUED][0] == "warning"
 
 
-# --- намеренные склейки: ловить нельзя ----------------------------------
+# --- deliberate joins: these must not be caught -------------------------
 
 
 def test_gender_ending_is_not_an_error() -> None:
-    """Select_CString возвращает окончание: «даровал» + «а» = «даровала»."""
+    """Select_CString returns an ending: «даровал» + «а» = «даровала»."""
     assert GLUED not in codes(
         "[X.GetSheHe|U] granted the boon.",
         "[X.GetSheHe|U] даровал[Select_CString(X.IsFemale, 'а', '')] дар.")
 
 
 def test_custom_ending_function_is_not_an_error() -> None:
-    """Переводчики заводят функции с суффиксом _END специально под окончания."""
+    """Translators set up functions with the _END suffix specially for endings."""
     assert GLUED not in codes(
         "a white [ROOT.Char.Custom('GetAnimalType')]",
         "бел[ROOT.Char.Custom('GetAnimalType_RU_Acc_END')]")
 
 
 def test_pronoun_stem_is_not_an_error() -> None:
-    """«к н» + «ему/ей» — склейка местоимения, перед вставкой одна буква."""
+    """«к н» + «ему/ей» is a join of a pronoun, one letter before the insert."""
     assert GLUED not in codes(
         "closer to [target.GetHerHim]",
         "ближе к н[target.Custom('GetDragonHerHis')]")
 
 
 def test_glue_inherited_from_the_original_is_not_an_error() -> None:
-    """В оригинале иконка стоит вплотную к слову — перевод вправе так же."""
+    """In the original the icon stands right against the word — the translation may do the same."""
     assert GLUED not in codes(
         "[command_modifier_i|E]Minimum roll",
         "[command_modifier_i|E]Худший бросок")
 
 
 def test_escape_sequence_is_not_a_letter() -> None:
-    """«\\n[X]» — перенос строки, а не буква n, приклеенная к вставке."""
+    """«\\n[X]» is a line break, not the letter n glued to an insert."""
     assert GLUED not in codes(
         "Line one.\\n[SCOPE.GetName] speaks.",
         "Строка одна.\\n[SCOPE.GetName] говорит.")
@@ -92,20 +93,20 @@ def test_space_present_is_clean() -> None:
         "дома [GetPlayer.GetDynasty.GetNameNoTooltip]")
 
 
-# --- поведение на живом проекте -----------------------------------------
+# --- the behaviour on a live project ------------------------------------
 
 
 @pytest.mark.realdata
 def test_rule_stays_quiet_on_a_clean_project(tmp_path) -> None:
-    """Правило не должно шуметь: доля срабатываний — доли процента.
+    """The rule must not be noisy: the share of hits is a fraction of a percent.
 
-    Замер на agoot (136 113 строк): 14 срабатываний, из них 3 ложных.
-    Здесь фиксируем только порядок величины, чтобы поймать регрессию правила.
+    Measured on agoot (136,113 rows): 14 hits, 3 of them false. Here we pin down
+    only the order of magnitude, so as to catch a regression of the rule.
     """
     import sqlite3
     from pathlib import Path
 
-    # проекты живут в загоне своей игры (см. core/games.py)
+    # the projects live in the pen of their game (see core/games.py)
     project = Path("Projects/CK3/agoot.pdxproj")
     if not project.is_file():
         pytest.skip("нет живого проекта agoot")

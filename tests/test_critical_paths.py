@@ -1,14 +1,14 @@
-"""Канарейки на критический путь: завести проект → скан → перевод → запись.
+"""Canaries on the critical path: set up a project → scan → translate → write.
 
-Повод конкретный. Сопоставление EN- и RU-файлов молча перестало работать для
-самой обычной раскладки модов мастерской, и приложение показало проект на
-138 тысяч строк с нулём переводов — при том, что готовый перевод лежал рядом на
-диске. Ни один тест не упал: все проверяли частности, и ни один не спрашивал
-главного — «а перевод-то нашёлся?».
+The reason is a concrete one. The matching of EN and RU files silently stopped
+working for the most ordinary layout of workshop mods, and the application showed
+a project of 138 thousand rows with zero translations — while a ready translation
+lay right there on the disk. Not a single test fell over: they all checked
+particulars, and not one asked the main thing — «and was the translation found?».
 
-Здесь проверяется именно это, на всех раскладках, которые встречаются живьём.
-Тесты нарочно грубые: они не про детали, а про то, что инструмент вообще
-выполняет свою работу.
+Here that is exactly what is checked, over all the layouts that occur in the
+wild. The tests are deliberately crude: they are not about details but about the
+tool doing its work at all.
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ EN = (
     'l_english:\n'
     ' greet:0 "Hello"\n'
     ' bye:0 "Goodbye"\n'
-    ' again:0 "Hello"\n'          # повтор — им проверяем автоподстановку
+    ' again:0 "Hello"\n'          # a repeat — the auto-substitution is checked with it
 )
 RU = (
     'l_russian:\n'
@@ -41,14 +41,14 @@ def write(path, text: str) -> None:
 
 
 def layout_flat(root):
-    """Корни указаны прямо на папки языка."""
+    """The roots point straight at the language folders."""
     write(root / "en" / "agot" / "foo_l_english.yml", EN)
     write(root / "ru" / "agot" / "foo_l_russian.yml", RU)
     return root / "en", root / "ru"
 
 
 def layout_workshop(root):
-    """Как в мастерской: два мода, корень — папка localization."""
+    """As in the workshop: two mods, the root is the localization folder."""
     write(root / "2962333032" / "localization" / "english" / "agot" / "foo_l_english.yml", EN)
     write(root / "2962803371" / "localization" / "russian" / "agot" / "foo_l_russian.yml", RU)
     return (root / "2962333032" / "localization",
@@ -56,14 +56,14 @@ def layout_workshop(root):
 
 
 def layout_same_tree(root):
-    """Оригинал и перевод в одном моде: localization/<язык>/…"""
+    """The original and the translation in one mod: localization/<language>/…"""
     write(root / "mod" / "localization" / "english" / "foo_l_english.yml", EN)
     write(root / "mod" / "localization" / "russian" / "foo_l_russian.yml", RU)
     return root / "mod" / "localization", root / "mod" / "localization"
 
 
 def layout_deep(root):
-    """Папка языка не первым сегментом пути."""
+    """The language folder is not the first segment of the path."""
     write(root / "en" / "sub" / "english" / "foo_l_english.yml", EN)
     write(root / "ru" / "sub" / "russian" / "foo_l_russian.yml", RU)
     return root / "en", root / "ru"
@@ -88,10 +88,10 @@ def scanned(request, tmp_path):
 
 
 def test_existing_translation_is_never_lost(scanned) -> None:
-    """Главная канарейка: перевод лежит на диске — он обязан найтись.
+    """The main canary: the translation lies on the disk — it is obliged to be found.
 
-    Ноль переведённых при непустом дереве перевода означает, что сломано
-    сопоставление файлов, и работать с таким проектом нельзя.
+    Zero translated with a non-empty translation tree means the matching of files
+    is broken, and such a project cannot be worked with.
     """
     conn, _ = scanned
     translated = conn.execute(
@@ -109,25 +109,25 @@ def test_translations_land_on_the_right_keys(scanned) -> None:
 
 
 def test_paired_files_are_not_treated_as_orphans(scanned) -> None:
-    """Осиротевший RU-файл уходит в архив — так терялся весь перевод сразу."""
+    """An orphaned RU file goes into the archive — that is how a whole translation was lost at once."""
     conn, stats = scanned
     assert stats.files_ru >= stats.files_en
     assert conn.execute("SELECT COUNT(*) FROM legacy_translations").fetchone()[0] == 0
 
 
 def test_memory_is_filled_from_the_translation(scanned) -> None:
-    """Пустая память переводов = молчащие подсказки и автоподстановка."""
+    """An empty translation memory = silent hints and no auto-substitution."""
     conn, _ = scanned
     assert [h.ru_text for h in tm.lookup(conn, "Hello")] == ["Привет"]
 
 
 def test_repeated_string_is_autofilled(scanned) -> None:
-    """Точное совпадение с уже переведённой строкой подставляется само."""
+    """An exact match with an already translated row is substituted by itself."""
     conn, _ = scanned
     row = conn.execute(
         "SELECT status, ru_text FROM units WHERE key = 'again'").fetchone()
     assert row["ru_text"] == "Привет"
-    assert row["status"] == Status.AUTO.value      # «подставлено, проверь»
+    assert row["status"] == Status.AUTO.value      # «substituted, check it»
 
 
 def test_nothing_is_left_untranslated_when_everything_matches(scanned) -> None:
@@ -139,7 +139,7 @@ def test_nothing_is_left_untranslated_when_everything_matches(scanned) -> None:
 
 
 def test_export_writes_the_translation_back(scanned, tmp_path) -> None:
-    """Замыкаем круг: то, что прочитали, должно записаться обратно в мод."""
+    """We close the circle: what was read has to be written back into the mod."""
     conn, _ = scanned
     out = tmp_path / "out_mod"
     export_project(conn, 1, ExportOptions(), out_root=out, backup=False)
@@ -150,7 +150,7 @@ def test_export_writes_the_translation_back(scanned, tmp_path) -> None:
 
 
 def test_rescan_is_idempotent(scanned) -> None:
-    """Повторный скан не должен ни терять переводы, ни плодить архив."""
+    """A repeated scan must neither lose translations nor breed the archive."""
     conn, _ = scanned
     before = conn.execute(
         "SELECT COUNT(*) FROM units WHERE ru_text IS NOT NULL").fetchone()[0]
