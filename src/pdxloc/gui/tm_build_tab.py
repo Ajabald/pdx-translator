@@ -1,9 +1,9 @@
-"""Вкладка «Собрать базу»: из папок локализации или из переводов проекта.
+"""The «Build a database» tab: from localisation folders or from the project.
 
-Основной сценарий — собрать базу игры из ванильной локализации, чтобы строки,
-скопированные модами из игры, переводились автоматически. Второй режим —
-выгрузить собственные переводы проекта, чтобы подключить их к другому проекту;
-раньше это была отдельная команда меню, открывавшая просто файловый диалог.
+The main case is building a game database from the vanilla localisation so that
+rows the mods copied from the game get translated on their own. The second mode
+exports the project's own translations for attaching to another project; that
+used to be a separate menu command which opened nothing but a file dialog.
 """
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ class _BuildWorker(QObject):
 
 class TmBuildTab(QWidget):
     statusChanged = Signal(str)
-    databasesChanged = Signal()      # появилась новая база — обновить списки
+    databasesChanged = Signal()      # a new database appeared: refresh the lists
 
     def __init__(self, parent=None, *, src_lang="english", tgt_lang="russian",
                  conn: sqlite3.Connection | None = None):
@@ -70,7 +70,7 @@ class TmBuildTab(QWidget):
         self._worker: _BuildWorker | None = None
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)   # поля не должны липнуть к краю
+        layout.setContentsMargins(12, 12, 12, 12)   # the fields must not stick to the edge
         layout.setSpacing(8)
 
         mode = QHBoxLayout()
@@ -108,11 +108,11 @@ class TmBuildTab(QWidget):
         self.cancel_btn = QPushButton(translate("TmBuild", "Interrupt"))
         self.cancel_btn.clicked.connect(self._on_cancel)
         self.buttons.addButton(self.cancel_btn, QDialogButtonBox.ActionRole)
-        self.cancel_btn.hide()      # скрывать только после добавления в блок кнопок
+        self.cancel_btn.hide()      # hide only after it is added to the button block
         layout.addWidget(self.buttons)
 
     def game_id(self) -> str:
-        """Игра, выбранная на вкладке: из списка либо слаг своего имени."""
+        """The game chosen on the tab: one from the list, or the slug of a typed name."""
         text = self.game_combo.currentText().strip()
         index = self.game_combo.findText(text)
         if index >= 0 and self.game_combo.itemData(index):
@@ -127,9 +127,10 @@ class TmBuildTab(QWidget):
         form.setHorizontalSpacing(10)
         outer.addLayout(form)
 
-        # Игра — первым полем: она решает, в чей загон ляжет база и с какой
-        # пометкой. При открытом проекте берём её у него: собирать базу другой
-        # игры, сидя в проекте, — случай редкий, но запрещать его не за что.
+        # The game comes first: it decides which pen the database lands in and what
+        # mark it carries. With a project open we take it from there — building a
+        # database for another game while sitting in a project is rare, but there is
+        # nothing to forbid it for.
         self.game_combo = QComboBox()
         self.game_combo.setEditable(True)
         for game_id in games.ORDER:
@@ -185,7 +186,7 @@ class TmBuildTab(QWidget):
             "The finished database appears in the folder %1."),
             settings.bdd_dir())))
 
-        # путь можно и вписать руками — тогда тоже подсказываем папки
+        # the path can be typed in too — then we suggest folders as well
         self.src_edit.editingFinished.connect(self._on_src_edited)
         self.tgt_edit.editingFinished.connect(self._on_tgt_edited)
         return page
@@ -206,7 +207,7 @@ class TmBuildTab(QWidget):
             settings.bdd_dir())))
         return page
 
-    # --- режимы ---
+    # --- modes ---
 
     def _on_mode_changed(self, _checked: bool) -> None:
         from_dirs = self.mode_dirs.isChecked()
@@ -218,7 +219,7 @@ class TmBuildTab(QWidget):
             self.export_name.setText(project_mod.project_name(self.conn))
 
     def shutdown(self) -> None:
-        """Своих таймеров нет; поток гасится через is_busy/cancel."""
+        """No timers of its own; the thread is stopped through is_busy/cancel."""
 
     def is_busy(self) -> bool:
         return self._thread is not None and self._thread.isRunning()
@@ -230,7 +231,7 @@ class TmBuildTab(QWidget):
         self.status.setText(text)
         self.statusChanged.emit(text)
 
-    # --- выбор папок ---
+    # --- choosing folders ---
 
     def _browse(self, edit: QLineEdit) -> None:
         path = QFileDialog.getExistingDirectory(
@@ -254,12 +255,13 @@ class TmBuildTab(QWidget):
         self._resolve_target()
 
     def _resolve_target(self) -> None:
-        """Спуститься в папку языка внутри выбранной папки перевода.
+        """Descend into the language folder inside the chosen translation folder.
 
-        Перевод-мод обычно кладут отдельным модом со своим деревом: у
-        русификатора AGOT это `localization/russian` (перевод мода) рядом с
-        `localization/replace/russian` (замена ванильных строк). Указывают при
-        этом общий корень — и пар не находилось ни одной.
+        A translation is usually shipped as a mod of its own with a tree of its
+        own: the AGOT Russian pack has `localization/russian` — the mod's
+        translation — next to `localization/replace/russian`, which replaces the
+        vanilla rows. People point at the common root, and not a single pair used
+        to be found.
         """
         src, tgt = self.src_edit.text().strip(), self.tgt_edit.text().strip()
         if not src or not tgt or not Path(src).is_dir() or not Path(tgt).is_dir():
@@ -282,7 +284,7 @@ class TmBuildTab(QWidget):
                     best.name))
             return
         if best is None and len(scored) > 1:
-            # нашли папки языка, но пар всё равно нет — покажем, что смотрели
+            # language folders were found but still no pairs: show what was looked at
             zero = translate("TmBuild", "(0 pairs)")
             looked = ", ".join(f"{p.name} {zero}" for p, _ in scored[1:])
             self._update_estimate()
@@ -292,11 +294,12 @@ class TmBuildTab(QWidget):
         self._update_estimate()
 
     def _autodetect(self, chosen: Path) -> None:
-        """Подставить настоящие папки локализации.
+        """Fill in the real localisation folders.
 
-        Пользователь естественно указывает корень игры или мода, а локализация
-        лежит глубже (у CK3 — game\\localization\\english). Без этого пары не
-        находятся вообще, а раньше приложение молча создавало пустую базу.
+        People naturally point at the root of a game or a mod, while the
+        localisation lies deeper — in CK3 at game\\localization\\english. Without
+        this no pairs are found at all, and the application used to create an
+        empty database in silence.
         """
         src_lang = self.src_lang.currentText().strip() or "english"
         tgt_lang = self.tgt_lang.currentText().strip() or "russian"
@@ -310,7 +313,7 @@ class TmBuildTab(QWidget):
         self._resolve_target()
 
     def _update_estimate(self) -> None:
-        """Показать, сколько файлов имеет пару, ещё до запуска."""
+        """Show how many files have a counterpart, before anything is started."""
         src, tgt = self.src_edit.text().strip(), self.tgt_edit.text().strip()
         if not src or not tgt or not Path(src).is_dir() or not Path(tgt).is_dir():
             return
@@ -334,7 +337,7 @@ class TmBuildTab(QWidget):
                 "TmBuild", "Original files: %1, of them with a pair: %2"),
                 total, paired))
 
-    # --- запуск ---
+    # --- the run ---
 
     def _run(self) -> None:
         if self.mode_project.isChecked():
@@ -393,14 +396,14 @@ class TmBuildTab(QWidget):
                 return
         pen.mkdir(parents=True, exist_ok=True)
 
-        # заранее говорим, если собирать нечего: раньше в этом случае
-        # молча создавалась пустая база, которую можно было подключить
+        # say in advance when there is nothing to build: the application used to create
+        # an empty database in silence, and it could then be attached
         tgt_text = self.tgt_edit.text().strip()
         if tgt_text and Path(tgt_text).is_dir():
             best, scored = tm_import.resolve_target_dir(
                 Path(src), Path(tgt_text), src_lang, tgt_lang)
             if best is not None and best != Path(tgt_text):
-                self.tgt_edit.setText(str(best))     # нашли вложенную папку языка
+                self.tgt_edit.setText(str(best))     # a nested language folder was found
                 tgt_text = str(best)
             paired, total = tm_import.count_pairs(
                 Path(src), Path(tgt_text), src_lang, tgt_lang)
@@ -448,15 +451,15 @@ class TmBuildTab(QWidget):
         self._worker.moveToThread(self._thread)
         self._thread.started.connect(self._worker.run)
         self._worker.progress.connect(self._on_progress)
-        # Только связанные методы этого виджета! Лямбда — не QObject, и PySide
-        # вызывает её напрямую в потоке отправителя: обработчик трогал бы
-        # виджеты из рабочего потока, а это намертво вешало окно на финише.
+        # Bound methods of this widget only! A lambda is not a QObject, and PySide
+        # calls it directly on the sender's thread: the handler would touch widgets
+        # from the worker thread, and that hung the window for good at the finish.
         self._worker.finished.connect(self._on_done)
         self._worker.failed.connect(self._on_failed)
         self._worker.cancelled.connect(self._on_cancelled)
-        # Поток останавливаем его же сигналом, а не ожиданием из основного:
-        # сообщение о завершении приходит ещё до выхода из run(), и wait()
-        # здесь намертво вешал окно.
+        # The thread is stopped by its own signal rather than by waiting from the main
+        # one: the finished message arrives before run() returns, and wait() here hung
+        # the window for good.
         self._worker.finished.connect(self._thread.quit)
         self._worker.failed.connect(self._thread.quit)
         self._worker.cancelled.connect(self._thread.quit)

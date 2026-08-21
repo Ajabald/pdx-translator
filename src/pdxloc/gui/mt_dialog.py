@@ -1,13 +1,15 @@
-"""Пакетный машинный перевод: охват, предполётная оценка, прогон, сводка.
+"""Batch machine translation: selection, a pre-flight estimate, the run, a summary.
 
-Операция трогает тысячи строк, стоит денег и ходит в сеть, поэтому устроена как
-загрузка перевода из мода: сперва видно, **сколько именно строк** и во что это
-обойдётся, и только потом кнопка. Записанное уходит одной пачкой и снимается
-одним Ctrl+Z — об этом сказано прямо в подтверждении, а не только в справке.
+The operation touches thousands of rows, costs money and goes over the network,
+so it is built like loading a translation from a mod: first it is visible **how
+many rows exactly** and what it will come to, and only then a button. What gets
+written goes as one batch and comes back with one Ctrl+Z — said plainly in the
+confirmation rather than in the help alone.
 
-Денежной оценки здесь нет намеренно. Таблица цен, зашитая в редко пересобираемый
-exe, устареет за месяцы, а неверная цифра про деньги хуже отсутствующей.
-Показываем то, что знаем точно: строки, символы, запросы и примерное время.
+There is deliberately no estimate in money. A price table baked into a rarely
+rebuilt exe goes stale within months, and a wrong figure about money is worse
+than none. We show what we know for certain: rows, characters, requests and a
+rough time.
 """
 from __future__ import annotations
 
@@ -28,7 +30,7 @@ from pdxloc.core.unit_ops import has_nothing_to_translate
 from pdxloc.gui import mt_worker, prefs
 from pdxloc.gui.widgets import HintLabel, WarningLabel
 
-# Охваты: значение -> (подпись, статусы). Порядок — как в списке.
+# Selections: value -> (label, statuses). The order is the order in the list.
 SCOPES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("selected", QT_TRANSLATE_NOOP("MtDialog", "Selected rows"), ()),
     ("untranslated", QT_TRANSLATE_NOOP("MtDialog", "Not translated"),
@@ -39,12 +41,14 @@ SCOPES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("all", QT_TRANSLATE_NOOP("MtDialog", "The whole project"), ()),
 )
 
-# Выше этого порога спрашиваем подтверждение: прогон уже долгий и заметный.
+# Above this threshold we ask for confirmation: the run is long enough to be
+# noticed.
 CONFIRM_ROWS = 500
 CONFIRM_CHARS = 100_000
 
-# Грубая оценка ответа сервиса. Точность здесь не нужна — нужен порядок величины,
-# чтобы человек понимал, уходить ему пить чай или ждать.
+# A rough estimate of how long a service takes to answer. Precision is not
+# wanted here — an order of magnitude is, so a person knows whether to go and
+# make tea or to wait.
 _LATENCY_GUESS_SEC = 1.5
 
 
