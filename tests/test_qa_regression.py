@@ -1,8 +1,9 @@
-"""Регрессия проверок качества на живых данных.
+"""A regression of the quality checks on live data.
 
-Прежний набор правил давал 1097 сообщений, из них 827 «ошибок», и 826 из них
-были ложными: правило требовало закрывать #weak в конце строки, хотя так
-устроен сам оригинал мода. Тест фиксирует, что этого больше не происходит.
+The former rule set gave 1097 messages, 827 of them «errors», and 826 of those
+were false: the rule demanded closing #weak at the end of a row, though that is
+how the original of the mod itself is built. The test pins down that this no
+longer happens.
 """
 from __future__ import annotations
 
@@ -22,7 +23,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def real_pairs():
-    """Пары «оригинал — перевод» прямо из файлов мода, без БД."""
+    """The pairs «original — translation» straight from the files of the mod, without a DB."""
     pairs = []
     for en_path in REALDATA_EN.rglob("*.yml"):
         if "_l_english" not in en_path.name:
@@ -42,7 +43,7 @@ def real_pairs():
 
 
 def test_errors_are_rare_and_real(real_pairs):
-    """Ошибок должно быть единицы, а не сотни."""
+    """There have to be single errors, not hundreds."""
     errors = []
     for key, en, ru in real_pairs:
         for code in check_unit(en, ru):
@@ -52,7 +53,7 @@ def test_errors_are_rare_and_real(real_pairs):
 
 
 def test_unclosed_tags_no_longer_flagged(real_pairs):
-    """Строки с #weak без #! — самый массовый случай — больше не ошибка."""
+    """Rows with #weak and no #! — the most massive case — are no longer an error."""
     suspects = [
         (key, en, ru) for key, en, ru in real_pairs
         if "#weak" in en and "#!" not in en
@@ -65,18 +66,18 @@ def test_unclosed_tags_no_longer_flagged(real_pairs):
 
 
 def test_total_noise_dropped(real_pairs):
-    """Общий объём сообщений упал в разы (было 1097)."""
+    """The total volume of messages fell severalfold (it was 1097)."""
     total = sum(len(check_unit(en, ru)) for _key, en, ru in real_pairs)
     assert total < 300, f"проверки снова шумят: {total} сообщений"
 
 
 def test_paragraph_breaks_are_not_double_spaces(real_pairs):
-    """Регрессия: абзацный разрыв объявлялся двойным пробелом.
+    """A regression: a paragraph break was declared a double space.
 
-    Правило заменяло каждый перенос строки (два символа: обратный слэш и «n»)
-    на пробел, поэтому `\\n\\n` выглядел как два пробела подряд. На живом моде
-    так помечались 84 перевода из 4851 — все до единого ложно, настоящих
-    двойных пробелов в переводах нет вовсе.
+    The rule replaced every line break (two characters: a backslash and an «n»)
+    with a space, so `\\n\\n` looked like two spaces in a row. On a live mod 84
+    translations out of 4851 were marked that way — every single one of them
+    falsely, there are no real double spaces in the translations at all.
     """
     with_breaks = [(k, en, ru) for k, en, ru in real_pairs if "\\n\\n" in ru]
     assert with_breaks, "в моде есть абзацные разрывы — иначе тест бессмысленен"
@@ -85,10 +86,10 @@ def test_paragraph_breaks_are_not_double_spaces(real_pairs):
 
 
 def test_typographic_checks_do_not_invent_problems(real_pairs):
-    """Правила про пробелы и кавычки молчат на вычитанном тексте.
+    """The rules about spaces and quotes keep quiet on a proofread text.
 
-    Если здесь начнёт срабатывать — сперва посмотреть глазами на строку: это
-    либо настоящая опечатка переводчика, либо снова ложное правило.
+    Should something start firing here — first look at the row with your own eyes:
+    it is either a real typo of the translator or a false rule again.
     """
     noisy = {code: [] for code in ("double_space", "edge_space", "unbalanced_quotes")}
     for key, en, ru in real_pairs:
@@ -99,7 +100,7 @@ def test_typographic_checks_do_not_invent_problems(real_pairs):
 
 
 def test_ignored_issue_disappears(db):
-    """Помеченное как «не ошибка» больше не показывается."""
+    """What is marked «not an error» is no longer shown."""
     from pdxloc.core import qa
 
     db.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1,'p','e','r')")
@@ -118,7 +119,7 @@ def test_ignored_issue_disappears(db):
 
 
 def test_inconsistent_translations_detected(db):
-    """Один и тот же оригинал, переведённый по-разному, — реальная проблема."""
+    """One and the same original translated differently is a real problem."""
     from pdxloc.core import tm
 
     db.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1,'p','e','r')")

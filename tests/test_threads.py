@@ -1,13 +1,14 @@
-"""Фоновые операции не должны вешать окно.
+"""Background operations must not hang the window.
 
-Две разные причины зависания, обе уже случались:
+Two different causes of a hang, both of which have already happened:
 
-* обработчик завершения вызывал thread.wait() из основного потока, а сигнал
-  «готово» приходит раньше, чем run() отдаёт управление — quit() не успевал
-  подействовать и ожидание становилось вечным;
-* сигнал был подключён к лямбде. Лямбда — не QObject, и PySide вызывает её
-  напрямую в потоке отправителя, поэтому обработчик трогал виджеты из рабочего
-  потока: окно вставало намертво на 99%, оба окна получали «Не отвечает».
+* the completion handler called thread.wait() from the main thread, while the
+  «ready» signal arrives before run() gives control back — quit() had no time to
+  take effect and the wait became eternal;
+* the signal was connected to a lambda. A lambda is no QObject, and PySide calls
+  it directly in the thread of the sender, so the handler touched widgets from the
+  worker thread: the window stood dead at 99%, and both windows got «Not
+  responding».
 """
 from __future__ import annotations
 
@@ -42,7 +43,7 @@ def test_tm_build_dialog_finishes_without_hanging(loc_tree, tmp_path, qtbot, mon
     monkeypatch.setattr(settings, "bdd_dir", lambda: bdd)
 
     class Watched(TmBuildTab):
-        """Запоминает, в каком потоке отработал обработчик завершения."""
+        """Remembers which thread the completion handler ran in."""
 
         done_tid = None
 
@@ -59,12 +60,12 @@ def test_tm_build_dialog_finishes_without_hanging(loc_tree, tmp_path, qtbot, mon
     dlg._run()
     qtbot.waitUntil(lambda: dlg.report_box.isVisibleTo(dlg), timeout=15000)
 
-    # обработчик завершения обязан выполняться в потоке GUI, иначе окно виснет
+    # the completion handler is obliged to run in the GUI thread, otherwise the window hangs
     assert dlg.done_tid == threading.get_ident()
     assert "Translation pairs: 2" in dlg.report_box.toPlainText()
-    # поток должен остановиться сам, без ожидания из основного
+    # the thread has to stop by itself, without a wait from the main one
     qtbot.waitUntil(lambda: not dlg._thread.isRunning(), timeout=5000)
-    # база ложится в загон своей игры (см. core/games.py)
+    # the database lands in the pen of its game (see core/games.py)
     assert (bdd / "CK3" / "Тест_english-russian.pdxtm").is_file()
 
 
@@ -104,10 +105,10 @@ def test_scan_can_be_cancelled(tmp_path, make_tree, qtbot):
 
 
 def test_no_worker_signal_is_connected_to_a_lambda():
-    """Сигналы фонового объекта — только на связанные методы окна.
+    """The signals of a background object go only to bound methods of the window.
 
-    PySide вызывает лямбду напрямую в потоке отправителя, поэтому такая связка
-    незаметно уводит работу с виджетами в рабочий поток.
+    PySide calls a lambda directly in the thread of the sender, so such a binding
+    imperceptibly takes work with widgets off into the worker thread.
     """
     import re
     from pathlib import Path
@@ -125,10 +126,11 @@ def test_no_worker_signal_is_connected_to_a_lambda():
 
 
 def test_qt_own_buttons_follow_the_interface_language(qtbot):
-    """Штатные кнопки Qt («Close», «Yes») переводятся вместе с интерфейсом.
+    """The standard buttons of Qt («Close», «Yes») are translated along with the interface.
 
-    Свой перевод и перевод Qt ставятся одним действием: если разъедутся, в
-    русском окне окажется английская кнопка «Close» — и наоборот.
+    Our own translation and the one of Qt are set by one action: should they come
+    apart, a Russian window would hold an English «Close» button — and the other
+    way round.
     """
     from PySide6.QtWidgets import QApplication, QDialogButtonBox
 

@@ -1,8 +1,8 @@
-"""Своё правило, съевшее время, гаснет до конца прохода.
+"""A rule of one's own that has eaten time goes out for the rest of the pass.
 
-Повод — катастрофический бэктрекинг: `(\\w+)+$` на длинной строке считается
-минутами, а проход идёт по сотне тысяч строк. Полностью это не лечится (см.
-`SLOW_RULE_SECONDS`), но одно медленное правило не должно стоить всего прохода.
+The reason is catastrophic backtracking: `(\\w+)+$` on a long row is computed for
+minutes, while a pass goes over a hundred thousand rows. This is not cured
+completely (see `SLOW_RULE_SECONDS`), but one slow rule must not cost the whole pass.
 """
 from __future__ import annotations
 
@@ -11,15 +11,15 @@ from pdxloc.core.qa_rules import BUILTIN, USER, Rule, RuleSet
 
 
 def slow_rule(rule_id: str = "slow", *, origin: str = USER) -> Rule:
-    """Правило, которое честно тратит больше порога на каждой строке."""
+    """A rule that honestly spends more than the threshold on every row."""
     import time
 
     def check(en, ru, params):
         time.sleep(qa_rules.SLOW_RULE_SECONDS * 1.2)
         return True
 
-    # kind=BUILTIN — чтобы проверка бралась из CHECKS по имени правила;
-    # origin решает, чьё правило, и именно его смотрит сторож времени
+    # kind=BUILTIN — so that the check is taken out of CHECKS by the name of the
+    # rule; origin decides whose rule it is, and that is what the time guard looks at
     rule = Rule(id=rule_id, title="Медленное", category="custom",
                 severity="warning", message="медленное",
                 kind=BUILTIN, origin=origin)
@@ -42,19 +42,19 @@ def teardown_function() -> None:
 def test_a_slow_user_rule_stops_after_the_first_row() -> None:
     rules = RuleSet([slow_rule(), fast_rule()])
 
-    assert "slow" in rules.check("Hello", "Привет")     # первый раз ещё работает
+    assert "slow" in rules.check("Hello", "Привет")     # the first time it still works
     assert "slow" in rules.exhausted
 
-    # на следующей строке его уже не зовут, а соседнее правило цело
+    # on the next row it is no longer called, while the neighbouring rule is intact
     found = rules.check("World", "Мир")
     assert "slow" not in found
     assert "fast" in found
 
 
 def test_a_fresh_pass_starts_with_a_clean_slate() -> None:
-    """Правило могло споткнуться об одну строку из ста тысяч.
+    """The rule may have stumbled over one row out of a hundred thousand.
 
-    Наказывать его навсегда не за что: набор живёт ровно один проход.
+    There is nothing to punish it forever for: a set lives exactly one pass.
     """
     first = RuleSet([slow_rule()])
     first.check("Hello", "Привет")
@@ -65,9 +65,9 @@ def test_a_fresh_pass_starts_with_a_clean_slate() -> None:
 
 
 def test_a_builtin_rule_is_never_silenced() -> None:
-    """Встроенные гасить нельзя: их проверку писал автор, и медленная встроенная
-    проверка — это ошибка в приложении, а не в чужой настройке. Замолчать о ней
-    значило бы спрятать собственную поломку.
+    """The built-in ones must not be quieted: their check was written by the author,
+    and a slow built-in check is an error in the application and not in somebody
+    else's setting. To fall silent about it would mean hiding our own breakage.
     """
     rules = RuleSet([slow_rule("slow_builtin", origin=BUILTIN)])
     rules.check("Hello", "Привет")
@@ -76,7 +76,7 @@ def test_a_builtin_rule_is_never_silenced() -> None:
 
 
 def test_time_is_measured_even_for_rules_that_behave() -> None:
-    """Счётчик нужен и быстрым — по нему видно, кто съел проход."""
+    """The counter is needed for the fast ones too — it shows who ate the pass."""
     rules = RuleSet([fast_rule()])
     rules.check("Hello", "Привет")
     assert rules.spent["fast"] >= 0.0
@@ -84,10 +84,10 @@ def test_time_is_measured_even_for_rules_that_behave() -> None:
 
 
 def test_the_guard_does_not_touch_the_default_set() -> None:
-    """Полсекунды на строку — на три порядка больше честного правила.
+    """Half a second per row is three orders of magnitude more than an honest rule.
 
-    Проверка от ложного срабатывания: весь встроенный набор на живой паре
-    должен уложиться в порог с огромным запасом.
+    A check against a false hit: the whole built-in set on a live pair has to fit
+    into the threshold with enormous room to spare.
     """
     rules = qa_rules.default_ruleset()
     long_line = "The quick brown fox jumps over the lazy dog. " * 40
