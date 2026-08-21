@@ -1,4 +1,4 @@
-"""Главное окно: стек экранов, меню, статус-бар."""
+"""The main window: the stack of screens, the menu, the status bar."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -24,10 +24,10 @@ from pdxloc.gui.start_screen import StartScreen
 from pdxloc.gui.status_chips import StatusChipsBar
 from pdxloc.gui.toolbar import ContextBar, build_toolbar
 
-PROJECT_ID = 1      # в файле проекта всегда ровно один проект
+PROJECT_ID = 1      # a project file always holds exactly one project
 
 CTX = "MainWindow"
-PRODUCT = "PDX Translator"      # имя продукта не переводится
+PRODUCT = "PDX Translator"      # the product name is not translated
 
 
 class MainWindow(QMainWindow):
@@ -53,8 +53,8 @@ class MainWindow(QMainWindow):
         self.editor_screen.manageTmRequested.connect(self._tm_manager)
         self.editor_screen.selectionChanged.connect(self._on_selection_changed)
 
-        # Постоянные виджеты: временные сообщения (showMessage) их не перекрывают,
-        # иначе счётчик пропадал бы после каждого уведомления
+        # Permanent widgets: temporary messages (showMessage) do not cover them,
+        # otherwise the counter would vanish after every notification
         self.selection_label = QLabel()
         self.statusBar().addPermanentWidget(self.selection_label)
         self.stats_label = QLabel()
@@ -75,15 +75,16 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(
             translate("MainWindow", "Choose or create a project"))
 
-        # Мастер — до открытия проекта: он задаёт язык интерфейса, и увидеть
-        # его посреди уже открытого окна значило бы перерисовать всё дважды.
+        # The wizard comes before the project is opened: it sets the interface
+        # language, and meeting it in the middle of an already open window would
+        # mean redrawing everything twice.
         self._run_first_start()
         if prefs.get("general/reopen_last"):
             last = settings.last_project_path()
             if last and last.is_file():
                 self.open_project(last)
 
-    # --- первый запуск ---
+    # --- first start ---
 
     def _run_first_start(self) -> None:
         from pdxloc.gui.welcome_dialog import WelcomeDialog, needed
@@ -97,7 +98,7 @@ class MainWindow(QMainWindow):
         dlg.exec()
 
     def _build_tm_database(self) -> None:
-        """Открыть память переводов сразу на вкладке сборки базы."""
+        """Open the translation memory straight on the database-building tab."""
         from pdxloc.gui.tm_window import TmWindow
 
         dlg = TmWindow(self.conn, self)
@@ -106,12 +107,12 @@ class MainWindow(QMainWindow):
         self.context_bar.refresh()
 
     def _offer_tm_databases(self) -> None:
-        """Напомнить про базы памяти, если их нет ни одной.
+        """Remind about the memory databases if there is not a single one.
 
-        Без базы инструмент теряет половину смысла: строки, скопированные модом
-        из игры, приходится переводить руками. Напоминание проходит через
-        `ask_once` — заглушить его можно навсегда, иначе оно превратилось бы в
-        назойливость и его начали бы закрывать не читая.
+        Without a database the tool loses half its point: the strings the mod
+        copied from the game have to be translated by hand. The reminder goes
+        through `ask_once` — it can be silenced forever, otherwise it would turn
+        into nagging and people would start closing it unread.
         """
         from pdxloc.gui import ask
 
@@ -128,18 +129,18 @@ class MainWindow(QMainWindow):
         if answer == QMessageBox.Yes:
             self._build_tm_database()
 
-    # --- меню ---
+    # --- the menu ---
 
     def _build_menu(self) -> None:
-        """Собрать меню по спеке `gui/actions.py`.
+        """Build the menu from the spec in `gui/actions.py`.
 
-        Раскладка и порядок живут там, здесь — только слоты: иначе состав меню
-        снова расползётся по коду, а панель инструментов начнёт заводить
-        собственные копии действий.
+        The layout and the order live there, here — only the slots: otherwise
+        the composition of the menu would crawl apart over the code again, and
+        the toolbar would start keeping copies of its own actions.
         """
         self.actions = ActionRegistry()
         self.actions.build(self, self.editor_screen.table)
-        # действия проекта — здесь, действия над строками — в экране редактора
+        # project actions live here, row actions live in the editor screen
         connect = self.actions.connect
         connect("projects", self.show_start)
         connect("open", self._open_file)
@@ -170,27 +171,29 @@ class MainWindow(QMainWindow):
 
         self._populate_menus()
 
-        # Старые имена: тесты и внешний код обращаются к win.act_export и
-        # соседям. Теперь это те же объекты, что в тулбаре и контекстном меню.
+        # Old names: the tests and outside code reach for win.act_export and its
+        # neighbours. Now those are the same objects as in the toolbar and the
+        # context menu.
         for action_id, action in self.actions:
             setattr(self, f"act_{action_id}", action)
 
         self.editor_screen.filtersChanged.connect(self._sync_filter_views)
-        # Подписки — здесь, а не в сборщиках подменю: те вызываются заново при
-        # каждой смене языка, и связь копилась бы с каждым переключением.
+        # The subscriptions live here and not in the submenu builders: those are
+        # called anew at every change of language, and the connections would
+        # pile up with every switch.
         theme.on_change(self._sync_theme_menu)
         rules_state.on_change(self._sync_qa_preset_menu)
         language.on_change(self._retranslate)
         self._set_project_actions(False)
 
     def _populate_menus(self) -> None:
-        """Собрать строку меню по спеке — один раз за жизнь окна.
+        """Build the menu bar from the spec — once in the life of the window.
 
-        Пересобирать при смене языка нельзя: `QMenuBar.clear()` снимает пункты,
-        но сами QMenu остаются детьми строки меню, а вместе с ними — пункты
-        радиогрупп. За три переключения языка их накопилось вчетверо больше,
-        чем было (проверяется `test_language_switch.py`). Поэтому меню
-        переименовывается на месте, см. `_retranslate_menus`.
+        Rebuilding it at a change of language will not do: `QMenuBar.clear()`
+        takes the items off, but the QMenu objects themselves stay children of
+        the menu bar, and the radio group items with them. Over three language
+        switches they piled up fourfold (checked by `test_language_switch.py`).
+        That is why the menu is renamed in place, see `_retranslate_menus`.
         """
         self._menus: dict[str, object] = {}
         self._submenus: dict[str, object] = {}
@@ -215,8 +218,9 @@ class MainWindow(QMainWindow):
                 else:
                     menu.addAction(self.actions[action_id])
 
-    # Подписи радиогрупп — одним источником на сборку и на перевод: разойдись
-    # они, после смены языка часть пунктов осталась бы на старом.
+    # The labels of the radio groups come from one source for both the build and
+    # the translation: were they to diverge, part of the items would stay in the
+    # old language after a switch.
     def _status_items(self):
         return ([(None, translate("MainWindow", "All"))]
                 + [(s.value, statuses_mod.label(s)) for s in STATUS_ORDER])
@@ -230,11 +234,12 @@ class MainWindow(QMainWindow):
                 for name, label in theme.THEME_LABELS.items()]
 
     def _qa_preset_items(self):
-        """Пресеты в порядке витрины: подходящий проекту — первым и с пометкой.
+        """The presets in shop-window order: the one that suits the project first, and marked.
 
-        Пометка вычисляется, а не стоит в ярлыке: раньше «(recommended)» было
-        вписано в `ck3_ru` и обещалось всем подряд, в том числе переводчику
-        HOI4, которому рекомендован соседний набор.
+        The mark is computed instead of standing in the label: «(recommended)»
+        used to be written into `ck3_ru` and promised to everyone in a row,
+        including the HOI4 translator, for whom a neighbouring set is the
+        recommended one.
         """
         game, locale = rules_state.game(), rules_state.locale()
         best = qa_rules.recommended(game, locale)
@@ -254,7 +259,7 @@ class MainWindow(QMainWindow):
                 for action_id in act_spec.STATUS_BUTTONS]
 
     def _retranslate_menus(self) -> None:
-        """Переименовать меню и пункты радиогрупп, ничего не пересоздавая."""
+        """Rename the menus and the radio group items without recreating anything."""
         for title, menu in self._menus.items():
             menu.setTitle(translate("MainWindow", title))
         titles = {"status": "Show", "sort": "Sort",
@@ -281,11 +286,12 @@ class MainWindow(QMainWindow):
         self.sort_desc_action.setText(translate("MainWindow", "Descending"))
 
     def _retranslate(self) -> None:
-        """Перерисовать всё, что живёт дольше одного открытия.
+        """Redraw everything that lives longer than one opening.
 
-        Диалоги в списке отсутствуют намеренно: каждый создаётся заново при
-        открытии и берёт язык сам. Перечитать нужно ровно долгожителей — меню,
-        команды, панель, экраны и шапку таблицы.
+        The dialogs are absent from the list deliberately: each is created anew
+        on opening and takes the language itself. What needs rereading is
+        exactly the long-livers — the menu, the commands, the toolbar, the
+        screens and the header of the table.
         """
         self.actions.retranslate()
         self._retranslate_menus()
@@ -309,11 +315,11 @@ class MainWindow(QMainWindow):
         return menu
 
     def _build_sort_menu(self, parent) -> None:
-        """Зеркало сортировки по заголовкам колонок.
+        """A mirror of the sorting by the column headers.
 
-        Нужно затем же, зачем чипы дублируют комбобокс: состояние, доступное
-        только кликом мыши по 26-пиксельному заголовку, с клавиатуры не
-        достать и в тестах не увидеть.
+        Needed for the same reason the chips duplicate the combo box: a state
+        reachable only by a mouse click on a 26-pixel header cannot be got at
+        from the keyboard and cannot be seen in a test.
         """
         menu = parent.addMenu(translate("MainWindow", "Sort"))
         self.sort_actions = self.actions.radio_group(
@@ -327,12 +333,13 @@ class MainWindow(QMainWindow):
         return menu
 
     def _build_columns_menu(self, parent):
-        """Какие колонки таблицы показывать (у EET это тоже пункт «Вид»).
+        """Which columns of the table to show (in EET this is an item of "View" too).
 
-        Ключ настройки — английская подпись колонки, а не её номер: вставь
-        кто-нибудь колонку в середину, и номера сдвинулись бы, спрятав чужую.
-        Переименованная подпись просто перестанет совпадать, и колонка вернётся
-        видимой — из двух отказов этот безобиднее.
+        The key of the setting is the English label of the column and not its
+        number: were somebody to insert a column in the middle, the numbers
+        would shift and hide a foreign one. A renamed label will simply stop
+        matching and the column will come back visible — of the two failures
+        that one is the more harmless.
         """
         menu = parent.addMenu(translate("MainWindow", "Columns"))
         self.column_actions = self.actions.check_group(
@@ -359,7 +366,7 @@ class MainWindow(QMainWindow):
         hidden = self._hidden_columns()
         hidden.discard(label) if visible else hidden.add(label)
         if len(hidden) >= len(DATA_COLUMNS):
-            # спрятать таблицу целиком — не настройка, а поломка
+            # hiding the table whole is not a setting but a breakage
             hidden.discard(label)
             self.column_actions[column].setChecked(True)
             return
@@ -370,8 +377,9 @@ class MainWindow(QMainWindow):
         settings.qsettings().setValue(f"view/button_{action_id}", visible)
         widget = self.toolbar.widgetForAction(self.actions[action_id])
         if widget is not None:
-            # прячем кнопку, а не действие: тот же QAction живёт в меню
-            # «Перевод» и в контекстном меню таблицы, и там он нужен
+            # we hide the button and not the action: the same QAction lives in
+            # the "Translation" menu and in the context menu of the table, and
+            # there it is needed
             widget.setVisible(visible)
 
     def _on_sort_column(self, column) -> None:
@@ -403,17 +411,18 @@ class MainWindow(QMainWindow):
         self.theme_actions[theme.current()].setChecked(True)
 
     def _build_qa_preset_menu(self, parent) -> None:
-        """Готовые наборы правил — радиогруппой, как тема и сортировка.
+        """The ready-made rule sets — a radio group, like the theme and the sorting.
 
-        Смена набора из меню пишет в глобальный слой: это выбор строгости
-        вообще, а не настройка под конкретный мод. Тонкая правка отдельных
-        правил живёт в окне Shift+F6 и умеет писать в слой проекта.
+        Changing the set from the menu writes into the global layer: this is a
+        choice of strictness in general and not a setting for a particular mod.
+        The fine tuning of individual rules lives in the Shift+F6 window and can
+        write into the project layer.
         """
         menu = parent.addMenu(translate("MainWindow", "Rule preset"))
         self._qa_preset_menu = menu
-        # Разделитель отделяет рекомендуемый набор от остальных. Родитель у
-        # него окно, а не меню: из меню он уходит и возвращается при каждой
-        # смене проекта, и умереть вместе с ним ему нельзя.
+        # The separator parts the recommended set from the rest. Its parent is
+        # the window and not the menu: it leaves the menu and comes back at
+        # every change of project, and it must not die together with it.
         self._qa_preset_separator = QAction(self)
         self._qa_preset_separator.setSeparator(True)
         self.qa_preset_actions = self.actions.radio_group(
@@ -434,15 +443,17 @@ class MainWindow(QMainWindow):
                 "%1", qa_rules.preset_label(name)), 5000)
 
     def _sync_qa_preset_menu(self) -> None:
-        """Отметить действующий набор и поднять рекомендуемый наверх.
+        """Mark the set in force and lift the recommended one to the top.
 
-        Пункты переставляются `removeAction`/`addAction`, а не пересборкой
-        меню. `QMenu.clear()` здесь нельзя: он **удаляет** действия, у которых
-        меню же и родитель, — а пересоздавать их значило бы копить пункты в
-        радиогруппе, ровно как предупреждает `_populate_menus`.
+        The items are moved about with `removeAction`/`addAction` and not by
+        rebuilding the menu. `QMenu.clear()` will not do here: it **deletes**
+        the actions whose parent the menu itself is — and recreating them would
+        mean piling up items in the radio group, exactly as `_populate_menus`
+        warns about.
 
-        Зовётся по сигналу `rules_state`, а тот приходит и при открытии, и при
-        закрытии проекта, — поэтому пометка появляется и исчезает сама.
+        Called on the signal from `rules_state`, and that one comes both on
+        opening and on closing a project — so the mark appears and disappears
+        by itself.
         """
         menu = self._qa_preset_menu
         for action in list(menu.actions()):
@@ -462,11 +473,12 @@ class MainWindow(QMainWindow):
             action.setChecked(True)
 
     def _sync_filter_views(self) -> None:
-        """Показать текущий фильтр во всех его витринах разом.
+        """Show the current filter in all of its shop windows at once.
 
-        Фильтр по статусу ставится из пяти мест — комбобокс, чипы статус-бара,
-        дерево файлов, сводка сканирования и меню. Раньше каждое место знало
-        только про себя: чип загорался, лишь когда кликнули по самому чипу.
+        The status filter is set from five places — the combo box, the status
+        bar chips, the file tree, the scan summary and the menu. Every place
+        used to know only about itself: a chip lit up only when the chip itself
+        was clicked.
         """
         status = self.editor_screen.state.status
         self.chips.set_active_filter(status)
@@ -483,7 +495,7 @@ class MainWindow(QMainWindow):
     def _set_project_actions(self, enabled: bool) -> None:
         self.actions.set_enabled(enabled)
 
-    # --- вид ---
+    # --- the view ---
 
     def _restore_view_settings(self) -> None:
         s = settings.qsettings()
@@ -493,8 +505,8 @@ class MainWindow(QMainWindow):
 
         hidden = self._hidden_columns()
         for column, label in DATA_COLUMNS:
-            # setChecked сам дёрнет toggled и спрячет колонку — второй раз
-            # прятать её здесь не надо
+            # setChecked will pull toggled itself and hide the column — there is
+            # no need to hide it here a second time
             self.column_actions[column].setChecked(label not in hidden)
         for action_id in act_spec.STATUS_BUTTONS:
             self.button_actions[action_id].setChecked(
@@ -518,10 +530,10 @@ class MainWindow(QMainWindow):
         theme.apply_theme(QApplication.instance(), name)
 
     def _show_shortcuts(self) -> None:
-        """Список клавиш собирается из спеки действий — врать он не может.
+        """The list of keys is gathered from the action spec — it cannot lie.
 
-        Раскладка та же, что у ESP/ESM Translator. Раньше список был написан
-        руками и отставал от кода при каждой правке меню.
+        The layout is the same as in ESP/ESM Translator. The list used to be
+        written by hand and fell behind the code at every edit of the menu.
         """
         rows = [
             (" / ".join(QKeySequence(k).toString() for k in spec.keys), spec.text)
@@ -536,16 +548,16 @@ class MainWindow(QMainWindow):
             self, translate("MainWindow", "Keyboard shortcuts"),
             f"<table>{body}</table>")
 
-    # --- проекты ---
+    # --- projects ---
 
     def show_start(self) -> None:
-        """Вернуться к списку проектов, отпустив открытый проект.
+        """Return to the list of projects, letting the open project go.
 
-        Соединение обязательно закрыть: `open_project` работает в режиме WAL,
-        рядом с файлом живут `-wal`/`-shm`, и пока они держатся, файл проекта
-        нельзя ни удалить, ни переместить. Раньше экран просто переключался, и
-        проект, открытый при запуске, оставался занятым всё время, пока
-        пользователь разглядывал список.
+        The connection has to be closed: `open_project` works in WAL mode, `-wal`
+        and `-shm` live next to the file, and while they are held the project
+        file can be neither deleted nor moved. The screen used to just switch
+        over, and a project opened at start-up stayed busy the whole time the
+        user was looking through the list.
         """
         self._close_project()
         self.project_path = None
@@ -556,7 +568,7 @@ class MainWindow(QMainWindow):
             translate("MainWindow", "Choose or create a project"))
 
     def _delete_project(self, raw: str) -> None:
-        """Удалить файл проекта по требованию стартового экрана."""
+        """Delete a project file at the request of the start screen."""
         path = Path(raw)
         known = next((d for d in settings.recent_projects()
                       if Path(d["path"]) == path), {})
@@ -581,7 +593,7 @@ class MainWindow(QMainWindow):
                                    QMessageBox.DestructiveRole)
         keep_btn = box.addButton(translate("MainWindow", "Cancel"),
                                  QMessageBox.RejectRole)
-        box.setDefaultButton(keep_btn)      # опасное действие не должно быть по Enter
+        box.setDefaultButton(keep_btn)      # a dangerous action must not sit on Enter
         also_backups = QCheckBox(
             translate("MainWindow", "Delete the backups next to it as well"))
         box.setCheckBox(also_backups)
@@ -590,7 +602,7 @@ class MainWindow(QMainWindow):
             return
 
         if self.project_path is not None and self.project_path == path:
-            self.show_start()               # закрывает соединение и снимает WAL
+            self.show_start()               # closes the connection and drops the WAL
         try:
             removed = project.delete_project_file(
                 path, with_backups=also_backups.isChecked())
@@ -609,9 +621,10 @@ class MainWindow(QMainWindow):
             fill(translate("MainWindow", "Project deleted: %1 (%2 files)"),
                  path.name, len(removed)), 6000)
         if removed.bypassed_trash:
-            # Обещали корзину — а Windows не берёт туда файл, который не влезает
-            # в её квоту. Проект перевода весит сотни мегабайт, так что случай
-            # живой. Молчать нельзя: человек пойдёт искать файл и не найдёт.
+            # We promised the recycle bin — and Windows does not take a file
+            # there if it does not fit its quota. A translation project weighs
+            # hundreds of megabytes, so the case is a live one. Keeping silent
+            # will not do: the human will go looking for the file and not find it.
             QMessageBox.warning(
                 self, translate("MainWindow", "Delete project"),
                 fill(translate("MainWindow",
@@ -621,14 +634,15 @@ class MainWindow(QMainWindow):
                      "\n".join(str(p) for p in removed.bypassed_trash)))
 
     def _offer_right_pen(self, path: Path) -> Path:
-        """Проект чужого загона — предложить перенести. Возвращает путь к файлу.
+        """A project of a foreign pen — offer to move it. Returns the path to the file.
 
-        Спрашиваем **до открытия**: открытый проект держит `-wal`, и переносить
-        его было бы поздно — пришлось бы закрывать только что открытое.
+        We ask **before opening**: an open project holds a `-wal`, and moving it
+        then would be too late — we would have to close what was just opened.
 
-        Срабатывает только внутри папки проектов. Файл проекта переносим, и его
-        нарочно кладут рядом с модом или отдают другому человеку — приставать к
-        такому значило бы самому стать той бедой, от которой защищаемся.
+        It fires only inside the projects folder. A project file is portable, and
+        people put it next to the mod or hand it to another person on purpose —
+        pestering about that would mean becoming the very trouble we defend
+        against.
         """
         game_id = project.read_game(path)
         if game_id is None:
@@ -638,14 +652,15 @@ class MainWindow(QMainWindow):
             here = path.resolve().parent
             target = settings.projects_pen(game_id)
             if here == target.resolve():
-                return path             # уже в своём загоне
+                return path             # already in its own pen
             if here == pen_root:
-                where = None            # в корне загонов — тоже не на месте
+                where = None            # in the root of the pens — also out of place
             elif here.parent == pen_root and games.by_folder(here.name):
                 where = games.by_folder(here.name)
             else:
-                # либо проект живёт своей жизнью вне папки проектов, либо лежит
-                # в папке, которую завёл человек. И то и другое — не наше дело
+                # either the project lives a life of its own outside the projects
+                # folder, or it lies in a folder the human set up. Either way —
+                # not our business
                 return path
         except OSError:
             return path
@@ -695,18 +710,19 @@ class MainWindow(QMainWindow):
         conn.commit()
         settings.set_last_project_path(path)
 
-        # набор правил — до первого пересчёта замечаний: иначе таблица успеет
-        # посчитать колонку «!» встроенными значениями, а не настройкой проекта
+        # the rule set comes before the first recount of the issues: otherwise
+        # the table would count the «!» column with the built-in values instead
+        # of the setting of the project
         rules_state.open_project(conn)
 
         has_units = conn.execute("SELECT 1 FROM units LIMIT 1").fetchone()
         self.editor_screen.set_session(conn)
         if not has_units:
             self.scan_current()
-        # строки, где переводить нечего (одна разметка), не должны висеть
-        # в непереведённых — в том числе в проектах прежних версий. Ровно один
-        # раз на проект: иначе отменённая через Ctrl+Z уборка возвращалась бы
-        # при следующем открытии.
+        # strings with nothing to translate (markup only) must not hang among
+        # the untranslated ones — in projects of former versions too. Exactly
+        # once per project: otherwise a cleanup undone with Ctrl+Z would come
+        # back at the next opening.
         auto_ignored = 0
         if not project.get_auto_ignore_done(conn):
             auto_ignored = unit_ops.auto_ignore_untranslated(conn, PROJECT_ID)
@@ -717,7 +733,7 @@ class MainWindow(QMainWindow):
         self.context_bar.set_project(conn)
         self.editor_screen.file_tree.setVisible(self.act_show_tree.isChecked())
         self._update_status_bar()
-        self.statusBar().clearMessage()      # убрать приглашение выбрать проект
+        self.statusBar().clearMessage()      # remove the invitation to choose a project
         self._offer_tm_databases()
         if auto_ignored:
             self.statusBar().showMessage(
@@ -738,16 +754,17 @@ class MainWindow(QMainWindow):
             settings.remember_project(
                 self.project_path, project.project_name(self.conn),
                 stats.done, stats.total, game=project.game(self.conn))
-            # журнал — в базу: иначе рядом остаётся `-wal` размером с проект,
-            # и следующее открытие начинается с чтения этих мегабайт
+            # the journal goes into the database: otherwise a `-wal` the size of
+            # the project is left next to it, and the next opening starts by
+            # reading those megabytes
             project.checkpoint(self.conn)
             self.conn.close()
             self.conn = None
         self.project_name = None
         self._update_window_title()
         rules_state.close_project()
-        # действия проекта без проекта только сбивают с толку: раньше они
-        # оставались включёнными и падали на пустом соединении
+        # project actions without a project only confuse: they used to stay
+        # enabled and fall over on an empty connection
         self._set_project_actions(False)
         self.context_bar.set_project(None)
         self.chips.hide()
@@ -811,7 +828,7 @@ class MainWindow(QMainWindow):
         self.editor_screen.open_project(PROJECT_ID)
         self._update_status_bar()
 
-    # --- сервис ---
+    # --- service ---
 
     def _update_status_bar(self) -> None:
         if self.conn is None:
@@ -823,7 +840,7 @@ class MainWindow(QMainWindow):
         self.chips.show()
 
     def _on_selection_changed(self, count: int) -> None:
-        """Охват массовой операции виден до нажатия, а не после."""
+        """The reach of a bulk operation is visible before the press, not after."""
         self.selection_label.setText(
             fill(translate("MainWindow", "Rows selected: %1"), count)
             if count > 1 else "")
@@ -832,19 +849,20 @@ class MainWindow(QMainWindow):
         self.editor_screen.set_status_filter(status_value or None)
 
     def _toggle_only_issues(self) -> None:
-        """Чип «!» — та же витрина, что галка панели и пункт меню.
+        """The «!» chip is the same shop window as the toolbar tick and the menu item.
 
-        Через `QAction`, а не мимо него: у действия уже есть слот, который
-        зовёт `set_only_issues` и обновляет остальные витрины, — иначе чип
-        загорался бы, а галка на панели оставалась снятой.
+        Through the `QAction` and not past it: the action already has a slot
+        that calls `set_only_issues` and updates the other shop windows —
+        otherwise the chip would light up while the tick on the toolbar stayed
+        clear.
         """
         self.act_only_issues.toggle()
 
     def _show_qa(self) -> None:
-        """Полная проверка проекта отдельным отчётом.
+        """A full check of the project as a separate report.
 
-        Повседневные замечания видны в колонке «!» таблицы, поэтому панель
-        больше не занимает место на экране постоянно.
+        The everyday issues are visible in the «!» column of the table, so the
+        panel no longer takes up room on the screen permanently.
         """
         from pdxloc.gui.qa_panel import QaReportDialog
 
@@ -857,10 +875,10 @@ class MainWindow(QMainWindow):
         self.editor_screen.refresh_issues()
 
     def _show_qa_rules(self, rule_id: str = "", initial_tab: int = 0) -> None:
-        """Окно настройки проверок. Работает и без открытого проекта.
+        """The window for setting up the checks. Works without an open project too.
 
-        Без проекта нельзя посчитать срабатывания, но набор правил глобальный,
-        и запретить его настройку до открытия мода было бы странно.
+        Without a project the hits cannot be counted, but the rule set is
+        global, and forbidding its setup until a mod is open would be odd.
         """
         from pdxloc.gui.rules_window import RulesWindow
 
@@ -876,7 +894,7 @@ class MainWindow(QMainWindow):
         self._show_qa_rules(initial_tab=1)
 
     def _actualize_cosmetic(self) -> None:
-        """Подтвердить переводы строк, где автор мода правил только оформление."""
+        """Confirm the translations of rows where the mod author edited the formatting only."""
         if self.conn is None:
             return
         ids = unit_ops.cosmetic_stale_ids(self.conn, PROJECT_ID)
@@ -905,11 +923,12 @@ class MainWindow(QMainWindow):
             fill(translate("MainWindow", "Rows actualized: %1"), changed), 6000)
 
     def _change_en_root(self) -> None:
-        """Сменить папку оригинала и сразу перечитать её.
+        """Change the source folder and reread it at once.
 
-        Без сканирования смена ничего не значит: строки в базе остаются от
-        прежней папки. Поэтому предлагаем скан прямо здесь, а не оставляем
-        проект в состоянии «путь новый, содержимое старое».
+        Without a scan the change means nothing: the rows in the database stay
+        from the former folder. That is why we offer the scan right here instead
+        of leaving the project in the state "the path is new, the contents are
+        old".
         """
         from pdxloc.gui.root_dialog import EnRootDialog
 
@@ -928,12 +947,12 @@ class MainWindow(QMainWindow):
             self.scan_current()
 
     def _change_languages(self) -> None:
-        """Сменить языки проекта и, если тронута папка языка, сразу перечитать.
+        """Change the project languages and, if the language folder was touched, reread.
 
-        Смена языка папки меняет, какие файлы сканер считает своими, — без
-        сканирования проект остался бы в состоянии «язык новый, содержимое
-        старое». Смена одного лишь языка текста файлов не касается, и звать
-        скан незачем.
+        A change of the folder language changes which files the scanner counts
+        as its own — without a scan the project would be left in the state "the
+        language is new, the contents are old". A change of the text language
+        alone does not touch the files, and there is no need to call the scan.
         """
         from pdxloc.gui.languages_dialog import LanguagesDialog
 
@@ -944,7 +963,7 @@ class MainWindow(QMainWindow):
         dlg.languagesChanged.connect(needs_scan.append)
         if not dlg.exec():
             return
-        # набор правил зависит от языка перевода: русские правила гасятся
+        # the rule set depends on the target language: the Russian rules go quiet
         rules_state.open_project(self.conn)
         self.context_bar.refresh()
         self.editor_screen.refresh_issues()
@@ -994,7 +1013,7 @@ class MainWindow(QMainWindow):
             fill(translate("MainWindow", "Rows reverted: %1"), restored), 6000)
 
     def _tm_manager(self) -> None:
-        """Одно окно на всю память переводов: записи, базы и сборка."""
+        """One window for the whole translation memory: records, databases and building."""
         from pdxloc.gui.tm_window import TmWindow
 
         if self.conn is None:
@@ -1006,25 +1025,25 @@ class MainWindow(QMainWindow):
         self.editor_screen.refresh_current()
 
     def _glossary(self) -> None:
-        """Окно глоссария: принятые термины и очередь кандидатов.
+        """The glossary window: the accepted terms and the queue of candidates.
 
-        Прогон статистики идёт по файлу проекта своим соединением, поэтому окну
-        нужен путь, а не только соединение.
+        The statistics run goes over the project file on its own connection, so
+        the window needs the path and not only the connection.
         """
         from pdxloc.gui.glossary_window import GlossaryWindow
 
         if self.conn is None or self.project_path is None:
             return
         window = GlossaryWindow(self.conn, self.project_path, self)
-        # принятый термин обязан подсветиться в поле оригинала сразу, не дожидаясь
-        # закрытия окна: переводчик принимает термин ровно потому, что видит его
-        # в строке перед собой
+        # an accepted term is obliged to light up in the source field at once,
+        # without waiting for the window to close: the translator accepts a term
+        # exactly because they see it in the row in front of them
         window.glossaryChanged.connect(self.editor_screen.detail.reload_glossary)
         window.exec()
         self.editor_screen.detail.reload_glossary()
 
     def _machine_translate_batch(self) -> None:
-        """Пакетный машинный перевод: охват, оценка, прогон, сводка."""
+        """Bulk machine translation: the reach, the estimate, the run, the summary."""
         from pdxloc.gui.mt_dialog import MtDialog
 
         if self.conn is None or self.project_path is None:
@@ -1038,12 +1057,12 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def _after_machine_translation(self) -> None:
-        """Строки писал воркер своим соединением — перечитываем всё."""
+        """The rows were written by the worker on its own connection — we reread it all."""
         self.editor_screen.open_project(PROJECT_ID)
         self._update_status_bar()
 
     def _on_tm_sources_changed(self) -> None:
-        """Набор баз меняется сразу — подсказки и шапка должны это увидеть."""
+        """The set of databases changes at once — the hints and the header must see it."""
         self.editor_screen.refresh_current()
         self.context_bar.refresh()
 
@@ -1080,16 +1099,16 @@ class MainWindow(QMainWindow):
         self._update_status_bar()
 
     def _about(self) -> None:
-        """Окно «О программе». Оно же — уведомление об условиях распространения.
+        """The "About" window. It is also the notice of the terms of distribution.
 
-        Так просит само приложение к GPL-3.0 («How to Apply These Terms»): для
-        программы с окнами уведомление об отсутствии гарантий показывают именно
-        в about box, а не в консоли, которой у нас нет.
+        The GPL-3.0 itself asks for that ("How to Apply These Terms"): for a
+        program with windows the notice of the absence of warranty is shown in
+        the about box and not in a console, which we do not have.
 
-        Про Qt сказано здесь же, и это не вежливость: в портативной сборке Qt
-        уезжает внутрь архива (93 МБ из 120), то есть мы его распространяем, а
-        LGPL требует сообщить получателю, что библиотека там и под какой
-        лицензией.
+        Qt is spoken of here as well, and that is not politeness: in the portable
+        build Qt travels inside the archive (93 MB out of 120), that is, we
+        distribute it, and the LGPL demands telling the recipient that the
+        library is in there and under which licence.
         """
         from pdxloc import COPYRIGHT, __version__
 
@@ -1111,7 +1130,7 @@ class MainWindow(QMainWindow):
             + fill(translate("MainWindow", "Project: %1<br>Memory databases: %2"),
                    where, settings.bdd_dir()))
 
-    # --- геометрия ---
+    # --- geometry ---
 
     def _restore_geometry(self) -> None:
         geo = settings.qsettings().value("geometry")
@@ -1122,9 +1141,9 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         settings.qsettings().setValue("geometry", self.saveGeometry())
-        # Ширины колонок — рядом с геометрией и по той же причине: человек
-        # подогнал таблицу под свой экран, и заставлять его делать это каждый
-        # запуск незачем (в EET это `ColumnsSizes`).
+        # The column widths sit next to the geometry and for the same reason: a
+        # human fitted the table to their screen, and making them do it at every
+        # start is pointless (in EET this is `ColumnsSizes`).
         self.editor_screen.table.save_column_widths()
         self._close_project()
         super().closeEvent(event)
