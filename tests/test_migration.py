@@ -1,11 +1,11 @@
-"""Тест миграции схемы v1 -> v2."""
+"""A test of the schema migration v1 -> v2."""
 from __future__ import annotations
 
 import sqlite3
 
 from pdxloc.db import SCHEMA_VERSION, get_connection
 
-# DDL версии 1 — литералом, чтобы тест не зависел от текущего db.py
+# The DDL of version 1 — as a literal, so that the test does not depend on the current db.py
 V1_DDL = """
 CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE projects (
@@ -61,7 +61,7 @@ def make_v1_db(path):
     conn.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1, 1, 'a_l_english.yml')")
     for i, st in enumerate(V1_STATUSES):
         if st == "orphaned":
-            # у осиротевших нет исходного текста, но есть перевод — он должен уцелеть
+            # the orphaned ones have no source text but do have a translation — it must survive
             conn.execute(
                 "INSERT INTO units (file_id, key, en_text, en_hash, ru_text, status) "
                 "VALUES (1, ?, NULL, NULL, 'сирота', 'orphaned')", (f"key{i}",))
@@ -78,21 +78,21 @@ def make_v1_db(path):
 
 
 def test_migration_v1_to_current(tmp_path):
-    """Цепочка v1 -> v2 -> v3 за одно открытие базы."""
+    """The chain v1 -> v2 -> v3 in one opening of the database."""
     db_path = tmp_path / "old.sqlite3"
     make_v1_db(db_path)
 
     conn = get_connection(db_path)
     assert conn.execute(
         "SELECT value FROM schema_meta WHERE key='schema_version'").fetchone()[0] == str(SCHEMA_VERSION)
-    # осиротевшая строка ушла в архив, остальные данные на месте
+    # the orphaned row went into the archive, the rest of the data is in place
     assert conn.execute("SELECT COUNT(*) FROM units").fetchone()[0] == len(V1_STATUSES) - 1
     assert conn.execute("SELECT ru_text FROM units WHERE key='key2'").fetchone()[0] == "перевод2"
     assert conn.execute(
         "SELECT COUNT(*) FROM units WHERE status='orphaned'").fetchone()[0] == 0
     archived = conn.execute("SELECT * FROM legacy_translations").fetchone()
     assert archived["key"] == "key5" and archived["ru_text"] == "сирота"
-    # новые статусы пишутся, старый — нет
+    # the new statuses are written, the old one is not
     conn.execute("UPDATE units SET status='ignored' WHERE key='key0'")
     conn.execute("UPDATE units SET status='custom' WHERE key='key2'")
     conn.commit()
@@ -101,7 +101,7 @@ def test_migration_v1_to_current(tmp_path):
         conn.execute("UPDATE units SET status='orphaned' WHERE key='key1'")
     with _pytest.raises(sqlite3.IntegrityError):
         conn.execute("INSERT INTO units (file_id, key) VALUES (1, 'key1')")
-    # схема v3: языки проекта, project_meta, files.trailing, tm без project_id
+    # the v3 schema: the project languages, project_meta, files.trailing, tm without project_id
     proj_cols = {r[1] for r in conn.execute("PRAGMA table_info(projects)")}
     assert {"src_lang", "tgt_lang"} <= proj_cols
     assert conn.execute("SELECT src_lang FROM projects").fetchone()[0] == "english"
@@ -111,12 +111,12 @@ def test_migration_v1_to_current(tmp_path):
     assert conn.execute("SELECT COUNT(*) FROM tm_entries").fetchone()[0] == 1
     conn.execute("SELECT COUNT(*) FROM project_meta")
     assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
-    # бэкапы обеих ступеней
+    # the backups of both steps
     assert (tmp_path / "old.sqlite3.v1.bak").exists()
     assert (tmp_path / "old.sqlite3.v2.bak").exists()
     conn.close()
 
-    # повторное открытие — no-op
+    # a repeated opening is a no-op
     conn2 = get_connection(db_path)
     assert conn2.execute("SELECT COUNT(*) FROM units").fetchone()[0] == len(V1_STATUSES) - 1
     assert conn2.execute("SELECT status FROM units WHERE key='key0'").fetchone()[0] == "ignored"
@@ -136,11 +136,12 @@ def test_fresh_db_is_current(tmp_path):
 
 
 def test_migration_v7_to_8_adds_the_issue_cache(tmp_path):
-    """v7 -> v8: две колонки под замечания, строки не пересобираются.
+    """v7 -> v8: two columns for the remarks, the rows are not rebuilt.
 
-    Пустые значения и означают «ещё не проверено»: набор правил живёт в
-    настройке приложения и в файле проекта, а миграция идёт до того, как их
-    прочитали, — заполнить кеш здесь просто нечем.
+    Empty values are exactly what «not checked yet» means: the rule set lives in
+    the setting of the application and in the project file, while the migration
+    goes before those are read — there is simply nothing to fill the cache with
+    here.
     """
     db_path = tmp_path / "v7.sqlite3"
     conn = get_connection(db_path)
@@ -149,7 +150,7 @@ def test_migration_v7_to_8_adds_the_issue_cache(tmp_path):
     conn.execute("INSERT INTO units (file_id, key, en_text, ru_text, status) "
                  "VALUES (1, 'k', 'Cost: $V$', 'Цена: $V$', 'translated')")
     conn.execute("UPDATE units SET qa_hash = 'x', qa_codes = 'dollar_mismatch'")
-    # откатываем схему к v7: колонок кеша ещё нет
+    # we roll the schema back to v7: the cache columns are not there yet
     conn.execute("ALTER TABLE units DROP COLUMN qa_hash")
     conn.execute("ALTER TABLE units DROP COLUMN qa_codes")
     conn.execute("UPDATE schema_meta SET value = '7' WHERE key = 'schema_version'")
@@ -164,21 +165,22 @@ def test_migration_v7_to_8_adds_the_issue_cache(tmp_path):
             "SELECT value FROM schema_meta WHERE key='schema_version'"
         ).fetchone()[0] == str(SCHEMA_VERSION)
         row = again.execute("SELECT ru_text, qa_hash, qa_codes FROM units").fetchone()
-        assert row[0] == "Цена: $V$"        # перевод на месте
+        assert row[0] == "Цена: $V$"        # the translation is in place
         assert row[1] is None and row[2] is None
-        # копия файла для этой ступени не нужна: таблица не пересобиралась
+        # a copy of the file is not needed for this step: the table was not rebuilt
         assert not (tmp_path / "v7.sqlite3.v7.bak").exists()
     finally:
         again.close()
 
 
 def test_migration_v8_to_9_adds_the_glossary(tmp_path):
-    """v8 -> v9: таблица глоссария, данные не трогаются.
+    """v8 -> v9: the glossary table, the data is not touched.
 
-    Ступень интересна тем, что миграции почти нечего делать: `init_schema`
-    прогоняет DDL до неё, а таблица заведена через `CREATE TABLE IF NOT
-    EXISTS` — к моменту вызова она уже есть и в старом файле. Проверяем именно
-    это: откатив версию и уронив таблицу, получаем её обратно вместе с v9.
+    The step is interesting in that the migration has almost nothing to do:
+    `init_schema` drives the DDL before it, and the table is set up through
+    `CREATE TABLE IF NOT EXISTS` — by the moment of the call it is already there
+    in the old file too. That is exactly what we check: having rolled the version
+    back and dropped the table, we get it back together with v9.
     """
     db_path = tmp_path / "v8.sqlite3"
     conn = get_connection(db_path)
@@ -186,7 +188,7 @@ def test_migration_v8_to_9_adds_the_glossary(tmp_path):
     conn.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1, 1, 'f')")
     conn.execute("INSERT INTO units (file_id, key, en_text, ru_text, status) "
                  "VALUES (1, 'k', 'A Maester of the Citadel', 'Мейстер Цитадели', 'translated')")
-    # откатываем схему к v8: глоссария ещё нет
+    # we roll the schema back to v8: there is no glossary yet
     conn.execute("DROP TABLE glossary")
     conn.execute("UPDATE schema_meta SET value = '8' WHERE key = 'schema_version'")
     conn.commit()
@@ -197,9 +199,9 @@ def test_migration_v8_to_9_adds_the_glossary(tmp_path):
         assert again.execute(
             "SELECT value FROM schema_meta WHERE key='schema_version'"
         ).fetchone()[0] == str(SCHEMA_VERSION)
-        # таблица вернулась и пуста — глоссарий начинается с нуля
+        # the table came back and is empty — a glossary starts from nothing
         assert again.execute("SELECT COUNT(*) FROM glossary").fetchone()[0] == 0
-        # перевод на месте: ступень не пересобирает ни одной существующей таблицы
+        # the translation is in place: the step rebuilds not one existing table
         assert again.execute("SELECT ru_text FROM units").fetchone()[0] == "Мейстер Цитадели"
         assert not (tmp_path / "v8.sqlite3.v8.bak").exists()
     finally:
@@ -207,11 +209,11 @@ def test_migration_v8_to_9_adds_the_glossary(tmp_path):
 
 
 def test_migration_v9_to_10_remembers_what_went_stale(tmp_path):
-    """v9 -> v10: история помнит прежний оригинал и вид правки.
+    """v9 -> v10: the history remembers the former original and the kind of edit.
 
-    Две колонки, `unit_history` не пересобирается. У прежних записей значения
-    остаются пустыми — их в тот момент никто не сохранял, и восстановить задним
-    числом неоткуда.
+    Two columns, `unit_history` is not rebuilt. For the former records the values
+    stay empty — nobody was saving them at that moment, and there is nowhere to
+    restore them from after the fact.
     """
     db_path = tmp_path / "v9.sqlite3"
     conn = get_connection(db_path)
@@ -221,7 +223,7 @@ def test_migration_v9_to_10_remembers_what_went_stale(tmp_path):
                  "VALUES (1, 1, 'k', 'New', 'Новый', 'stale')")
     conn.execute("INSERT INTO unit_history (unit_id, ru_text, status) "
                  "VALUES (1, 'Старый', 'translated')")
-    # откатываем схему к v9: колонок ещё нет
+    # we roll the schema back to v9: the columns are not there yet
     conn.execute("ALTER TABLE unit_history DROP COLUMN prev_en_text")
     conn.execute("ALTER TABLE unit_history DROP COLUMN change_kind")
     conn.execute("UPDATE schema_meta SET value = '9' WHERE key = 'schema_version'")
@@ -238,7 +240,7 @@ def test_migration_v9_to_10_remembers_what_went_stale(tmp_path):
 
         row = again.execute(
             "SELECT ru_text, prev_en_text, change_kind FROM unit_history").fetchone()
-        assert row[0] == "Старый"           # прежняя запись цела
+        assert row[0] == "Старый"           # the former record is intact
         assert row[1] is None and row[2] is None
         assert not (tmp_path / "v9.sqlite3.v9.bak").exists()
     finally:

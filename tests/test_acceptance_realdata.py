@@ -1,8 +1,8 @@
-"""Приёмочный тест на реальных деревьях BLA.
+"""An acceptance test on the real BLA trees.
 
-Проверяет: импорт без потерь, статистику, экспорт с семантической
-эквивалентностью текущему RU-дереву пользователя и шум проверок по наборам
-правил.
+It checks: an import without losses, the statistics, an export semantically
+equivalent to the user's current RU tree, and the noise of the checks under the
+rule sets.
 """
 from __future__ import annotations
 
@@ -22,12 +22,12 @@ pytestmark = [
     pytest.mark.skipif(not realdata_available(), reason="нет реальных деревьев BLA"),
 ]
 
-# Эталонные числа, зафиксированы при первом прогоне (2026-07-30)
-EXPECTED_UNITS = 5275          # 5277 записей − 2 внутрифайловых дубликата
-EXPECTED_TRANSLATED = 3694     # переведено (translated)
-EXPECTED_AUTO = 4              # заполнено из TM при импорте
-EXPECTED_ARCHIVED = 46         # переводы ключей, которых нет в оригинале
-EXPECTED_MARKERS = 594         # строк с маркером «ТРЕБУЕТ ПЕРЕВОДА» -> untranslated
+# The reference numbers, pinned down at the first run (2026-07-30)
+EXPECTED_UNITS = 5275          # 5277 records − 2 duplicates inside files
+EXPECTED_TRANSLATED = 3694     # translated
+EXPECTED_AUTO = 4              # filled from the TM at the import
+EXPECTED_ARCHIVED = 46         # translations of keys that are not in the original
+EXPECTED_MARKERS = 594         # rows with the «ТРЕБУЕТ ПЕРЕВОДА» marker -> untranslated
 
 
 @pytest.fixture(scope="module")
@@ -66,7 +66,7 @@ def test_import_counts(imported):
 
 def test_marker_entries_untranslated(imported):
     conn, pid, _ = imported
-    # все маркерные строки должны были стать untranslated (или auto из TM)
+    # every marker row had to become untranslated (or auto out of the TM)
     marker_count = 0
     for p in REALDATA_RU.rglob("*.yml"):
         if "_l_russian" not in p.name or "_updated" in p.name:
@@ -74,7 +74,7 @@ def test_marker_entries_untranslated(imported):
         lf = paradox_yaml.parse_file(p)
         marker_count += sum(1 for e in lf.entries if LEGACY_MARKER in e.comment_inline)
     assert marker_count == EXPECTED_MARKERS
-    # ни один маркер не должен попасть в переведённые
+    # not a single marker must get into the translated ones
     bad = conn.execute(
         """SELECT COUNT(*) FROM units u JOIN files f ON f.id = u.file_id
            WHERE f.project_id = ? AND u.status IN ('translated','reviewed')
@@ -85,15 +85,15 @@ def test_marker_entries_untranslated(imported):
 
 
 def test_export_semantic_equivalence(imported, tmp_path):
-    """Экспорт translated_only эквивалентен старому RU-дереву.
+    """The translated_only export is equivalent to the old RU tree.
 
-    Для каждого ключа, который (а) есть в EN и (б) переведён в старом дереве
-    (ru != en, без маркера), экспортированный текст совпадает.
+    For every key that (a) is in the EN and (b) is translated in the old tree
+    (ru != en, without a marker), the exported text coincides.
     """
     conn, pid, _ = imported
     out = tmp_path / "export"
     report = export_project(conn, pid, ExportOptions(mode="translated_only"), out_root=out)
-    # 12 файлов целиком без переводов не пишутся вовсе
+    # 12 files entirely without translations are not written at all
     assert report.files_written == 18
 
     checked = 0
@@ -107,7 +107,7 @@ def test_export_semantic_equivalence(imported, tmp_path):
             continue
         old_ru = {e.key: e for e in paradox_yaml.parse_file(old_ru_path).entries}
 
-        # ключи старого дерева, обязанные попасть в экспорт
+        # the keys of the old tree that are obliged to get into the export
         expected = {
             key: e.text for key, e in old_ru.items()
             if key in en_keys
@@ -123,20 +123,21 @@ def test_export_semantic_equivalence(imported, tmp_path):
             assert key in new_ru, f"{rel}: потерян ключ {key}"
             assert new_ru[key] == text, f"{rel}: текст изменился у {key}"
         checked += len(expected)
-    assert checked > 3500   # достаточно массивная проверка
+    assert checked > 3500   # a massive enough check
 
 
-# --- шум проверок --------------------------------------------------------
+# --- the noise of the checks ---------------------------------------------
 #
-# Числа сняты на этом же дереве (2026-08-10) и держатся здесь, а не только в
-# документации: настройка проверок затевалась ради снижения шума, а шум —
-# единственное её свойство, которое нельзя увидеть на синтетических парах.
-# Дерево живое и с обновлением мода поедет, как и `EXPECTED_UNITS` выше;
-# поменялись числа — сверься, что виновато обновление, а не правило.
+# The numbers are taken off this same tree (2026-08-10) and are kept here and not
+# only in the documentation: the setting up of the checks was started for the sake
+# of lowering the noise, and the noise is the only property of it that cannot be
+# seen on synthetic pairs. The tree is a live one and will move with an update of
+# the mod, as `EXPECTED_UNITS` above will; if the numbers changed, check that it
+# is the update that is to blame and not a rule.
 
-CUSTOM = qa_rules.CUSTOM        # встроенные значения, без пресета
+CUSTOM = qa_rules.CUSTOM        # the built-in values, without a preset
 EXPECTED_ISSUES = {"strict": 353, CUSTOM: 149, "ck3_ru": 149, "quiet": 27}
-# Главный вклад в «строгий»: эвристика длины, потому и выключена по умолчанию
+# The main contribution to the «strict» one: the length heuristic, hence it is off by default
 EXPECTED_STRICT_LEN_RATIO = 204
 
 
@@ -152,11 +153,11 @@ def test_issue_count_per_preset(imported, preset, expected):
 
 
 def test_presets_are_monotonic_on_live_data(imported):
-    """Строгий шумнее встроенного, тот — рекомендованного, тот — тихого.
+    """The strict one is noisier than the built-in, that one than the recommended, that one than the quiet.
 
-    На синтетике монотонность закрыта `test_qa_defaults.py`, но там пары
-    подобраны под правила. Здесь наоборот: правила встречаются с текстом,
-    которого никто не подбирал.
+    On synthetics the monotonicity is covered by `test_qa_defaults.py`, but there
+    the pairs are picked to fit the rules. Here it is the other way round: the
+    rules meet a text nobody picked.
     """
     conn, pid, _ = imported
     counts = {p: len(_issues(conn, pid, p))

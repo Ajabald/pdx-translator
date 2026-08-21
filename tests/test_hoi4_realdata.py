@@ -1,12 +1,14 @@
-"""Приёмочный тест на ванильном дереве Hearts of Iron IV.
+"""An acceptance test on the vanilla tree of Hearts of Iron IV.
 
-Второе живое дерево в проекте и первое не от CK3. На нём сверены токены
-`§Y…§!` и `£icon`, на нём же настроен пресет «HOI4 · Русский»: числа ниже сняты
-с версии игры от 14.08.2026 и стоят здесь затем, чтобы правка регулярки или
-правила не разъехалась с реальностью молча.
+The second live tree in the project and the first not from CK3. The tokens
+`§Y…§!` and `£icon` were checked on it, and the preset «HOI4 · Русский» was set up
+on it too: the numbers below are taken off the game version of 14.08.2026 and
+stand here so that an edit of a regex or of a rule does not silently part ways
+with reality.
 
-Путь к папке `localisation` задаётся переменной `PDXT_REALDATA_HOI4`; без неё
-тест пропускается — игра есть не на всякой машине.
+The path to the `localisation` folder is set by the variable
+`PDXT_REALDATA_HOI4`; without it the test is skipped — not every machine has the
+game.
 """
 from __future__ import annotations
 
@@ -29,12 +31,12 @@ POUND = "£"        # £
 
 EXPECTED_EN_FILES = 206
 EXPECTED_EN_ENTRIES = 129_087
-EXPECTED_RU_ENTRIES = 148_026     # русское дерево больше: падежные формы
+EXPECTED_RU_ENTRIES = 148_026     # the Russian tree is bigger: the case forms
 
 
 @pytest.fixture(scope="module")
 def trees():
-    """Разобранные деревья: {ключ: текст} на язык плюс предупреждения парсера."""
+    """The parsed trees: {key: text} per language plus the parser warnings."""
     parsed = {}
     warnings: list[str] = []
     for lang in ("english", "russian"):
@@ -51,17 +53,17 @@ def trees():
 
 @pytest.fixture(scope="module")
 def pairs(trees):
-    """Пары «оригинал — перевод» по совпадающим ключам."""
+    """The pairs «original — translation» by the matching keys."""
     parsed, _ = trees
     en, ru = parsed["english"][0], parsed["russian"][0]
     return [(text, ru[key]) for key, text in en.items() if key in ru]
 
 
-# --- разбор --------------------------------------------------------------
+# --- the parsing ---------------------------------------------------------
 
 
 def test_the_parser_reads_vanilla_hoi4_without_a_single_complaint(trees) -> None:
-    """Формат у серии общий — и парсер, написанный под CK3, это подтверждает."""
+    """The format is common to the series — and a parser written for CK3 confirms it."""
     parsed, warnings = trees
     assert warnings == []
     assert len(parsed["english"][1]) == EXPECTED_EN_FILES
@@ -70,11 +72,11 @@ def test_the_parser_reads_vanilla_hoi4_without_a_single_complaint(trees) -> None
 
 
 def test_the_russian_tree_only_adds_keys(trees) -> None:
-    """Ни один английский ключ не потерян; лишние — русские падежные формы.
+    """Not a single English key is lost; the extra ones are Russian case forms.
 
-    Их 18 939, и живут они в `RU_LOCKEYS_l_russian.yml` и файлах `WUW_*`,
-    которых в английском дереве нет вовсе. Сканер кладёт такие в архив
-    (`legacy_translations`).
+    There are 18,939 of them, and they live in `RU_LOCKEYS_l_russian.yml` and the
+    `WUW_*` files, which the English tree does not have at all. The scanner puts
+    such into the archive (`legacy_translations`).
     """
     parsed, _ = trees
     en, ru = parsed["english"][0], parsed["russian"][0]
@@ -84,14 +86,15 @@ def test_the_russian_tree_only_adds_keys(trees) -> None:
     assert sum(1 for key in extra if "_RU_" in key or key.endswith("_RU_lower")) > 15_000
 
 
-# --- разметка ------------------------------------------------------------
+# --- the markup ----------------------------------------------------------
 
 
 def test_every_colour_and_icon_is_covered_by_the_registry(trees) -> None:
-    """После вычистки разметки не должно остаться ни § , ни £.
+    """After the markup is cleaned out, neither a § nor a £ must be left.
 
-    Голый символ значит, что токен разобран наполовину: в машинный перевод
-    уедет обрубок, а сравнение длин посчитает разметку текстом.
+    A bare symbol means the token is parsed by halves: a stump will travel into
+    the machine translation, and the comparison of lengths will count markup as
+    text.
     """
     en = trees[0]["english"][0]
     leftovers = [text for text in en.values()
@@ -109,7 +112,7 @@ def test_nothing_of_the_markup_reaches_the_translator(trees) -> None:
 
 
 def test_how_much_colour_and_icon_there_is(trees) -> None:
-    """Цифры из шапки `core/markup.py` — здесь они и проверяются."""
+    """The figures from the head of `core/markup.py` — here is where they are checked."""
     en = trees[0]["english"][0]
     counts = collections.Counter()
     for text in en.values():
@@ -121,7 +124,7 @@ def test_how_much_colour_and_icon_there_is(trees) -> None:
     assert counts["icon_pound"] + counts["icon_var"] > 1_200
 
 
-# --- проверки ------------------------------------------------------------
+# --- the checks ----------------------------------------------------------
 
 
 def _codes(rules, pairs) -> collections.Counter:
@@ -133,19 +136,20 @@ def _codes(rules, pairs) -> collections.Counter:
 
 
 def test_the_builtin_ruleset_is_noisy_on_russian_hoi4(pairs) -> None:
-    """Встроенный набор считает приём игры ошибкой — отсюда и пресет."""
+    """The built-in set counts a device of the game as an error — hence the preset."""
     found = _codes(qa_rules.resolve(locale="ru"), pairs)
     assert found["brackets_mismatch"] == 5_028
     assert found["glued_markup"] == 1_249
 
 
 def test_the_hoi4_preset_leaves_only_the_suspicious(pairs) -> None:
-    """5 028 → 746 и 1 249 → 5. Остальное — кандидаты в настоящие ошибки.
+    """5,028 → 746 and 1,249 → 5. The rest are candidates for real errors.
 
-    Общее число здесь больше, чем в примечании к пресету (9 464 против 5 269):
-    там замер по строкам проекта, а тут — по всему дереву, вместе с теми, что
-    проект пометил бы «нечего переводить». Разница целиком в `same_as_en`:
-    названия техники и аббревиатуры переводить и не нужно.
+    The total number here is bigger than in the note to the preset (9,464 against
+    5,269): there the measurement is over the rows of a project, and here over the
+    whole tree, together with those a project would mark «nothing to translate».
+    The difference is entirely in `same_as_en`: the names of equipment and the
+    abbreviations need no translating.
     """
     found = _codes(qa_rules.resolve({"preset": "hoi4_ru"}, locale="ru"), pairs)
     assert found["brackets_mismatch"] == 746
@@ -155,16 +159,17 @@ def test_the_hoi4_preset_leaves_only_the_suspicious(pairs) -> None:
 
 
 def test_the_colour_rule_is_quiet_on_a_professional_translation(pairs) -> None:
-    """25 расхождений по цвету на 124 893 строки — правило годится включённым."""
+    """25 colour divergences over 124,893 rows — the rule will do switched on."""
     found = _codes(qa_rules.resolve({"preset": "hoi4_ru"}, locale="ru"), pairs)
     assert found["color_mismatch"] == 25
 
 
 def test_paradox_did_lose_variables(pairs) -> None:
-    """326 строк, где подстановка потерялась или подменена другой.
+    """326 rows where a substitution was lost or swapped for another.
 
-    Ради таких находок правила и написаны: `$JAP_zaibatsu_faction$` в переводе
-    стал `$JAP_naval_faction$` — в игре это видно как чужое требование.
+    It is for finds like these that the rules are written: `$JAP_zaibatsu_faction$`
+    became `$JAP_naval_faction$` in the translation — in the game that shows as a
+    foreign requirement.
     """
     found = _codes(qa_rules.resolve({"preset": "hoi4_ru"}, locale="ru"), pairs)
     assert found["dollar_mismatch"] == 326
