@@ -1,20 +1,20 @@
-"""Все команды приложения одной таблицей.
+"""Every command of the application in one table.
 
-Правило, ради которого заведён модуль: **у каждой команды ровно один дом** —
-пункт главного меню. Панель инструментов и контекстное меню таблицы показывают
-ТЕ ЖЕ объекты `QAction`, а не свои копии.
+The rule the module exists for: **each command has exactly one home**, its entry
+in the main menu. The toolbar and the table context menu show THE SAME `QAction`
+objects rather than copies of their own.
 
-Раньше было иначе. «Подтвердить» существовало трижды: кнопка тулбара
-(собственный QAction без клавиши, только с подсказкой «F10»), пункт
-контекстного меню (свой QAction с настоящей F10) и колонка «✓» таблицы.
-Починка одной копии не касалась остальных, тексты разъезжались, а четыре
-кнопки тулбара («Поиск», «Следующая непереведённая», «Подтвердить», «Снять
-подтверждение») не имели пункта меню вообще — найти их с клавиатуры было
-нельзя. Тринадцать операций над строками, наоборот, жили только в контекстном
-меню и в главном меню не показывались.
+It used to be otherwise. «Validate» existed three times over: a toolbar button (a
+QAction of its own with no shortcut, only a tooltip saying «F10»), a context menu
+entry (its own QAction with a real F10) and the «✓» column of the table. Fixing
+one copy did not touch the others, the texts drifted apart, and four toolbar
+buttons — «Find», «Next untranslated», «Validate», «Unvalidate» — had no menu
+entry at all, so they could not be found from the keyboard. Thirteen row
+operations, conversely, lived in the context menu alone and never appeared in the
+main menu.
 
-Раскладка меню взята с ESP/ESM Translator — инструмента, по которому равняется
-интерфейс (см. `ett4/Lang.xml`).
+The menu layout is taken from ESP/ESM Translator, the tool this interface aligns
+itself with (see `ett4/Lang.xml`).
 """
 from __future__ import annotations
 
@@ -25,10 +25,10 @@ from PySide6.QtGui import QAction, QActionGroup, QKeySequence
 
 from pdxloc.core.i18n import QT_TRANSLATE_NOOP, translate
 
-# Контекст перевода: у EET ключи строк тоже именованы по окну («Options.»,
-# «Import.», «Principal.»), и Linguist группирует по нему дерево. Писать его
-# литералом обязательно — переменную lupdate не разрешает и строку теряет
-# молча (проверяется `test_i18n.py`).
+# The translation context: in EET the row keys are named after the window as
+# well («Options.», «Import.», «Principal.»), and Linguist groups its tree by it.
+# Writing it as a literal is mandatory — lupdate does not allow a variable and
+# loses the string in silence (checked by `test_i18n.py`).
 CTX = "Actions"
 
 SEP = None                      # разделитель в меню и на панели
@@ -38,13 +38,13 @@ ALWAYS = "always"               # всегда, даже без открытог
 PROJECT = "project"             # только при открытом проекте
 NEVER = "never"                 # заглушка на будущее — выключена всегда
 
-# кому принадлежит действие и в каком контексте работает его клавиша.
+# who owns an action and in what context its shortcut works.
 #
-# TABLE — только для клавиш, которые спорят с правкой текста: Ctrl+C, Ctrl+V и
-# Ctrl+Z в поле перевода обязаны означать «копировать/вставить/отменить набор»,
-# а не операцию над строкой таблицы. Всё остальное (F7, F8, F10…) в текстовом
-# поле смысла не имеет, поэтому работает по всему окну — как в EET, где F10
-# срабатывает независимо от того, где стоит курсор.
+# TABLE is for the shortcuts that argue with editing text and nothing else:
+# Ctrl+C, Ctrl+V and Ctrl+Z inside the translation field must mean
+# «copy/paste/undo typing» rather than an operation on a table row. Everything
+# else — F7, F8, F10… — is meaningless in a text field, so it works across the
+# whole window, as in EET where F10 fires wherever the cursor happens to be.
 WINDOW = "window"               # окно целиком
 TABLE = "table"                 # таблица строк и её потомки
 
@@ -61,11 +61,7 @@ class Act:
     owner: str = WINDOW
 
 
-# --- собственно команды ---------------------------------------------------
-#
-# Клавиши повторяют раскладку ESP/ESM Translator: F5 скан, F7 подстановка,
-# F8 перевод=оригинал, F9 память, F10 подтвердить. Переводчики приходят
-# оттуда, и переучивать пальцы незачем.
+# --- the commands themselves ---
 
 ACTIONS: tuple[Act, ...] = (
     # файл и проект как файл
@@ -262,11 +258,12 @@ class ActionRegistry:
     def build(self, window, table) -> None:
         """Создать все действия. `table` — владелец действий над строками.
 
-        Родитель определяет контекст клавиши. Ctrl+Z, Ctrl+C и Ctrl+V обязаны
-        принадлежать таблице: у QAction главного окна контекст по умолчанию —
-        всё окно, а карта шорткатов Qt опрашивается раньше, чем событие дойдёт
-        до виджета с фокусом. Из-за этого Ctrl+Z в поле перевода откатывал не
-        набранный текст, а последнюю пакетную операцию проекта.
+        The parent decides the context of a shortcut. Ctrl+Z, Ctrl+C and Ctrl+V
+        have to belong to the table: a QAction of the main window defaults to the
+        whole window as its context, and Qt consults its shortcut map before the
+        event reaches the focused widget. Because of that, Ctrl+Z in the
+        translation field used to undo not the typing but the last bulk operation
+        of the project.
         """
         for spec in ACTIONS:
             owner = table if spec.owner == TABLE else window
@@ -275,18 +272,18 @@ class ActionRegistry:
                 action.setShortcuts([QKeySequence(k) for k in spec.keys])
             if spec.owner == TABLE:
                 action.setShortcutContext(Qt.WidgetWithChildrenShortcut)
-                table.addAction(action)      # клавиша работает и без открытого меню
+                table.addAction(action)      # the shortcut works with no menu open
             if spec.checkable:
                 action.setCheckable(True)
             self.actions[spec.id] = action
-        self.retranslate()      # подсказки ставит он же — в одном месте
+        self.retranslate()      # it also sets the tooltips, all in one place
 
     def retranslate(self) -> None:
-        """Перечитать тексты команд на текущем языке.
+        """Re-read the command texts in the current language.
 
-        Одного этого метода хватает на три витрины разом: панель инструментов и
-        контекстное меню показывают ТЕ ЖЕ объекты QAction, а не свои копии, —
-        ровно то свойство, ради которого заведён реестр.
+        This one method is enough for three shop windows at once: the toolbar and
+        the context menu show THE SAME QAction objects rather than copies of their
+        own — exactly the property the registry exists for.
         """
         for spec in ACTIONS:
             action = self.actions.get(spec.id)
@@ -298,7 +295,7 @@ class ActionRegistry:
                 action.setToolTip(tip)
                 action.setStatusTip(tip)
 
-    # --- доступ ---
+    # --- availability ---
 
     def __getitem__(self, action_id: str) -> QAction:
         return self.actions[action_id]
@@ -312,15 +309,15 @@ class ActionRegistry:
         return action
 
     def set_enabled(self, has_project: bool) -> None:
-        """Действия проекта без проекта только сбивают с толку — и падали на
-        пустом соединении."""
+        """Project actions with no project only confuse — and used to fall over on an
+        empty connection."""
         for spec in ACTIONS:
             if spec.scope == PROJECT:
                 self.actions[spec.id].setEnabled(has_project)
             elif spec.scope == NEVER:
                 self.actions[spec.id].setEnabled(False)
 
-    # --- витрины ---
+    # --- shop windows ---
 
     def fill_menu(self, menu, ids) -> None:
         for action_id in ids:
@@ -337,17 +334,17 @@ class ActionRegistry:
                 bar.addAction(self.actions[action_id])
 
     def check_group(self, menu, parent, items, on_toggle) -> dict:
-        """Подменю независимых галок: «Колонки», «Кнопки статуса».
+        """A submenu of independent ticks: «Columns», «Status buttons».
 
-        Не радиогруппа: показать можно любое подмножество. Возвращает пункты по
-        значению — вызывающий обязан уметь и отметить их (настройка приезжает из
-        QSettings), и переименовать при смене языка.
+        Not a radio group: any subset may be shown. It returns the entries keyed
+        by value — the caller has to be able both to tick them, since the setting
+        comes from QSettings, and to rename them when the language changes.
         """
         made: dict = {}
         for value, label in items:
             action = QAction(label, parent, checkable=True)
-            # отметить до подписки: `toggled` при сборке меню позвал бы слот
-            # раньше, чем собран тулбар, к которому слот и обращается
+            # tick before subscribing: `toggled` while the menu is being built would call
+            # the slot before the toolbar it reaches into has been assembled
             action.setChecked(True)
             action.toggled.connect(
                 lambda checked, v=value: on_toggle(v, checked))
@@ -356,11 +353,11 @@ class ActionRegistry:
         return made
 
     def radio_group(self, menu, parent, items, on_pick) -> dict:
-        """Подменю-радиогруппа: «Показывать», «Сортировка», «Тема».
+        """A radio-group submenu: «Show», «Sort», «Theme».
 
-        Возвращает пункты по значению — вызывающему нужно уметь отмечать
-        текущий выбор, когда его меняют не отсюда (чипом, заголовком колонки,
-        диалогом параметров).
+        It returns the entries keyed by value — the caller needs to be able to
+        mark the current choice when it is changed from elsewhere: by a chip, a
+        column header or the preferences dialog.
         """
         group = QActionGroup(parent)
         group.setExclusive(True)
