@@ -1,4 +1,4 @@
-"""Стартовый экран: недавние проекты, создание и открытие файла проекта."""
+"""The start screen: recent projects, creating one and opening a project file."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -20,18 +20,19 @@ from pdxloc.gui.widgets import HintLabel
 
 CTX = "StartScreen"
 
-# Оставлено ради внешнего кода, который импортировал список отсюда. Сам список
-# переехал в ядро: справочник данных не место в модуле окна.
+# Kept for outside code that imported the list from here. The list itself moved
+# into the core: a table of data does not belong in a window module.
 LANGUAGES = list(PARADOX_LANGUAGES)
 
 
 def safe_name(name: str) -> str:
-    """Имя файла из названия проекта: в названии бывает двоеточие и слэш."""
+    """A file name out of a project name: a name can hold a colon or a slash."""
     return "".join("_" if c in '<>:"/\\|?*' else c for c in name).strip(" .")
 
 
 class ProjectDialog(QDialog):
-    """Создание проекта: имя, папки оригинала и перевода, языки, файл проекта."""
+    """Creating a project: the name, the original and translation folders, the
+    languages, the project file."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -40,11 +41,11 @@ class ProjectDialog(QDialog):
 
         form = QFormLayout(self)
 
-        # Игра — первым полем: она задаёт и список языковых папок, и загон, в
-        # который ляжет файл проекта. Спрашивать её после путей значило бы
-        # предлагать папки, которых у игры нет.
+        # The game comes first: it sets both the list of language folders and the pen
+        # the project file lands in. Asking for it after the paths would mean offering
+        # folders the game does not have.
         self.game_combo = QComboBox()
-        self.game_combo.setEditable(True)      # своя игра — свободным именем
+        self.game_combo.setEditable(True)      # a game of your own, under a free-form name
         for game_id in games.ORDER:
             self.game_combo.addItem(games.title(game_id), game_id)
         self.game_combo.setToolTip(translate(
@@ -67,7 +68,7 @@ class ProjectDialog(QDialog):
             row.setSpacing(6)
             row.addWidget(edit, 1)
             btn = QToolButton()
-            btn.setText(translate("StartScreen", "Browse…"))   # а не узкое «…»
+            btn.setText(translate("StartScreen", "Browse…"))   # rather than a narrow «…»
             btn.setToolTip(translate("StartScreen", "Choose a folder"))
             btn.clicked.connect(lambda _, e=edit: self._browse_dir(e))
             row.addWidget(btn)
@@ -91,9 +92,10 @@ class ProjectDialog(QDialog):
         langs.addStretch(1)
         form.addRow(translate("StartScreen", "Game folders:"), langs)
 
-        # Язык текста нужен редко — только при переводе на язык, которого в
-        # игре нет. Поле, которое нечем заполнить, только путает, поэтому оно
-        # скрыто до галки; поменять его можно и потом, в «Языках проекта».
+        # The text language is needed rarely — only when translating into a language
+        # the game does not have. A field with nothing to put in it only confuses, so
+        # it stays hidden until the box is ticked; it can be changed later anyway, in
+        # «Project languages».
         self.split = QCheckBox(translate(
             "StartScreen", "The text is in another language"))
         self.split.setToolTip(translate(
@@ -122,8 +124,9 @@ class ProjectDialog(QDialog):
         file_row = QHBoxLayout()
         file_row.setSpacing(6)
         self.file_edit = QLineEdit()
-        # по умолчанию проект ложится в папку Projects самого приложения, но
-        # путь виден и правится: файл проекта переносим, его кладут и к моду
+        # by default the project lands in the application's own Projects folder, but
+        # the path is visible and editable: a project file travels, and people put it
+        # next to the mod
         self.file_edit.setPlaceholderText(
             str(settings.projects_dir() / f"<name>{settings.PROJECT_EXT}"))
         file_row.addWidget(self.file_edit, 1)
@@ -145,7 +148,7 @@ class ProjectDialog(QDialog):
         form.addRow(buttons)
 
     def game_id(self) -> str:
-        """Игра из списка либо слаг своего имени."""
+        """A game from the list, or the slug of a name of your own."""
         text = self.game_combo.currentText().strip()
         index = self.game_combo.findText(text)
         if index >= 0 and self.game_combo.itemData(index):
@@ -156,15 +159,16 @@ class ProjectDialog(QDialog):
         return self.game_combo.currentText().strip() or games.title(games.CK3)
 
     def _on_game_changed(self) -> None:
-        """Смена игры меняет и языковые папки, и загон под файл проекта."""
+        """Changing the game changes both the language folders and the pen the project
+        file lands in."""
         allowed = games.languages(self.game_id())
         for box, keep in ((self.src_lang, "english"), (self.tgt_lang, "russian")):
             current = box.currentText().strip()
             box.blockSignals(True)
             box.clear()
             box.addItems(allowed)
-            # выбор человека важнее списка: у игры может не быть его языка, но
-            # моды заводят свои папки, и запрещать это нечем
+            # the person's choice outweighs the list: a game may not have their language,
+            # but mods create folders of their own and there is nothing to forbid it with
             box.setCurrentText(current if current else keep)
             box.blockSignals(False)
         self._suggest_file(self.name_edit.text())
@@ -173,7 +177,7 @@ class ProjectDialog(QDialog):
     def _on_split_toggled(self, shown: bool) -> None:
         self.locales.setVisible(shown)
         if shown:
-            # подставляем то, что и так подразумевается папками
+            # fill in what the folders imply anyway
             self.src_locale.setCurrentText(
                 lang_mod.default_locale(self.src_lang.currentText().strip()))
             self.tgt_locale.setCurrentText(
@@ -229,7 +233,7 @@ class ProjectDialog(QDialog):
         self.tgt_edit.setText(str(sibling))
 
     def _start_dir(self, edit: QLineEdit) -> str:
-        """Откуда открывать проводник: текущее значение, иначе прошлый выбор."""
+        """Where to open the browser: the current value, otherwise the last choice."""
         return edit.text().strip() or settings.last_browse_dir()
 
     def _browse_dir(self, edit: QLineEdit) -> None:
@@ -289,7 +293,8 @@ class ProjectDialog(QDialog):
         self.accept()
 
     def _project_path(self) -> Path | None:
-        """Путь к файлу проекта. Голое имя без папки кладём в загон игры."""
+        """The path to the project file. A bare name with no folder goes into the
+        game's pen."""
         text = self.file_edit.text().strip()
         pen = settings.projects_pen(self.game_id())
         if not text:
@@ -303,8 +308,8 @@ class ProjectDialog(QDialog):
     def values(self) -> dict:
         src_lang = self.src_lang.currentText().strip() or "english"
         tgt_lang = self.tgt_lang.currentText().strip() or "russian"
-        # Пустая локаль означает «совпадает с папкой языка» — так и храним,
-        # чтобы проект не зарастал значениями, которые и так выводятся.
+        # An empty locale means «the same as the language folder» — and that is how it
+        # is stored, so a project does not fill up with values that follow anyway.
         src_locale = tgt_locale = ""
         if self.split.isChecked():
             src_locale = self._locale_code(self.src_locale)
@@ -328,8 +333,8 @@ class ProjectDialog(QDialog):
 
 class StartScreen(QWidget):
     projectOpened = Signal(str)      # путь к файлу проекта
-    # удаление отдаём наверх: экран не знает про открытое соединение, а файл
-    # проекта нельзя стереть, пока он открыт
+    # deletion is handed upwards: the screen knows nothing about an open connection,
+    # and a project file cannot be erased while it is open
     deleteRequested = Signal(str)
 
     def __init__(self, parent=None):
@@ -355,7 +360,7 @@ class StartScreen(QWidget):
             btn.clicked.connect(slot)
             row.addWidget(btn)
             self._buttons[key] = btn
-        row.addSpacing(16)      # своё удаление отделено от повседневных кнопок
+        row.addSpacing(16)      # deletion is kept apart from the everyday buttons
         for key, slot in (
             ("reveal", self._reveal),
             ("forget", self._forget),
@@ -368,7 +373,8 @@ class StartScreen(QWidget):
         row.addStretch(1)
         layout.addLayout(row)
 
-        # Delete убирает из списка, Shift+Delete удаляет файл — как в проводнике
+        # Delete removes it from the list, Shift+Delete deletes the file — as in
+        # Explorer
         self._act_forget = QAction(self)
         self._act_forget.setShortcut(QKeySequence.Delete)
         self._act_forget.setShortcutContext(Qt.WidgetWithChildrenShortcut)
@@ -384,7 +390,7 @@ class StartScreen(QWidget):
         self.reload()
 
     def retranslate(self) -> None:
-        """Экран показывается между проектами и живёт всю сессию."""
+        """The screen is shown between projects and lives for the whole session."""
         # вызов вынесен из f-строки: внутри неё lupdate строку не видит
         title = translate("StartScreen", "Translation projects")
         self.title.setText(f"<h2>{title}</h2>")
@@ -414,14 +420,14 @@ class StartScreen(QWidget):
         menu.exec(self.list.viewport().mapToGlobal(pos))
 
     def reload(self) -> None:
-        """Недавние проекты, сгруппированные по играм.
+        """Recent projects, grouped by game.
 
-        Группы идут по свежести, а не по алфавиту: список недавних тем и ценен,
-        что сверху лежит то, с чем работали вчера.
+        The groups go by recency rather than alphabetically: a list of recent
+        things is valuable precisely because yesterday's work is on top.
 
-        Заголовки — такие же строки списка, только невыбираемые. `QTreeWidget`
-        потребовал бы переписать и выбор, и контекстное меню, и `_selected_path`,
-        а показывал бы то же самое.
+        The headers are ordinary list rows, only unselectable. A `QTreeWidget`
+        would have meant rewriting the selection, the context menu and
+        `_selected_path`, and would have shown the same thing.
         """
         self.list.clear()
         by_game: dict[str, list[dict]] = {}
@@ -471,7 +477,7 @@ class StartScreen(QWidget):
         return Path(value) if value else None
 
     def create_project(self) -> None:
-        """Создать проект — та же команда, что кнопкой, но вызываемая извне."""
+        """Create a project: the same command as the button, callable from outside."""
         self._create()
 
     def _create(self) -> None:
@@ -539,7 +545,7 @@ class StartScreen(QWidget):
             shell.reveal(path)
 
     def _delete(self) -> None:
-        """Решение принимает главное окно: только оно знает, открыт ли проект."""
+        """The main window decides: only it knows whether the project is open."""
         path = self._selected_path()
         if path is not None:
             self.deleteRequested.emit(str(path))

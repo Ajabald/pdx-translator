@@ -1,15 +1,15 @@
-"""Окно глоссария (Shift+F9): термины и кандидаты в них.
+"""The glossary window (Shift+F9): terms and candidates for them.
 
-Форма повторяет окно памяти переводов: вкладки плюс общая нижняя полоса, а
-состояние активной вкладки живёт в ней, а не рядом с кнопками, к которым не
-относится. Контракт вкладки тот же — `statusChanged`, `status_text`,
-`shutdown`.
+The shape repeats the translation memory window: tabs plus a shared strip along
+the bottom, and the state of the active tab lives in that strip rather than next
+to buttons it has nothing to do with. The tab contract is the same —
+`statusChanged`, `status_text`, `shutdown`.
 
-Разделение на две вкладки не косметическое. «Термины» — это то, что уже решено
-и что подсвечивается в поле оригинала; «Кандидаты» — очередь на разбор, где
-работают сверху вниз и где счёт с охватом говорят, чему верить. Смешать их в
-одну таблицу значило бы показывать переводчику предположение и решение одним
-цветом.
+Splitting them into two tabs is not cosmetic. «Terms» is what has been decided
+and what gets highlighted in the original field; «Candidates» is a queue to work
+through from the top, where the score and the number of pairs say what to
+believe. Mixing them into one table would show the translator a guess and a
+decision in the same colour.
 """
 from __future__ import annotations
 
@@ -49,11 +49,11 @@ C_EN, C_RU, C_SCORE, C_PAIRS = range(4)
 
 
 class _ExtractWorker(QObject):
-    """Прогон статистики в своём потоке и со своим соединением.
+    """The statistics run, in a thread of its own and on a connection of its own.
 
-    Соединение только на чтение и своё: правило потоков в этом приложении —
-    одно соединение на поток, а корпус бывает в четверть миллиона записей, и
-    держать на нём главный поток нельзя.
+    The connection is read-only and separate: the threading rule in this
+    application is one connection per thread, and the corpus runs to a quarter of
+    a million entries — the main thread must not be held on that.
     """
     done = Signal(list)
     failed = Signal(str)
@@ -80,9 +80,9 @@ class _ExtractWorker(QObject):
         try:
             conn = project_mod.read_only_connection(self._path)
             db_module.register_functions(conn)
-            # `tm_all` — временное представление, живущее в соединении, и в
-            # свежем его нет вовсе. Без этой строки прогон падал бы на «no such
-            # table: tm_all», то есть не работал бы никогда.
+            # `tm_all` is a temporary view living inside a connection, and a fresh one does
+            # not have it at all. Without this line the run would fall over on «no such
+            # table: tm_all», that is, it would never work.
             project_mod.attach_tm_sources(conn, self._tm_paths)
             found = glossary.extract(
                 conn, min_pairs=self._min_pairs, min_score=self._min_score,
@@ -90,7 +90,7 @@ class _ExtractWorker(QObject):
                 progress=lambda done, total: self.progress.emit(done, total),
                 cancelled=lambda: self._cancelled)
             self.done.emit(found)
-        except sqlite3.Error as exc:      # noqa: BLE001 — показываем любую ошибку базы
+        except sqlite3.Error as exc:      # noqa: BLE001 — every database error is shown
             self.failed.emit(str(exc))
         finally:
             if conn is not None:
@@ -98,7 +98,7 @@ class _ExtractWorker(QObject):
 
 
 class _Model(QAbstractTableModel):
-    """Общая модель обеих таблиц: колонки задаёт вкладка."""
+    """The model shared by both tables; the tab decides the columns."""
     edited = Signal()
 
     def __init__(self, conn: sqlite3.Connection, columns, status: str, parent=None):
@@ -160,7 +160,8 @@ class _Model(QAbstractTableModel):
         if self.columns is TERM_COLUMNS:
             return entry.note
         if column == C_SCORE:
-            # два знака: разница между 0.63 и 0.634 переводчику ничего не говорит
+            # two decimals: the difference between 0.63 and 0.634 tells a translator
+            # nothing
             return "" if entry.score is None else f"{entry.score:.2f}"
         return "" if entry.pairs is None else str(entry.pairs)
 
@@ -179,7 +180,7 @@ class _Model(QAbstractTableModel):
         field = {T_EN: "en_term", T_RU: "ru_term", T_NOTE: "note"}[index.column()]
         text = str(value).strip()
         if field != "note" and not text:
-            return False        # пустой термин подсвечивать нечем
+            return False        # an empty term has nothing to highlight
         glossary.update_entry(self.conn, entry.id, **{field: text})
         self.reload()
         self.edited.emit()
@@ -187,7 +188,7 @@ class _Model(QAbstractTableModel):
 
 
 class _Tab(QWidget):
-    """Общее у обеих вкладок: таблица, сортировка, поиск, нижняя полоса."""
+    """What both tabs share: the table, the sorting, the search, the bottom strip."""
     statusChanged = Signal(str)
     glossaryChanged = Signal()
 
@@ -267,7 +268,7 @@ class _Tab(QWidget):
 
 
 class TermsTab(_Tab):
-    """Принятые термины: их и подсвечивает панель редактора."""
+    """The accepted terms; these are what the editor panel highlights."""
 
     def __init__(self, conn: sqlite3.Connection, parent=None):
         super().__init__(conn, TERM_COLUMNS, APPROVED, parent)
@@ -324,11 +325,12 @@ class TermsTab(_Tab):
 
 
 class CandidatesTab(_Tab):
-    """Очередь на разбор: что предложила статистика."""
+    """The queue to work through: what the statistics proposed."""
 
-    # Прогон кончился — успехом, ошибкой или отменой. Наружу нужен затем же,
-    # зачем и всякий сигнал о конце фоновой работы: дождаться его со стороны
-    # нельзя иначе как опросом, а опрос в тесте — это гонка.
+    # The run has ended — in success, in an error or in a cancellation. It is
+    # public for the same reason as any signal about the end of background work:
+    # there is no way to wait for it from outside except by polling, and polling in
+    # a test is a race.
     runFinished = Signal()
 
     def __init__(self, conn: sqlite3.Connection, path, parent=None):
@@ -372,7 +374,7 @@ class CandidatesTab(_Tab):
 
         self.reload()
 
-    # --- прогон ---
+    # --- the run ---
 
     def is_busy(self) -> bool:
         return self._thread is not None
@@ -394,7 +396,7 @@ class CandidatesTab(_Tab):
         for signal in (self._worker.done, self._worker.failed):
             signal.connect(self._thread.quit)
         self.progress.setVisible(True)
-        self.progress.setRange(0, 0)        # пока не знаем объём — бегущая полоса
+        self.progress.setRange(0, 0)        # while the size is unknown, a marquee bar
         self.run_btn.setText(translate("Glossary", "Stop"))
         self._thread.start()
 
@@ -403,11 +405,11 @@ class CandidatesTab(_Tab):
         self.progress.setValue(done)
 
     def _finish(self) -> None:
-        """Вернуть кнопку и полосу в покой. Сигнал — последним действием.
+        """Put the button and the bar back at rest. The signal goes last.
 
-        Порядок важен всем, кто ждёт конца прогона: к моменту `runFinished`
-        кандидаты обязаны быть уже записаны и показаны, иначе «дождался конца»
-        означало бы «дождался чего-то посередине».
+        The order matters to everyone waiting for the run to end: by the time
+        `runFinished` arrives the candidates must already be written and shown,
+        or «waited for the end» would mean «waited for something in the middle».
         """
         self._thread = self._worker = None
         self.progress.setVisible(False)
@@ -423,12 +425,12 @@ class CandidatesTab(_Tab):
         self.runFinished.emit()
 
     def _on_failed(self, message: str) -> None:
-        """Ошибку показываем в нижней полосе, а не окном.
+        """An error goes into the bottom strip rather than into a window.
 
-        Модальное окно из слота, завершающего фоновую работу, блокирует всё,
-        что этого завершения ждёт, — включая обработку событий самого прогона.
-        А переводчику здесь и нечего решать: счёт не удался, кнопка на месте,
-        повторить можно тут же.
+        A modal window raised from the slot that finishes background work blocks
+        everything waiting for that finish, the event handling of the run
+        included. And there is nothing for the translator to decide here: the
+        count failed, the button is where it was, and retrying takes one click.
         """
         self._finish()
         self._status = fill(
@@ -448,7 +450,7 @@ class CandidatesTab(_Tab):
             self._thread.wait(3000)
             self._thread = self._worker = None
 
-    # --- разбор ---
+    # --- working through ---
 
     def _decide(self, status: str) -> None:
         selected = self._selected()
@@ -494,8 +496,8 @@ class GlossaryWindow(QDialog):
 
         for tab in self._tabs():
             tab.statusChanged.connect(self._on_tab_status)
-            # принятый термин обязан сразу подсветиться в панели редактора, а
-            # счётчики соседней вкладки — сойтись с новым решением
+            # an accepted term must light up in the editor panel at once, and the counters
+            # on the neighbouring tab must agree with the new decision
             tab.glossaryChanged.connect(self.glossaryChanged)
             tab.glossaryChanged.connect(self._reload_others)
         self.tabs.currentChanged.connect(lambda _: self._show_status())
@@ -517,14 +519,14 @@ class GlossaryWindow(QDialog):
         self.tabs.currentWidget().reload()
         self.status_label.setText(self.tabs.currentWidget().status_text())
 
-    # --- закрытие ---
+    # --- closing ---
 
     def _confirm_close_while_running(self) -> bool:
-        """Не закрываться молча посреди прогона.
+        """Do not close in silence in the middle of a run.
 
-        В отдельном окне от этого спасала бы модальность: уйти было бы некуда.
-        Во вкладках переводчик легко переключится на «Термины» и нажмёт
-        «Закрыть», не вспомнив, что счёт ещё идёт.
+        In a window of its own modality would have saved us: there would be
+        nowhere to go. Among tabs a translator easily switches to «Terms» and
+        presses «Close» without remembering that the count is still going.
         """
         if not self.candidates.is_busy():
             return True

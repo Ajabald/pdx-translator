@@ -1,16 +1,16 @@
-"""QA-проверки перевода: сохранность CK3-токенов, длина, спецпоследовательности.
+"""Quality checks: CK3 tokens kept intact, length, special sequences.
 
-Сравнение токенов — мультимножества (Counter): важно и наличие, и количество.
+Tokens are compared as multisets (Counter): both presence and count matter.
 
-**Замечания кешируются в самой строке** (`units.qa_hash`, `units.qa_codes`).
-Повод — замер: полный проход по проекту ванильной HOI4 (124 893 пары) занимает
-3,35 с, и раньше он шёл при каждом открытии проекта, в потоке интерфейса.
-Кеш живёт в строке, а не в отдельной таблице, ровно затем, чтобы его нельзя
-было забыть сбросить: `qa_hash` считается от набора правил и обоих текстов
-сразу, поэтому любая правка перевода, приход новой редакции оригинала или смена
-набора правил обесценивают его сами собой. Пометки «это не ошибка»
-(`qa_ignores`) в кеш не входят — они накладываются поверх, и менять их можно
-не пересчитывая ничего.
+**Issues are cached in the row itself** (`units.qa_hash`, `units.qa_codes`). The
+reason is a measurement: a full pass over the vanilla HOI4 project (124 893
+pairs) takes 3.35 s, and it used to run on every project open, on the interface
+thread. The cache lives in the row rather than in a table of its own precisely so
+that it cannot be forgotten and left stale: `qa_hash` is computed from the rule
+set and both texts at once, so any edit to the translation, any new revision of
+the original and any change of rule set invalidate it by themselves. The «not an
+error» marks (`qa_ignores`) are not part of the cache — they are laid on top, and
+changing them recomputes nothing.
 """
 from __future__ import annotations
 
@@ -23,8 +23,9 @@ from pdxloc.core import markup, qa_rules
 from pdxloc.core.models import Issue
 from pdxloc.core.statuses import Status
 
-# Описание самих токенов живёт в core/markup.py — там же сказано, кто их
-# использует. Здесь оставлены имена: по ним ходят проверки ниже и тесты.
+# The tokens themselves are described in core/markup.py, together with who uses
+# them. What is left here are the names: the checks below and the tests go by
+# them.
 RE_BRACKET = markup.pattern("bracket")
 RE_DOLLAR = markup.pattern("dollar")
 RE_ICON = markup.pattern("icon_pound")
@@ -34,18 +35,19 @@ RE_FMT_CLOSE = markup.pattern("fmt_close")
 RE_NEWLINE = markup.pattern("newline")
 RE_ESCAPE_SEQ = qa_rules.RE_ESCAPE_SEQ
 
-# (severity, русское сообщение) — производная от встроенного набора правил.
-# По ней ходят окно отчёта и колонка «!» таблицы.
+# (severity, message) — derived from the built-in rule set. The report window
+# and the «!» column of the table both go by it.
 CODES: dict[str, tuple[str, str]] = qa_rules.default_ruleset().codes()
 
-# Правила, выключенные по умолчанию. Осталось именем ради старого кода:
-# состояние живёт в самом правиле (Rule.enabled).
+# Rules that are off by default. The name is kept for the sake of older code:
+# the state lives in the rule itself (Rule.enabled).
 OPTIONAL_CODES = frozenset(
     r.id for r in qa_rules.BUILTIN_RULES if not r.enabled)
 
 
 def strip_markup(text: str) -> str:
-    """Убрать разметку для сравнения длины. Реализация — в core/markup.py."""
+    """Strip the markup for a length comparison. The implementation is in
+    core/markup.py."""
     return markup.strip_markup(text)
 
 
@@ -56,11 +58,12 @@ def check_unit(
     enabled: frozenset[str] | set[str] | None = None,
     ruleset: qa_rules.RuleSet | None = None,
 ) -> list[str]:
-    """Коды проблем для пары «оригинал — перевод».
+    """The issue codes for one «original — translation» pair.
 
-    Сами проверки живут в `core/qa_rules.py` — вместе с параметрами, которыми
-    их настраивают. Здесь остался вход: `enabled` ограничивает набор кодов (так
-    зовут старый код и тесты), `ruleset` подставляет настроенный набор целиком.
+    The checks themselves live in `core/qa_rules.py`, together with the
+    parameters that tune them. What is left here is the way in: `enabled` narrows
+    the set of codes — that is how the older code and the tests call it — while
+    `ruleset` substitutes a configured set whole.
     """
     rules = ruleset if ruleset is not None else qa_rules.default_ruleset()
     if enabled is not None:
@@ -69,10 +72,10 @@ def check_unit(
 
 
 def find_inconsistent(conn: sqlite3.Connection, project_id: int) -> dict[int, str]:
-    """Строки, где одинаковый оригинал переведён по-разному.
+    """Rows where one and the same original is translated differently.
 
-    Возвращает {unit_id: подсказка с вариантами} — проверка на весь проект,
-    поэтому её нельзя выполнить, глядя на одну строку.
+    Returns {unit_id: a hint listing the variants}. It is a whole-project check,
+    so it cannot be answered by looking at a single row.
     """
     rows = conn.execute(
         """SELECT u.id, u.en_hash, u.ru_text FROM units u
@@ -97,14 +100,14 @@ def find_inconsistent(conn: sqlite3.Connection, project_id: int) -> dict[int, st
     return result
 
 
-# --- кеш замечаний -------------------------------------------------------
+# --- the issue cache ---
 
 def ruleset_fingerprint(rules: qa_rules.RuleSet) -> str:
-    """Отпечаток набора правил — всё, от чего зависят коды замечаний.
+    """A fingerprint of the rule set: everything the issue codes depend on.
 
-    Серьёзность сюда не входит намеренно: она красит колонку «!», но не меняет
-    ни одного кода, а пересчитывать сотню тысяч строк из-за смены цвета было бы
-    обидно.
+    The severity is deliberately left out: it colours the «!» column but changes
+    not a single code, and recomputing a hundred thousand rows over a change of
+    colour would be a shame.
     """
     payload = json.dumps(
         [[r.id, r.enabled, r.params] for r in rules],
@@ -113,7 +116,7 @@ def ruleset_fingerprint(rules: qa_rules.RuleSet) -> str:
 
 
 def pair_hash(fingerprint: str, en_text: str, ru_text: str) -> str:
-    """Отпечаток проверенной пары. Сошёлся — замечания в строке ещё годны."""
+    """A fingerprint of a checked pair. If it matches, the row's issues still hold."""
     raw = f"{fingerprint}\x1f{en_text}\x1f{ru_text}".encode()
     return hashlib.sha1(raw).hexdigest()[:16]
 
@@ -123,10 +126,11 @@ def _codes_of(stored: str | None) -> list[str]:
 
 
 def _remember(conn: sqlite3.Connection, checked: Sequence[tuple[str, str, int]]) -> None:
-    """Записать посчитанное. Ошибка записи гасится: кеш — ускоритель.
+    """Store what was computed. A write error is swallowed: the cache is only a
+    speed-up.
 
-    Соединение бывает и только на чтение (фоновые замеры открывают именно
-    такое), и остаться без таблицы строк из-за этого нельзя.
+    The connection is sometimes read-only — the background counters open exactly
+    such a one — and losing the row table over that is not acceptable.
     """
     if not checked:
         return
@@ -143,11 +147,13 @@ def cached_issues(
     rows: Iterable[sqlite3.Row],
     rules: qa_rules.RuleSet,
 ) -> dict[int, list[str]]:
-    """Коды замечаний строк: из кеша, где он годен, иначе пересчётом.
+    """Issue codes for rows: from the cache where it holds, by recomputing where
+    it does not.
 
-    `rows` — уже выбранные строки; нужны поля `id`, `en_text`, `ru_text` и,
-    чтобы кеш вообще работал, `qa_hash` с `qa_codes`. Без них (запрос старого
-    вида) всё считается заново — медленно, но верно.
+    `rows` are already selected rows; the fields `id`, `en_text`, `ru_text` are
+    needed, and `qa_hash` with `qa_codes` for the cache to work at all. Without
+    them — an older shape of query — everything is computed afresh: slow, but
+    correct.
     """
     rows = list(rows)
     fingerprint = ruleset_fingerprint(rules)
@@ -177,7 +183,7 @@ def recheck_one(
     unit_id: int,
     rules: qa_rules.RuleSet,
 ) -> list[str]:
-    """Пересчитать замечания одной строки и обновить её кеш."""
+    """Recompute the issues of one row and refresh its cache."""
     row = conn.execute(
         "SELECT id, en_text, ru_text FROM units WHERE id = ?", (unit_id,)).fetchone()
     if row is None or not row["en_text"] or not row["ru_text"]:
@@ -190,11 +196,11 @@ def recheck_one(
 
 
 def ignored_pairs(conn: sqlite3.Connection) -> set[tuple[int, str]]:
-    """Что пользователь пометил как «это не ошибка»."""
+    """What the user has marked as «not an error»."""
     try:
         return {(r["unit_id"], r["code"]) for r in conn.execute(
             "SELECT unit_id, code FROM qa_ignores")}
-    except sqlite3.Error:      # таблицы ещё нет (старая схема)
+    except sqlite3.Error:      # the table does not exist yet (an older schema)
         return set()
 
 
@@ -217,8 +223,9 @@ def run_qa(
     enabled: frozenset[str] | set[str] | None = None,
     ruleset: qa_rules.RuleSet | None = None,
 ) -> list[Issue]:
-    # машинный перевод здесь обязателен: потерянная подстановка или сломанный
-    # тултип — самое частое, что он приносит, и увидеть это надо до записи в мод
+    # machine translation is mandatory here: a lost substitution or a broken
+    # tooltip is the commonest thing it brings, and that has to be seen before it
+    # is written to the mod
     statuses = (
         (Status.TRANSLATED.value, Status.REVIEWED.value, Status.AUTO.value,
          Status.MACHINE.value, Status.STALE.value, Status.CUSTOM.value)
@@ -244,8 +251,8 @@ def run_qa(
     inconsistent = (
         find_inconsistent(conn, project_id) if "inconsistent" in active else {})
 
-    # тот же кеш, что питает колонку «!»: отчёт по проекту, открытый сразу
-    # после таблицы, не должен считать всё заново
+    # the same cache that feeds the «!» column: a project report opened right after
+    # the table must not compute everything again
     found = cached_issues(conn, rows, rules)
 
     issues: list[Issue] = []
@@ -263,7 +270,7 @@ def run_qa(
                 unit_id=r["id"], key=r["key"], file_rel_path=r["rel_path"],
                 code=code, severity=rules.severity(code), message=message,
             ))
-    # Ошибки выше предупреждений, предупреждения — выше сигналов
+    # Errors above warnings, warnings above signals
     issues.sort(key=lambda i: (qa_rules.SEVERITY_RANK.get(i.severity, 9),
                                i.file_rel_path, i.key))
     return issues
