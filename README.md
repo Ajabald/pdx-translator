@@ -227,10 +227,18 @@ mod, the language and the stage of the work, so the rule set is not a constant:
   character balance, and forbidden characters. A custom rule is configured
   entirely, message text and examples included.
 - **Seven ready-made sets**: «Strict», «Breakage only», «Own», and one per game
-  and language — «CK3 · Russian», «HOI4 · Russian», «CK2 · Russian»,
-  «Stellaris · Russian». The difference is not cosmetic: on a live translation
-  of 136 113 rows the strict set reports 41 713 issues, the built-in defaults
-  37 040, «CK3 · Russian» 12 591 and «Breakage only» 11 404 (measured 2026-08-10).
+  — «Crusader Kings III» (CK3), «Hearts of Iron IV» (HOI4), «Crusader Kings II»
+  (CK2), «Stellaris».
+  A game set carries only what the game itself dictates; the inflection helpers
+  your language uses are attached on their own, from the translation language of
+  the project. Pick the set named after your game and there is nothing else to
+  choose. The difference is not cosmetic: on a live translation of 136 113 rows
+  the strict set reports 41 713 issues against 12 591 for the CK3 set.
+- **Twelve pairs of game and language** ship with their own inflection helpers,
+  harvested from the games themselves — French, German, Polish, Portuguese,
+  Russian and Spanish across the four games. Without them a translation that
+  swaps a plain reference for an inflecting one reads as a lost reference: in
+  French HOI4 that is 37 270 occurrences.
 - **Three layers**: built-in values, the global `qa_rules.json` next to the
   application, and the settings stored inside the project itself. Each layer
   keeps only the differences, so updating the application does not wipe your
