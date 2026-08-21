@@ -1,13 +1,13 @@
-"""Цветовые темы интерфейса.
+"""The colour themes of the interface.
 
-Все цвета приложения собраны здесь, в двух наборах. Раньше они были рассыпаны
-по модулям (`core/statuses.py`, `gui/highlighter.py`, модель таблицы) и
-рассчитаны только на светлый фон: на тёмном подсветка разметки и заливка
-статусов становились нечитаемыми.
+Every colour in the application is gathered here, in two sets. They used to be
+scattered across modules (`core/statuses.py`, `gui/highlighter.py`, the table
+model) and were meant for a light background only: on a dark one the markup
+highlighting and the status fills turned unreadable.
 
-Светлый набор — ровно те значения, что были до появления тем, чтобы привычный
-вид не поехал. Смена темы применяется на лету: подписчики получают сигнал
-`notifier.changed` и перерисовываются.
+The light set holds exactly the values that existed before the themes, so the
+familiar look did not shift. A change of theme applies on the fly: subscribers
+get the `notifier.changed` signal and repaint.
 """
 from __future__ import annotations
 
@@ -25,12 +25,12 @@ THEME_LABELS = {LIGHT: QT_TRANSLATE_NOOP("Theme", "Light"),
 _LIGHT: dict[str, str] = {
     "text": "#202020",
     "hint": "#555555",
-    "text.disabled": "#999999",   # запись есть, но недоступна (файл не найден)
-    "text.placeholder": "#767676",  # подсказка в пустом поле: тише набранного
-    # заливка строк таблицы по статусу
+    "text.disabled": "#999999",   # the entry exists but is unavailable (file not found)
+    "text.placeholder": "#767676",  # the hint in an empty field: quieter than typed text
+    # the fill of table rows by status
     f"status.{Status.UNTRANSLATED}": "#f8d0d0",
-    # приглушённо-тёплый, рядом с жёлтым «Авто», но заметно бледнее: строка
-    # заполнена, но человек её не видел
+    # a muted warm tone, next to the yellow of «Auto» but noticeably paler: the
+    # row is filled in, but nobody has looked at it
     f"status.{Status.MACHINE}": "#f0e4cd",
     f"status.{Status.AUTO}": "#fff3c4",
     f"status.{Status.TRANSLATED}": "#d6f0d6",
@@ -41,38 +41,38 @@ _LIGHT: dict[str, str] = {
     "chip.text": "#202020",
     "chip.border": "#909090",
     "chip.border.active": "#303030",
-    # глифы quick-колонок
+    # the glyphs of the quick columns
     "quick.reviewed": "#2e7d32",
     "quick.translated": "#c62828",
     "quick.custom": "#7b1fa2",
     "quick.ignored": "#546e7a",
     "quick.disabled": "#c8c8c8",
-    # характер правки оригинала
+    # the nature of an edit to the original
     "change.cosmetic": "#8d6e63",
     "change.meaningful": "#e65100",
-    # замечания проверки
+    # the issues of the check
     "issue.error": "#c62828",
     "issue.warning": "#ef6c00",
-    "issue.info": "#4a6f8a",      # сигнал, а не ошибка: повод свериться
-    "issue.row": "#f8d0d0",       # заливка строки-ошибки в отчёте проверки
-    "warning.text": "#a04000",    # предупреждение под полем в диалогах
-    # дерево файлов
-    "tree.complete": "#1d7a1d",   # файл переведён целиком
+    "issue.info": "#4a6f8a",      # a signal rather than an error: a reason to go and look
+    "issue.row": "#f8d0d0",       # the fill of an error row in the check report
+    "warning.text": "#a04000",    # the warning under a field in dialogs
+    # the file tree
+    "tree.complete": "#1d7a1d",   # the file is translated in full
     "tree.partial": "#404040",
-    # память переводов
-    "tm.readonly": "#6f6f6f",     # записи подключённых баз — только для чтения
-    # подсветка разметки CK3
+    # translation memory
+    "tm.readonly": "#6f6f6f",     # entries of attached databases: read-only
+    # CK3 markup highlighting
     "markup.bracket": "#1857c3",
     "markup.dollar": "#8017c9",
     "markup.icon": "#9a7a00",
     "markup.format": "#3e7d47",
     "markup.escape": "#c86a1f",
-    # изменения оригинала
+    # changes to the original
     "diff.insert": "#c8f0c8",
     "diff.delete": "#f6c8c8",
-    # термин глоссария в поле оригинала. Ложится на то же поле, что и
-    # diff.insert, и обязан быть от него отличим: у устаревшей строки обе
-    # подсветки видны разом.
+    # a glossary term in the original field. It lands on the same field as
+    # diff.insert and has to be told apart from it: on an outdated row both
+    # highlights are visible at once.
     "glossary.term": "#ffe9a8",
 }
 
@@ -142,7 +142,7 @@ def colors() -> dict[str, str]:
 
 
 def color(key: str) -> str:
-    """Цвет по имени. Отсутствующее имя — ошибка разработчика, не пользователя."""
+    """A colour by name. A missing name is a developer's mistake, not a user's."""
     return _PALETTES[_current][key]
 
 
@@ -155,7 +155,7 @@ def status_color(status: Status | str) -> str:
 
 
 def _dark_palette() -> QPalette:
-    """Тёмная палитра Qt: без неё меню и поля остались бы светлыми."""
+    """The dark Qt palette: without it the menus and the fields would stay light."""
     bg = QColor("#2b2b2b")
     base = QColor("#232323")
     text = QColor(_DARK["text"])
@@ -173,8 +173,8 @@ def _dark_palette() -> QPalette:
     p.setColor(QPalette.Link, QColor("#7dabf5"))
     p.setColor(QPalette.Highlight, QColor("#3d6ea5"))
     p.setColor(QPalette.HighlightedText, QColor("#ffffff"))
-    # без этой строки роль осталась бы от светлого стиля — тёмный текст с
-    # полупрозрачностью, на Base #232323 читаемый разве что под лупой
+    # without this line the role would keep the light style's value — dark text
+    # with transparency, legible on Base #232323 only under a magnifying glass
     p.setColor(QPalette.PlaceholderText, QColor(_DARK["text.placeholder"]))
     disabled = QColor("#7a7a7a")
     for role in (QPalette.Text, QPalette.ButtonText, QPalette.WindowText):
@@ -183,7 +183,7 @@ def _dark_palette() -> QPalette:
 
 
 def apply_theme(app, name: str, *, save: bool = True) -> None:
-    """Переключить тему приложения и сообщить об этом подписчикам."""
+    """Switch the application theme and tell the subscribers about it."""
     global _current
     if name not in _PALETTES:
         name = LIGHT
@@ -206,15 +206,15 @@ def saved_theme() -> str:
 
 
 def apply_saved(app) -> None:
-    """Восстановить тему, выбранную в прошлый раз."""
+    """Restore the theme chosen last time."""
     apply_theme(app, saved_theme(), save=False)
 
 
 def on_change(slot) -> None:
-    """Подписаться на смену темы.
+    """Subscribe to a change of theme.
 
-    Слот должен быть связанным методом QObject: такая связь сама разрывается
-    при удалении виджета. Лямбда пережила бы его и обращалась к мёртвому C++
-    объекту.
+    The slot must be a bound method of a QObject: such a connection breaks itself
+    when the widget is deleted. A lambda would outlive it and reach into a dead
+    C++ object.
     """
     notifier.changed.connect(slot)

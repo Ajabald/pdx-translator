@@ -1,21 +1,21 @@
-"""Единственный источник правды о том, что и в каком порядке показано.
+"""The single source of truth about what is shown and in what order.
 
-Фильтр ставится из пяти мест: панель фильтров над таблицей, чипы статус-бара,
-дерево файлов, сводка сканирования и меню «Фильтры». Раньше каждое из них
-держало собственное состояние — чипы, например, подсвечивались только когда
-кликнули по самим чипам, а кнопка «Показать» в сводке двигала комбобокс мимо
-них. Теперь состояние здесь одно, а органы управления — только его витрины:
-пишут сюда и перерисовываются по сигналу.
+The filter is set from five places: the filter bar above the table, the
+status-bar chips, the file tree, the scan summary and the «Filters» menu. Each of
+them used to hold state of its own — the chips, for one, lit up only when the
+chips themselves were clicked, while the «Show» button in the summary moved the
+combo box straight past them. Now the state is here alone, and the controls are
+merely its shop windows: they write here and repaint on a signal.
 
-Сигналов два, и это существенно:
+There are two signals, and that matters:
 
-* `changed` — сменился состав строк, нужен новый SQL-запрос и пересчёт
-  замечаний (по 5к строк это порядка 45 мс);
-* `sortChanged` — сменился только порядок, хватит перестановки уже загруженных
-  строк (5–10 мс).
+* `changed` — the set of rows changed; a new SQL query and a recount of the
+  issues are needed (about 45 ms over 5k rows);
+* `sortChanged` — only the order changed; reordering the already loaded rows is
+  enough (5–10 ms).
 
-Гнать клик по заголовку колонки через полную перезагрузку значило бы
-пересчитывать все проверки качества на каждое нажатие.
+Pushing a click on a column header through a full reload would mean recomputing
+every quality check on every press.
 """
 from __future__ import annotations
 
@@ -26,8 +26,8 @@ from pdxloc.gui.units_model import COL_ISSUES, UnitFilters
 
 
 class ViewState(QObject):
-    changed = Signal()       # состав строк изменился
-    sortChanged = Signal()   # изменился только порядок
+    changed = Signal()       # the set of rows changed
+    sortChanged = Signal()   # only the order changed
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -38,21 +38,21 @@ class ViewState(QObject):
         self.file_prefix: str | None = None
         self.sort = SortState()
 
-    # --- производное ---
+    # --- derived ---
 
     @property
     def only_issues(self) -> bool:
-        """Фильтр «только с замечаниями» — второй шаг колонки «!».
+        """The «only with issues» filter — the second step of the «!» column.
 
-        Отдельного поля нет намеренно: пока их было два (чекбокс и колонка),
-        они бы разъезжались. Чекбокс, пункт меню и кнопка панели — три окна в
-        одно значение.
+        There is deliberately no field of its own: while there were two of them,
+        the checkbox and the column, they drifted apart. The checkbox, the menu
+        entry and the toolbar button are three windows onto one value.
         """
         return self.sort.column == COL_ISSUES and self.sort.step == SECOND
 
     @property
     def sort_spec(self) -> tuple[int, bool] | None:
-        """(колонка, по убыванию) либо None — естественный порядок."""
+        """(column, descending) or None for the natural order."""
         if self.sort.column is None:
             return None
         # у колонки «!» второй шаг сужает выборку, а не переворачивает порядок:

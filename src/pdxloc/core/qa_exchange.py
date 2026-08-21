@@ -97,21 +97,22 @@ def write(path: Path, preset: str, rules: RuleSet, *,
 
 
 def parse(data: Mapping) -> Bundle:
-    """Разобрать содержимое файла. Незнакомое — в `skipped`."""
+    """Parse the contents of a file. Anything unfamiliar goes into `skipped`."""
     if not isinstance(data, Mapping) or data.get("format") != FORMAT:
         raise ExchangeError("not a pdxqa file")
     try:
         version = int(data.get("version") or 0)
     except (TypeError, ValueError) as e:
-        # Номер версии — тоже чужие данные: `int("вчера")` вылетал бы мимо
-        # ExchangeError, и окно показало бы не сообщение, а падение.
+        # The version number is somebody else's data too: `int("yesterday")` would fly
+        # past ExchangeError, and the window would show a crash instead of a message.
         raise ExchangeError(f"unreadable version: {data.get('version')!r}") from e
     if version > VERSION:
         raise ExchangeError("made by a newer version")
 
     skipped: list[str] = []
     preset = data.get("preset")
-    # Файл мог быть выгружен до 0.1.2, когда игра и язык жили в одном наборе.
+    # The file may have been exported before 0.1.2, when the game and the language
+    # lived in one preset.
     preset = qa_rules.PRESET_ALIASES.get(preset, preset)
     if preset not in qa_rules.PRESETS:
         if preset:

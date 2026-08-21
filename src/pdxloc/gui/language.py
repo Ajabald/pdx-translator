@@ -1,13 +1,13 @@
-"""Язык интерфейса: загрузка переводов и оповещение о смене.
+"""The interface language: loading the translations and announcing a change.
 
-Устроено как `gui/theme.py` — значение плюс сигнал, и по сигналу окна
-перерисовываются, а не ждут перезапуска. Причина та же, что у темы: язык
-выбирают в мастере первого запуска, и «а теперь перезапустите программу»
-первым же экраном — плохое знакомство.
+Built like `gui/theme.py` — a value plus a signal, and on that signal the windows
+repaint rather than wait for a restart. The reason is the same as with the theme:
+the language is chosen in the first-run wizard, and «now restart the program» as
+the very first screen makes a poor introduction.
 
-Названия языков написаны на самих языках. Так их находит тот, кому они нужны:
-человек, открывший русский интерфейс по ошибке, ищет глазами «English», а не
-«Английский».
+The language names are written in the languages themselves. That is how the
+person who needs them finds them: somebody who opened the Russian interface by
+mistake looks for «English», not for «Английский».
 """
 from __future__ import annotations
 
@@ -17,14 +17,15 @@ from PySide6.QtCore import QLibraryInfo, QLocale, QObject, QTranslator, Signal
 
 from pdxloc import settings
 
-# код Qt-локали -> как язык называет себя сам
+# Qt locale code -> what the language calls itself
 LANGUAGES: dict[str, str] = {
     "en": "English",
     "ru": "Русский",
     "zh_CN": "简体中文",
 }
 
-# Английский — язык строк в коде: для него перевод не нужен и файла .qm нет.
+# English is the language of the strings in the code: it needs no translation
+# and has no .qm file.
 SOURCE = "en"
 
 PREFIX = "pdxloc_"
@@ -41,8 +42,8 @@ _translators: list[QTranslator] = []
 
 
 def _dir():
-    # importlib.resources, а не Path(__file__): путь верен и в исходниках, и
-    # внутри onedir-сборки PyInstaller — так же, как у gui/icons.py
+    # importlib.resources rather than Path(__file__): the path is right both in the
+    # sources and inside a PyInstaller onedir build, just as in gui/icons.py
     return resources.files("pdxloc.gui") / "translations"
 
 
