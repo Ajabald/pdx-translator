@@ -1,12 +1,13 @@
-"""Приёмочный тест на ванильном дереве Stellaris.
+"""An acceptance test on the vanilla tree of Stellaris.
 
-Третья живая игра в проекте и первая, у которой грамматика живёт прямо в
-строке: с версии 3.6 Stellaris склоняет генерируемые имена тегами `&!fem` и
-вариантами `|||gen:` (описано в `localisation/99_README_GRAMMAR.txt`). Числа
-сняты с установленной игры; стоят здесь затем, чтобы правка реестра или правил
-не разъехалась с реальностью молча.
+The third live game in the project and the first whose grammar lives right inside
+the row: since version 3.6 Stellaris declines generated names with the tags
+`&!fem` and the variants `|||gen:` (described in
+`localisation/99_README_GRAMMAR.txt`). The numbers are taken off the installed
+game; they stand here so that an edit of the registry or of the rules does not
+silently part ways with reality.
 
-Путь — переменная `PDXT_REALDATA_STELLARIS` (папка `localisation` игры).
+The path is the variable `PDXT_REALDATA_STELLARIS` (the `localisation` folder).
 """
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ pytestmark = [
 EXPECTED_EN_FILES = 231
 EXPECTED_EN_ENTRIES = 149_217
 EXPECTED_RU_FILES = 233
-EXPECTED_RU_ENTRIES = 150_899      # 12 ключей задублированы переводчиком
+EXPECTED_RU_ENTRIES = 150_899      # 12 keys were duplicated by the translator
 
 
 @pytest.fixture(scope="module")
@@ -57,11 +58,11 @@ def pairs(trees):
     return [(text, ru[key]) for key, text in en.items() if key in ru and text and ru[key]]
 
 
-# --- разбор --------------------------------------------------------------
+# --- the parsing --------------------------------------------------------
 
 
 def test_the_tree_is_recognised_and_parsed(trees) -> None:
-    """Формат опознаётся по содержимому, а разбор идёт без единой жалобы."""
+    """The format is recognised by the content, and the parsing goes without a single complaint."""
     assert loc_formats.detect(REALDATA_STELLARIS / "english") == loc_formats.YML
 
     parsed, warnings = trees
@@ -73,18 +74,18 @@ def test_the_tree_is_recognised_and_parsed(trees) -> None:
 
 
 def test_the_translation_is_complete_and_adds_case_forms(trees) -> None:
-    """Ни одного английского ключа без пары; лишние — падежные формы."""
+    """Not one English key without a pair; the extra ones are case forms."""
     parsed, _ = trees
     en, ru = parsed["english"][1], parsed["russian"][1]
     assert set(en) - set(ru) == set()
     assert len(set(ru) - set(en)) == 1_670
 
 
-# --- грамматическая система 3.6 -----------------------------------------
+# --- the grammar system of 3.6 ------------------------------------------
 
 
 def test_how_much_grammar_there_is(trees) -> None:
-    """Система заточена под языки с падежами — по числам это и видно."""
+    """The system is sharpened for languages with cases — the numbers show it."""
     parsed, _ = trees
     counts = {}
     for lang in ("english", "russian"):
@@ -98,7 +99,7 @@ def test_how_much_grammar_there_is(trees) -> None:
 
 
 def test_grammar_never_reaches_the_translator(trees) -> None:
-    """`энергия&!fem|||gen:энергии` уезжал в переводчик как есть."""
+    """`энергия&!fem|||gen:энергии` used to travel to the translator as it is."""
     parsed, _ = trees
     for text in parsed["russian"][1].values():
         shielded, mapping = mt.shield_tags(text)
@@ -107,18 +108,18 @@ def test_grammar_never_reaches_the_translator(trees) -> None:
 
 
 def test_markup_of_the_other_games_covers_stellaris(trees) -> None:
-    """`§`, `£` и `$…$` уже были в реестре — здесь они и проверяются.
+    """`§`, `£` and `$…$` were in the registry already — here is where they are checked.
 
-    Двенадцать строк из 149 217 остаются с голым символом, и ни одна не по
-    нашей вине:
+    Twelve rows out of 149,217 stay with a bare symbol, and not one of them
+    through our fault:
 
-    * десять — забытые Paradox заглушки `§_TODO CD§!` и `§_Not working…`;
-      `§_` не цвет, и делать вид, что это разметка, значит прятать чужой
-      недосмотр;
-    * `£unity £§YUnity§!` — лишняя `£` в тексте обучения, тоже опечатка;
-    * `£leader_skill|$LEVEL$£` — иконка, имя которой собирается из переменной
-      с флагом; строка одна на всё дерево, и менять ради неё регулярку дороже,
-      чем оставить как есть.
+    * ten are stubs Paradox forgot, `§_TODO CD§!` and `§_Not working…`; `§_` is no
+      colour, and pretending that it is markup means hiding somebody else's
+      oversight;
+    * `£unity £§YUnity§!` — an extra `£` in a tutorial text, a typo as well;
+    * `£leader_skill|$LEVEL$£` — an icon whose name is assembled from a variable
+      with a flag; there is one such row in the whole tree, and changing the regex
+      for its sake costs more than leaving it as it is.
     """
     parsed, _ = trees
     leftovers = [t for t in parsed["english"][1].values()
@@ -128,7 +129,7 @@ def test_markup_of_the_other_games_covers_stellaris(trees) -> None:
     assert sum(1 for t in leftovers if re.search(r"£[a-z_]+\|\$", t)) == 1
 
 
-# --- проверки ------------------------------------------------------------
+# --- the checks ---------------------------------------------------------
 
 
 def _codes(rules, pairs) -> collections.Counter:
@@ -153,10 +154,10 @@ def test_the_preset_takes_the_edge_off(pairs) -> None:
 
 
 def test_paradox_lost_gender_tags(pairs) -> None:
-    """502 строки, где тег рода потерялся при переводе.
+    """502 rows where a gender tag was lost in the translation.
 
-    `Agrippa&!masc` → `Агриппа`: в игре это имя перестанет считаться мужским, и
-    просклоняется неверно всё, куда оно подставится.
+    `Agrippa&!masc` → `Агриппа`: in the game the name stops counting as masculine,
+    and everything it is substituted into declines wrongly.
     """
     preset = _codes(qa_rules.resolve({"preset": "stellaris_ru"}, locale="ru"), pairs)
     assert preset["grammar_mismatch"] == 502

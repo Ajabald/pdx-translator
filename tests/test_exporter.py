@@ -1,4 +1,4 @@
-"""Тесты экспортёра."""
+"""Tests of the exporter."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -42,7 +42,7 @@ def test_all_fallback_en(db, make_tree, tmp_path):
     assert report.keys_written == 3
     assert report.keys_fallback_en == 1
     keys = {e.key: e.text for e in paradox_yaml.parse_file(out / "mod_l_russian.yml").entries}
-    assert keys["bye"] == "Goodbye"     # fallback на EN
+    assert keys["bye"] == "Goodbye"     # a fallback to EN
 
 
 def test_bom_and_header(db, make_tree, tmp_path):
@@ -63,19 +63,19 @@ def test_comments_preserved_markers_dropped(db, make_tree, tmp_path):
     out = tmp_path / "out"
     export_project(db, pid, ExportOptions(mode="all_fallback_en"), out_root=out)
     text = (out / "mod_l_russian.yml").read_text(encoding="utf-8-sig")
-    assert "#Comment" in text                  # комментарий из EN сохранён
+    assert "#Comment" in text                  # the comment from EN is kept
     entries = {e.key: e for e in paradox_yaml.parse_file(out / "mod_l_russian.yml").entries}
-    # greet помечен маркером во входном файле -> считается непереведённым,
-    # уходит в экспорт оригиналом и получает свежий маркер
+    # greet is marked with a marker in the input file -> it counts as untranslated,
+    # goes into the export as the original and gets a fresh marker
     assert entries["greet"].text == "Hello"
     assert "ТРЕБУЕТ ПЕРЕВОДА" in entries["greet"].comment_inline
-    # маркер ставится по факту непереведённости, а не копируется из входа
+    # the marker is set by the fact of being untranslated, not copied from the input
     assert all("ТРЕБУЕТ ПЕРЕВОДА" in e.comment_inline for e in entries.values())
 
 
 def test_stale_excluded_when_disabled(db, make_tree, tmp_path):
     pid = setup_project(db, make_tree)
-    # правим EN -> stale_key станет stale
+    # we edit the EN -> stale_key will become stale
     make_tree({"mod_l_english.yml":
                EN.replace('"Changed"', '"Changed again"')}, "en")
     scan_project(db, pid)
@@ -90,7 +90,7 @@ def test_stale_excluded_when_disabled(db, make_tree, tmp_path):
     out2 = tmp_path / "out2" / "mod_l_russian.yml"
     keys2 = {e.key for e in paradox_yaml.parse_file(out2).entries}
     assert "stale_key" in keys2
-    # отчёт — то, что видит человек после записи; он обязан сходиться с файлом
+    # the report is what a human sees after the write; it is obliged to agree with the file
     assert report.keys_written == len(keys)
     assert report2.keys_written == len(keys2) == len(keys) + 1
 
@@ -115,15 +115,15 @@ def test_export_respects_en_order(db, make_tree, tmp_path):
     out = tmp_path / "out"
     export_project(db, pid, ExportOptions(mode="all_fallback_en"), out_root=out)
     keys = [e.key for e in paradox_yaml.parse_file(out / "mod_l_russian.yml").entries]
-    assert keys == ["greet", "bye", "stale_key"]   # порядок EN-файла
+    assert keys == ["greet", "bye", "stale_key"]   # the order of the EN file
 
 
 def test_interrupted_write_leaves_the_previous_file_whole(db, make_tree, tmp_path, monkeypatch):
-    """Сорванная запись не оставляет в моде обрезанный файл.
+    """An interrupted write leaves no truncated file in the mod.
 
-    Файл локализации перезаписывается на месте, а игра читает из папки все
-    `*.yml` подряд: огрызок она загрузит как настоящий и покажет игроку
-    полперевода. Поэтому пишем рядом и подменяем готовое.
+    A localisation file is overwritten in place, while the game reads every `*.yml`
+    in the folder in a row: a stump it will load as a real one and show the player
+    half a translation. That is why we write next to it and swap the ready one in.
     """
     pid = setup_project(db, make_tree)
     out = tmp_path / "out"
@@ -143,13 +143,13 @@ def test_interrupted_write_leaves_the_previous_file_whole(db, make_tree, tmp_pat
     except OSError:
         pass
 
-    assert target.read_bytes() == before        # прежняя версия цела
+    assert target.read_bytes() == before        # the former version is intact
 
 
-# --- резервные копии перезаписываемых файлов ---
+# --- the backups of overwritten files ---
 
 def test_backup_keeps_previous_version(db, make_tree, tmp_path):
-    """Перезапись изменившегося файла оставляет прежнюю версию в бэкапе."""
+    """Overwriting a changed file leaves the former version in a backup."""
     pid = setup_project(db, make_tree)
     out, backups = tmp_path / "out", tmp_path / "backups"
     export_project(db, pid, ExportOptions(), out_root=out, backup_root=backups)
@@ -167,7 +167,7 @@ def test_backup_keeps_previous_version(db, make_tree, tmp_path):
 
 
 def test_no_backup_when_file_unchanged(db, make_tree, tmp_path):
-    """Файл не переписывался — копировать нечего, папка снимка не заводится."""
+    """The file was not overwritten — there is nothing to copy, no snapshot folder is set up."""
     pid = setup_project(db, make_tree)
     out, backups = tmp_path / "out", tmp_path / "backups"
     export_project(db, pid, ExportOptions(), out_root=out, backup_root=backups)
@@ -193,7 +193,7 @@ def test_backup_disabled(db, make_tree, tmp_path):
 
 
 def test_backups_pruned(tmp_path):
-    """Держим только последние снимки — бэкап не превращается в архив версий."""
+    """We keep only the latest snapshots — a backup does not turn into an archive of versions."""
     from pdxloc.core.exporter import _prune_backups
 
     project_dir = tmp_path / "test"
@@ -206,11 +206,12 @@ def test_backups_pruned(tmp_path):
 
 
 def test_pruning_does_not_touch_foreign_folders(tmp_path):
-    """Чужая папка в `backups/<проект>/` — не снимок, и удалять её мы не вправе.
+    """A foreign folder in `backups/<project>/` is no snapshot, and we have no right to delete it.
 
-    Раньше снимком считалась любая подпапка, а `rmtree` не спрашивает: папка,
-    положенная человеком руками, уезжала вместе со старыми снимками молча.
-    Отличить своё от чужого можно точно — у снимка строгое имя со временем.
+    Any subfolder used to count as a snapshot, and `rmtree` does not ask: a folder
+    put there by a human went away together with the old snapshots silently. Our
+    own can be told from a foreign one exactly — a snapshot has a strict name with
+    the time in it.
     """
     from pdxloc.core.exporter import _prune_backups
 
@@ -220,7 +221,7 @@ def test_pruning_does_not_touch_foreign_folders(tmp_path):
     foreign = project_dir / "мои заметки"
     foreign.mkdir()
     (foreign / "важное.txt").write_text("не удаляй", encoding="utf-8")
-    # похоже на снимок, но не оно: под шаблон не подходит
+    # it looks like a snapshot but is not: it does not fit the template
     almost = project_dir / "2026-08-01"
     almost.mkdir()
 
@@ -229,17 +230,17 @@ def test_pruning_does_not_touch_foreign_folders(tmp_path):
     assert foreign.is_dir(), "чужая папка снесена"
     assert (foreign / "важное.txt").read_text(encoding="utf-8") == "не удаляй"
     assert almost.is_dir(), "папка, лишь похожая на снимок, снесена"
-    # а свои старые снимки всё-таки убраны, иначе чистка перестала работать
+    # while our own old snapshots are taken away after all, otherwise the cleaning stopped working
     assert [p.name for p in sorted(project_dir.iterdir())
             if p.name[:4].isdigit() and "_" in p.name] == ["2026-08-04_120000"]
 
 
 def test_a_snapshot_name_matches_what_pruning_looks_for(tmp_path):
-    """Имя снимка и шаблон чистки обязаны сходиться.
+    """The name of a snapshot and the template of the cleaning are obliged to agree.
 
-    Они в разных концах модуля, и разъехаться им ничего не стоит: поменяй
-    формат имени — чистка перестанет узнавать собственные снимки и будет
-    копить их вечно, ничего при этом не ломая заметно.
+    They are at different ends of the module, and parting ways costs them nothing:
+    change the format of the name — and the cleaning stops recognising its own
+    snapshots and will pile them up forever, breaking nothing noticeably at that.
     """
     from datetime import datetime
 

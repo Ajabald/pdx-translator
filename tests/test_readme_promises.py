@@ -1,15 +1,16 @@
-"""README обещает числа — код обязан их подтверждать.
+"""The README promises numbers — the code is obliged to confirm them.
 
-Правило бэклога: «возможность считается сделанной, когда она названа в README».
-У правила есть обратная сторона, на которой уже обожглись: названное в README
-устаревает молча. Ошибки не возникает ни одной — просто в описании написано
-«15 встроенных правил», а их семнадцать, и человек, выбирающий инструмент,
-читает неправду.
+A rule of the backlog: «a capability counts as done once it is named in the
+README». The rule has a reverse side we have already been burned by: what is
+named in the README goes stale silently. Not a single error arises — it is simply
+that the description says «15 built-in rules» while there are seventeen, and the
+person choosing a tool reads an untruth.
 
-Числа тут проверяются те, что **меняются вместе с кодом**: правила и наборы
-добавляются, и каждый раз забыть про README ничего не стоит. Замеры на живых
-корпусах (41 713 замечаний и прочие) сюда не входят намеренно — они привязаны к
-дате замера, стоящей рядом в тексте, и устаревать им положено.
+The numbers checked here are the ones that **change together with the code**:
+rules and sets get added, and forgetting about the README each time costs
+nothing. The measurements on live corpora (41,713 remarks and the rest) are
+deliberately not here — they are tied to the date of the measurement standing
+next to them in the text, and going stale is proper to them.
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 READMES = {"en": ROOT / "README.md", "ru": ROOT / "README.ru.md",
            "zh": ROOT / "README.zh-CN.md"}
 
-# сколько чего есть на самом деле
+# how much of what there actually is
 BUILTIN_RULES = len(qa_rules.BUILTIN_RULES)
 PRESETS = len(qa_rules.PRESETS)
 
@@ -32,16 +33,16 @@ PRESETS = len(qa_rules.PRESETS)
 RULES_RE = {
     "en": re.compile(r"\*\*(\d+) built-in rules"),
     "ru": re.compile(r"\*\*(\d+) встроенных правил"),
-    # По-китайски счётное слово стоит при числе, а не при существительном, и
-    # число пишется цифрами — как во всей технической прозе на этом языке.
+    # In Chinese the measure word stands by the number and not by the noun, and
+    # the number is written in figures — as in all technical prose in that language.
     "zh": re.compile(r"\*\*(\d+) 条内置规则"),
 }
-# «Seven ready-made sets» / «Семь готовых наборов» — число словом
+# «Seven ready-made sets» / «Семь готовых наборов» — the number as a word
 PRESETS_RE = {
     "en": re.compile(r"\*\*(\w+) ready-made sets"),
     "ru": re.compile(r"\*\*(\w+) готовых наборов"),
-    # Нежадный захват: иероглифы числа и счётного слова стоят вплотную, и
-    # жадный `\w+` съел бы всю связку целиком.
+    # A non-greedy capture: the characters of the number and of the measure word
+    # stand right together, and a greedy `\w+` would swallow the whole bunch.
     "zh": re.compile(r"\*\*(\w+?)套现成的规则集"),
 }
 WORDS = {
@@ -88,7 +89,7 @@ GAMES_RE = {
 
 @pytest.mark.parametrize("lang", sorted(READMES))
 def test_game_count_matches_the_registry(lang: str) -> None:
-    """CK2 появилась 2026-08-15 и не была названа ни в одном README до 08-19."""
+    """CK2 appeared on 2026-08-15 and was named in no README until 08-19."""
     found = GAMES_RE[lang].search(text(lang))
     assert found, f"в {READMES[lang].name} не нашлось обещания про число игр"
     said = WORDS[lang].get(found.group(1).lower())
@@ -98,10 +99,11 @@ def test_game_count_matches_the_registry(lang: str) -> None:
 
 @pytest.mark.parametrize("lang", sorted(READMES))
 def test_every_game_is_named_in_the_readme(lang: str) -> None:
-    """Игра, о которой не сказано, для пользователя не существует.
+    """A game that is not spoken of does not exist for the user.
 
-    Пробелы схлопываем: README свёрстан под 80 колонок, и «Europa Universalis
-    IV» законно разъезжается по двум строкам. Перенос — не смысл.
+    We collapse the spaces: the README is set to 80 columns, and «Europa
+    Universalis IV» lawfully comes apart over two lines. A line break is not a
+    meaning.
     """
     said = " ".join(text(lang).split())
     missing = [g for g in games.ORDER if games.title(g) not in said]
@@ -110,16 +112,17 @@ def test_every_game_is_named_in_the_readme(lang: str) -> None:
 
 @pytest.mark.parametrize("lang", sorted(READMES))
 def test_every_game_preset_is_named_in_the_readme(lang: str) -> None:
-    """Игровой набор, о котором не сказано, для пользователя не существует.
+    """A game set that is not spoken of does not exist for the user.
 
-    Три набора (HOI4, CK2, Stellaris) появились вместе с играми, а README
-    продолжал перечислять четыре штуки времён одной CK3 — и обещание «семь игр
-    серии» этим себе же противоречило.
+    Three sets (HOI4, CK2, Stellaris) appeared together with the games, while the
+    README went on listing four of them from the times of CK3 alone — and the
+    promise of «seven games of the series» thereby contradicted itself.
 
-    Проверяются только наборы, названные игрой: с 0.1.2 их имя и есть слаг
-    игры, а он стоит в тексте буквально. У `strict`, `quiet` и `custom` имя
-    человеческое и в каждом языке своё («Строгий», «Только поломки»), сверять
-    его с идентификатором нечестно — их считает тест выше, по числу.
+    Only the sets named after a game are checked: since 0.1.2 their name is the
+    slug of the game, and that stands in the text literally. `strict`, `quiet` and
+    `custom` have a human name, different in every language («Строгий», «Только
+    поломки»), and checking it against the identifier would be dishonest — those
+    are counted by the test above, by number.
     """
     said = text(lang).lower()
     game_presets = [p for p in qa_rules.PRESETS if p in games.ORDER]
