@@ -1,4 +1,4 @@
-"""Окно глоссария: прогон, разбор кандидатов, счётчики, гашение потока."""
+"""The glossary window: the run, sorting the candidates out, the counters, stopping the thread."""
 from __future__ import annotations
 
 import os
@@ -43,12 +43,12 @@ def window(project, qtbot):
 
 
 def run_extraction(window, qtbot):
-    """Нажать «Найти термины» и дождаться конца прогона."""
+    """Press «Find terms» and wait for the end of the run."""
     with qtbot.waitSignal(window.candidates.runFinished, timeout=5000):
         window.candidates.run_btn.click()
 
 
-# --- прогон ---------------------------------------------------------------
+# --- the run --------------------------------------------------------------
 
 
 def test_finding_terms_fills_the_candidates_tab(window, qtbot, project):
@@ -73,7 +73,7 @@ def test_a_second_run_adds_nothing_new(window, qtbot, project):
     assert len(glossary.rows(conn)) == before
 
 
-# --- разбор ---------------------------------------------------------------
+# --- sorting out ----------------------------------------------------------
 
 
 def select_first_row(tab):
@@ -105,7 +105,7 @@ def test_rejecting_takes_the_row_out_of_the_queue(window, qtbot, project):
 
 
 def test_accepting_tells_the_editor_to_repaint(window, qtbot):
-    """Сигнал наружу — то, чем окно подсвечивает термин, не закрываясь."""
+    """The signal outwards is what the window highlights a term with, without closing."""
     run_extraction(window, qtbot)
     select_first_row(window.candidates)
     with qtbot.waitSignal(window.glossaryChanged, timeout=1000):
@@ -120,7 +120,7 @@ def test_deciding_on_an_empty_selection_does_nothing(window, qtbot, project):
     assert glossary.rows(conn, status=APPROVED) == []
 
 
-# --- термины руками -------------------------------------------------------
+# --- terms by hand --------------------------------------------------------
 
 
 def test_a_term_can_be_added_by_hand(window, project):
@@ -130,7 +130,7 @@ def test_a_term_can_be_added_by_hand(window, project):
     window.terms.add_btn.click()
 
     assert glossary.approved_terms(conn) == {"winterfell": "Винтерфелл"}
-    assert window.terms.en_input.text() == ""       # поля освобождены под следующий
+    assert window.terms.en_input.text() == ""       # the fields are freed for the next one
 
 
 def test_a_half_filled_term_is_not_added(window, project):
@@ -149,7 +149,7 @@ def test_a_term_is_edited_in_place(window, project):
 
 
 def test_an_emptied_term_is_refused(window, project):
-    """Пустой термин подсвечивать нечем — правка не принимается."""
+    """There is nothing to highlight an empty term with — the edit is not accepted."""
     conn, _ = project
     glossary.upsert_manual(conn, "Winterfell", "Винтерфелл")
     window.terms.reload()
@@ -167,14 +167,15 @@ def test_deleting_a_term_stops_the_highlight(window, project):
     assert glossary.approved_terms(conn) == {}
 
 
-# --- нижняя полоса --------------------------------------------------------
+# --- the bottom bar -------------------------------------------------------
 
 
 def test_the_bottom_bar_shows_the_active_tab(window, qtbot, project):
-    """Полоса внизу — общая, и говорить обязана про открытую вкладку.
+    """The bar at the bottom is a common one, and it is obliged to speak about the open tab.
 
-    Термин заводится мимо окна: так проверяется, что при переходе на вкладку
-    она перечитывает данные, а не показывает счёт с момента открытия.
+    The term is set up past the window: that is how we check that on a switch to
+    the tab it rereads the data instead of showing the count from the moment of
+    opening.
     """
     conn, _ = project
     glossary.upsert_manual(conn, "Winterfell", "Винтерфелл")
@@ -195,7 +196,7 @@ def test_counts_report_every_status(window, qtbot, project):
     assert glossary.counts(conn)[REJECTED] == 1
 
 
-# --- закрытие -------------------------------------------------------------
+# --- closing --------------------------------------------------------------
 
 
 def test_shutdown_stops_the_thread(window, qtbot):
@@ -205,5 +206,5 @@ def test_shutdown_stops_the_thread(window, qtbot):
 
 
 def test_closing_while_idle_asks_nothing(window, qtbot):
-    """Вопрос при закрытии — только если счёт идёт."""
+    """A question at closing — only if the counting is going on."""
     assert window._confirm_close_while_running() is True

@@ -1,8 +1,9 @@
-"""Регрессия дефекта: сборка базы из ванильной локализации CK3.
+"""A regression of a defect: building a database out of the vanilla CK3 localisation.
 
-Пользователь указал корень игры, приложение не нашло ни одной пары, но всё
-равно создало файл базы — пустой и с виду исправный. Плюс на настоящих папках
-сборка идёт десятки секунд без возможности прервать.
+The user pointed at the root of the game, the application found not a single pair
+but created the file of the database all the same — empty and sound to the eye.
+On top of that, on real folders the building goes for tens of seconds with no way
+to interrupt it.
 """
 from __future__ import annotations
 
@@ -17,7 +18,7 @@ RU = 'l_russian:\n a:0 "Привет"\n b:0 "Мир"\n'
 
 @pytest.fixture
 def game_tree(tmp_path):
-    """Дерево, похожее на установленную CK3: локализация лежит глубоко."""
+    """A tree resembling an installed CK3: the localisation lies deep."""
     root = tmp_path / "Crusader Kings III"
     loc = root / "game" / "localization"
     for lang, text in (("english", EN), ("russian", RU)):
@@ -31,7 +32,7 @@ def game_tree(tmp_path):
 
 @pytest.fixture
 def pairless_tree(tmp_path):
-    """Дерево, где перевода нет вовсе, — собирать из него нечего."""
+    """A tree where there is no translation at all — there is nothing to build out of it."""
     root = tmp_path / "OnlyEnglish"
     d = root / "game" / "localization" / "english"
     d.mkdir(parents=True)
@@ -41,7 +42,7 @@ def pairless_tree(tmp_path):
 
 
 def test_find_localization_dirs_from_game_root(game_tree):
-    """Указан корень игры — находим game/localization/<язык>."""
+    """The root of the game is given — we find game/localization/<language>."""
     src, tgt = tm_import.find_localization_dirs(game_tree, "english", "russian")
     assert src == game_tree / "game" / "localization" / "english"
     assert tgt == game_tree / "game" / "localization" / "russian"
@@ -67,13 +68,13 @@ def test_find_localization_dirs_missing(tmp_path):
 def test_count_pairs(game_tree):
     loc = game_tree / "game" / "localization"
     assert tm_import.count_pairs(loc / "english", loc / "russian") == (1, 1)
-    # корень игры тоже годится: каталог языка в пути сопоставляется наравне
-    # с меткой языка в имени файла
+    # the root of the game will do too: the language directory in the path is matched
+    # on a par with the language mark in the name of the file
     assert tm_import.count_pairs(game_tree, game_tree) == (1, 1)
 
 
 def test_no_pairs_leaves_no_file(pairless_tree, tmp_path):
-    """Главный дефект: раньше оставалась пустая, но с виду рабочая база."""
+    """The main defect: an empty but seemingly working database used to be left behind."""
     out = tmp_path / "broken.pdxtm"
     with pytest.raises(ValueError, match="pair was found"):
         tm_import.build_tm_from_dirs(
@@ -102,7 +103,7 @@ def test_successful_build_from_game_root_dirs(game_tree, tmp_path):
 
 
 def test_game_entries_marked_as_game_source(game_tree, tmp_path):
-    """Записи игровой базы помечаются как «база игры», а не «импорт»."""
+    """The records of a game database are marked as «a game database» and not «an import»."""
     import sqlite3
 
     loc = game_tree / "game" / "localization"
@@ -116,7 +117,7 @@ def test_game_entries_marked_as_game_source(game_tree, tmp_path):
 
 
 def test_cancel_removes_partial_file(game_tree, tmp_path):
-    """Прерывание не оставляет недописанную базу."""
+    """An interruption leaves no unfinished database behind."""
     loc = game_tree / "game" / "localization"
     out = tmp_path / "cancelled.pdxtm"
     with pytest.raises(tm_import.TmBuildCancelled):
@@ -128,7 +129,7 @@ def test_cancel_removes_partial_file(game_tree, tmp_path):
 
 
 def test_existing_database_survives_failed_rebuild(game_tree, pairless_tree, tmp_path):
-    """Неудачная пересборка не портит уже работающую базу."""
+    """A failed rebuild does not spoil an already working database."""
     loc = game_tree / "game" / "localization"
     out = tmp_path / "vanilla.pdxtm"
     tm_import.build_tm_from_dirs(loc / "english", loc / "russian", out, name="CK3")

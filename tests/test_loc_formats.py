@@ -1,9 +1,9 @@
-"""Реестр форматов: какой парсер применить к этим файлам.
+"""The registry of formats: which parser to apply to these files.
 
-Формат определяется по содержимому дерева, а не по названию игры, — иначе
-своя игра, заведённая свободным именем, оставалась бы без ответа. Здесь и
-проверяется, что ответ берётся из данных и что оба формата отвечают одинаково
-устроенным набором функций.
+The format is decided by the content of the tree and not by the name of the game
+— otherwise a game of one's own, set up with a free name, would be left without an
+answer. Here we check that the answer is taken from the data and that both formats
+answer with an identically built set of functions.
 """
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def test_the_format_is_told_by_the_tree(yml_tree, csv_tree, tmp_path) -> None:
 
 
 def test_a_yml_file_without_a_header_is_not_localisation(tmp_path) -> None:
-    """`.yml` рядом с модом бывает и настройкой сборки — заголовок решает."""
+    """A `.yml` next to a mod happens to be a build setting too — the header decides."""
     root = tmp_path / "ci"
     root.mkdir()
     (root / "workflow.yml").write_text("name: build\non: push\n", encoding="utf-8")
@@ -53,13 +53,13 @@ def test_a_yml_file_without_a_header_is_not_localisation(tmp_path) -> None:
 
 
 def test_an_unknown_id_falls_back_to_the_current_format() -> None:
-    """Значение приезжает из файла проекта — версия могла знать больше нас."""
+    """The value arrives from a project file — the version could have known more than we do."""
     assert loc_formats.get("никакой").id == loc_formats.DEFAULT
     assert loc_formats.get(loc_formats.CSV).id == loc_formats.CSV
 
 
 def test_both_formats_answer_the_same_questions(yml_tree, csv_tree) -> None:
-    """Вызывающие ходят только через эти имена — набор обязан совпадать."""
+    """The callers go only by these names — the set is obliged to match."""
     for fmt, root, language in ((loc_formats.get(loc_formats.YML), yml_tree, "english"),
                                 (loc_formats.get(loc_formats.CSV), csv_tree, "english")):
         found = fmt.files(root, language)
@@ -73,7 +73,7 @@ def test_both_formats_answer_the_same_questions(yml_tree, csv_tree) -> None:
 
 
 def test_the_language_lives_in_the_path_only_in_the_current_format() -> None:
-    """У старых игр язык — колонка, и файл перевода зовётся как оригинал."""
+    """In the older games the language is a column, and the translation file is named like the original."""
     yml = loc_formats.get(loc_formats.YML)
     csv = loc_formats.get(loc_formats.CSV)
     assert yml.language_in_path and not csv.language_in_path
@@ -83,10 +83,11 @@ def test_the_language_lives_in_the_path_only_in_the_current_format() -> None:
 
 
 def test_the_registry_delegates_to_the_module(monkeypatch, yml_tree) -> None:
-    """Формат держит модуль, а не снятые ссылки: подмена обязана доходить.
+    """A format holds the module and not references taken off it: a substitution is obliged to reach it.
 
-    Проверка не про тесты, а про устройство: ссылка на функцию, снятая при
-    импорте, не узнала бы ни о подмене, ни о том, что модуль перезагрузили.
+    The check is not about the tests but about the arrangement: a reference to a
+    function taken at import time would learn neither of a substitution nor of the
+    module being reloaded.
     """
     calls: list = []
     real = paradox_yaml.parse_file
@@ -98,7 +99,7 @@ def test_the_registry_delegates_to_the_module(monkeypatch, yml_tree) -> None:
 
 
 def test_newlines_are_normalised_the_same_for_both() -> None:
-    """В базу перевод ложится в общем виде: настоящий перенос ломает оба формата."""
+    """Into the database a translation goes in the common form: a real line break breaks both formats."""
     assert loc_formats.normalize_newlines("раз\nдва") == "раз\\nдва"
     assert paradox_csv.escape_value("раз\nдва") == "раз\\nдва"
 

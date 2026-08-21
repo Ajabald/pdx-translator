@@ -1,8 +1,8 @@
-"""Сквозные сценарии: три пути переводчика целиком, от создания до записи в мод.
+"""End-to-end scenarios: three paths of a translator whole, from setting up to the write into the mod.
 
-Остальные тесты проверяют узлы по отдельности; здесь важно, что они работают
-вместе — перевод переживает обновление мода, запись читается обратно без потерь,
-а откат возвращает ровно то, что было.
+The other tests check the nodes separately; here what matters is that they work
+together — a translation survives an update of the mod, a write reads back without
+losses, and a rollback returns exactly what was there.
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ EN_V1 = ('l_english:\n'
          ' long:0 "The bridge must be paid.\\n\\nOr blood will."\n'
          ' gone:0 "This key disappears later"\n')
 
-# та же локализация после обновления мода: оформление, смысл, новый и удалённый ключ
+# the same localisation after an update of the mod: the formatting, the meaning, a new and a deleted key
 EN_V2 = ('l_english:\n'
          ' greet:0 "Hello, [GetName]!!"\n'
          ' bye:0 "Farewell, my dear friend."\n'
@@ -42,7 +42,7 @@ def write(path, text):
 
 @pytest.fixture
 def mod(tmp_path):
-    """Проект на дереве мода, пять строк, четыре переведены."""
+    """A project on the tree of a mod, five rows, four of them translated."""
     en = tmp_path / "mod" / "localization" / "english"
     write(en / "m_l_english.yml", EN_V1)
     conn = P.create_project(tmp_path / "p.pdxproj", name="Тест",
@@ -58,7 +58,7 @@ def mod(tmp_path):
 
 
 def test_translate_from_scratch_and_write_to_mod(mod):
-    """Путь 1: перевести с нуля и записать в мод."""
+    """Path 1: translate from scratch and write into the mod."""
     conn, tmp_path, _en, _ids = mod
     out = tmp_path / "out"
 
@@ -82,7 +82,7 @@ def test_translate_from_scratch_and_write_to_mod(mod):
 
 
 def test_existing_translation_is_picked_up(tmp_path):
-    """Путь 2: рядом уже лежит готовый перевод."""
+    """Path 2: a ready translation already lies next to it."""
     en = tmp_path / "mod" / "localization" / "english"
     ru = tmp_path / "mod" / "localization" / "russian"
     write(en / "m_l_english.yml", 'l_english:\n a:0 "Hello"\n b:0 "World"\n')
@@ -93,8 +93,8 @@ def test_existing_translation_is_picked_up(tmp_path):
         scan_project(conn, 1)
         got = {r["key"]: r["status"] for r in conn.execute("SELECT key, status FROM units")}
         assert got["a"] == Status.TRANSLATED.value
-        # совпадение с оригиналом — законный перевод (имена, числа), но только
-        # потому что в файле есть хоть один настоящий
+        # a coincidence with the original is a lawful translation (names, numbers),
+        # but only because the file holds at least one real one
         assert got["b"] == Status.TRANSLATED.value
         assert conn.execute(
             "SELECT COUNT(*) FROM legacy_translations WHERE key='old'").fetchone()[0] == 1
@@ -118,7 +118,7 @@ def test_copy_of_source_is_not_a_translation(tmp_path):
 
 
 def test_mod_update_keeps_translations(mod):
-    """Путь 3: вышло обновление мода."""
+    """Path 3: an update of the mod has come out."""
     conn, _tmp, en, ids = mod
     write(en / "m_l_english.yml", EN_V2)
 
@@ -147,7 +147,7 @@ def test_mod_update_keeps_translations(mod):
 
 
 def test_memory_base_gives_similar_lines(mod, tmp_path):
-    """База основного мода подсказывает похожие строки сабмода."""
+    """The database of the main mod prompts similar rows to a submod."""
     conn, _tmp, _en, _ids = mod
     other = tmp_path / "mod2" / "localization"
     write(other / "english" / "b_l_english.yml",
@@ -169,7 +169,7 @@ def test_memory_base_gives_similar_lines(mod, tmp_path):
 
 
 def test_import_from_mod_and_undo(mod, tmp_path):
-    """Чужой перевод принимается пачкой и снимается одной командой."""
+    """Somebody else's translation is accepted in a batch and taken off by one command."""
     conn, _tmp, _en, _ids = mod
     other = tmp_path / "other"
     write(other / "m_l_russian.yml",
@@ -183,7 +183,7 @@ def test_import_from_mod_and_undo(mod, tmp_path):
     batch = unit_ops.new_batch_id()
     report = loc_import.import_translations(
         conn, 1, other, loc_import.ImportOptions(overwrite=True), batch_id=batch)
-    assert report.imported == 1        # fresh появится только после обновления мода
+    assert report.imported == 1        # fresh will appear only after an update of the mod
     unit_ops.undo_batch(conn, batch)
     assert conn.execute("SELECT ru_text FROM units WHERE key='greet'").fetchone()[0] == before
 

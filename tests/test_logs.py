@@ -1,4 +1,4 @@
-"""Диагностический лог: пишет, переживает отказ и не тянет за собой Qt."""
+"""The diagnostic log: it writes, it survives a refusal and it does not drag Qt along."""
 from __future__ import annotations
 
 import logging
@@ -16,7 +16,7 @@ SRC = Path(__file__).resolve().parents[1] / "src"
 
 @pytest.fixture(autouse=True)
 def clean_root(tmp_path, monkeypatch):
-    """Свой каталог и свежий корневой логгер на каждый тест."""
+    """A directory of its own and a fresh root logger for every test."""
     from pdxloc import settings
 
     monkeypatch.setattr(settings, "app_root", lambda: tmp_path)
@@ -32,14 +32,14 @@ def clean_root(tmp_path, monkeypatch):
 
 
 def test_the_log_lands_next_to_the_application(clean_root) -> None:
-    """Рядом с приложением, а не в %APPDATA%: режим переносимый."""
+    """Next to the application and not in %APPDATA%: the mode is portable."""
     path = logs.setup()
     assert path == clean_root / logs.LOG_NAME
     assert path.is_file()
 
 
 def test_the_environment_is_written_first(clean_root) -> None:
-    """Версия, Python и система снимают половину вопросов до трассировки."""
+    """The version, the Python and the system take half the questions off before the traceback."""
     from pdxloc import __version__
 
     path = logs.setup()
@@ -49,7 +49,7 @@ def test_the_environment_is_written_first(clean_root) -> None:
 
 
 def test_an_uncaught_exception_reaches_the_file(clean_root) -> None:
-    """Ради этого всё и делается: сейчас такое исключение уходит в никуда."""
+    """That is what the whole thing is for: at present such an exception goes nowhere."""
     path = logs.setup()
     try:
         raise ValueError("что-то пошло не так")
@@ -63,7 +63,7 @@ def test_an_uncaught_exception_reaches_the_file(clean_root) -> None:
 
 
 def test_keyboard_interrupt_is_not_a_crash(clean_root) -> None:
-    """Ctrl+C — не поломка, и засорять им лог незачем."""
+    """Ctrl+C is no breakage, and there is no point littering the log with it."""
     path = logs.setup()
     try:
         raise KeyboardInterrupt
@@ -73,10 +73,10 @@ def test_keyboard_interrupt_is_not_a_crash(clean_root) -> None:
 
 
 def test_a_read_only_folder_does_not_stop_the_application(monkeypatch) -> None:
-    """Приложение, не запустившееся из-за лога, хуже приложения без лога.
+    """An application that did not start because of the log is worse than one without a log.
 
-    Каталог бывает только на чтение — флешка с защитой, `Program Files` без
-    прав, — и это не повод не работать.
+    A directory happens to be read-only — a flash drive with protection, `Program
+    Files` without rights — and that is no reason not to work.
     """
     def refuse(*_a, **_kw):
         raise OSError("только чтение")
@@ -87,7 +87,7 @@ def test_a_read_only_folder_does_not_stop_the_application(monkeypatch) -> None:
 
 
 def test_setup_is_idempotent(clean_root) -> None:
-    """Второй вызов не должен вешать второй обработчик — строки задвоились бы."""
+    """A second call must not hang a second handler — the lines would be doubled."""
     logs.setup()
     count = len(logging.getLogger().handlers)
     logs.setup()
@@ -95,10 +95,11 @@ def test_setup_is_idempotent(clean_root) -> None:
 
 
 def test_logging_works_without_pyside(tmp_path) -> None:
-    """`--scan-cli` живёт без Qt, и лог обязан жить там же.
+    """`--scan-cli` lives without Qt, and the log is obliged to live there too.
 
-    Проверяем в отдельном процессе: PySide6 уже загружен в этом, и подменить
-    его на месте — значит проверить не то, что происходит на машине без Qt.
+    We check in a separate process: PySide6 is already loaded in this one, and
+    substituting it in place would mean checking something other than what happens
+    on a machine without Qt.
     """
     script = textwrap.dedent(f"""
         import sys
