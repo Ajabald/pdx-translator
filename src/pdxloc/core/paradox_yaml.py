@@ -243,5 +243,5 @@ def detect(root: Path) -> bool:
             if HEADER_RE.match(line):
                 return True
             if line.strip() and not COMMENT_RE.match(line):
-                break      # первая значащая строка не заголовок — не наш файл
+                break      # the first meaningful line is not a header — not our file
     return False

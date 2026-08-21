@@ -216,7 +216,7 @@ def _fits(line: str, encoding: str) -> bool:
 
 def render(language: str, entries: Iterable[LocEntry], trailing: str = "",
            *, encoding: str = "") -> str:
-    """Собрать текст файла.
+    """Assemble the text of the file.
 
     **Other people's columns are kept as long as they survive the encoding.** A
     French translation is written in the same cp1252 as the original, and German

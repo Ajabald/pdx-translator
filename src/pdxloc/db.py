@@ -684,7 +684,7 @@ def _migrate_3_to_4(conn: sqlite3.Connection) -> None:
 
 
 def _migrate_4_to_5(conn: sqlite3.Connection) -> None:
-    """v4 -> v5: язык текста отдельно от папки игры.
+    """v4 -> v5: the text language apart from the game folder.
 
     Two new columns and nothing else: `units` is not rebuilt and no copy of the
     file is needed before the migration. The values are left **empty** on purpose

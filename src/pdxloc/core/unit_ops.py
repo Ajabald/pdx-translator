@@ -235,9 +235,9 @@ def status_after_edit(
     prev_en: str | None,
     change_kind: str | None,
 ) -> tuple[str, str | None, str | None]:
-    """Каким станет состояние строки после правки перевода.
+    """What the state of a row will become after an edit of the translation.
 
-    Возвращает `(статус, prev_en_text, change_kind)`. Ни базы, ни записи — чтобы
+    Returns `(status, prev_en_text, change_kind)`. No database, no writing — so
     the transition table could be called both per row (`save_ru_text`) and as a
     batch (importing a translation from a mod). The logic here is shared by both
     paths **deliberately**: let them diverge and the import would start leaving

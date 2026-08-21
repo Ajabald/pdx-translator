@@ -76,13 +76,13 @@ TOKENS: tuple[Token, ...] = (
         id="color_script",
         title="Colour from a script call §[…]",
         pattern=re.compile(r"§\[[^\[\]]*\]"),
-        # Раньше `bracket` — иначе скобка забирает свой кусок первой, а от цвета
-        # остаётся голая §, и она съедает первую букву следующего слова:
-        # `§[GetColour]red` превращался в `ed`. Простой `§Y`, наоборот, ищется
-        # ПОСЛЕ скобки (`color_open`, порядок 24) — иначе цвет внутри
-        # скриптового вызова украл бы диапазон у всего вызова, как это было с
-        # иконкой `@gold!`. Вложенных скобок формат не знает, поэтому оба
-        # правила уживаются. 13 строк ванильной HOI4.
+        # Before `bracket` — otherwise the bracket takes its piece first and a
+        # bare § is left of the colour, which then eats the first letter of the
+        # next word: `§[GetColour]red` used to turn into `ed`. A plain `§Y`, on
+        # the contrary, is looked for AFTER the bracket (`color_open`, order 24)
+        # — otherwise a colour inside a scripted call would steal the range from
+        # the call whole, as happened with the `@gold!` icon. The format knows no
+        # nested brackets, so both rules get along. 13 rows of vanilla HOI4.
         order=4,
         color="markup.format",
         bold=True,
@@ -106,7 +106,7 @@ TOKENS: tuple[Token, ...] = (
         id="icon_pound",
         title="Icon £ £",
         pattern=re.compile(r"£[A-Za-z0-9_]+(?:\|[A-Za-z0-9]+)?£?"),
-        order=12,          # раньше icon_var и dollar — см. примечание у icon_var
+        order=12,          # before icon_var and dollar — see the note at icon_var
         color="markup.icon",
         shield=True,
         strip_with="",
@@ -123,12 +123,13 @@ TOKENS: tuple[Token, ...] = (
         id="icon_var",
         title="Icon named by a variable £$…$£",
         pattern=re.compile(r"£\$[^$]*\$£?"),
-        # После `bracket` и `icon_pound`, но до `dollar`. До `dollar` — потому
-        # что переменная внутри это имя иконки, а не подстановка в текст, и
-        # уезжать в переводчик она должна вместе с иконкой. После `icon_pound`
-        # — из-за `£command_power£$COST|H0$`: там вторая £ закрывает первую
-        # иконку, и начни разбор отсюда, эта пара распалась бы надвое.
-        # 29 строк ванильной HOI4.
+        # After `bracket` and `icon_pound`, but before `dollar`. Before `dollar`
+        # because the variable inside is the name of an icon and not a
+        # substitution into the text, and it has to travel to the translator
+        # together with the icon. After `icon_pound` because of
+        # `£command_power£$COST|H0$`: the second £ there closes the first icon,
+        # and were the parsing to start here, that pair would fall in two.
+        # 29 rows of vanilla HOI4.
         order=14,
         color="markup.icon",
         shield=True,

@@ -260,9 +260,10 @@ def resolve_target_dir(
 def count_pairs(
     src_dir: Path, tgt_dir: Path, src_lang: str = "english", tgt_lang: str = "russian",
 ) -> tuple[int, int]:
-    """Сколько файлов имеют пару и сколько всего файлов оригинала.
+    """How many files have a pair and how many source files there are in all.
 
-    Дешёвая прикидка до начала работы: если пар нет, собирать нечего.
+    A cheap estimate before the work begins: if there are no pairs, there is
+    nothing to build.
     """
     src_dir, tgt_dir = Path(src_dir), Path(tgt_dir)
     fmt = loc_formats.get(loc_formats.detect(src_dir))
@@ -276,7 +277,7 @@ def count_pairs(
 
 
 def _encoding_of(fmt: loc_formats.LocFormat, root: Path) -> str:
-    """Кодировка дерева. У формата с единственной кодировкой — она и есть."""
+    """The encoding of the tree. For a format with a single encoding — that is it."""
     from pdxloc.core import paradox_csv
 
     if len(fmt.encodings) == 1:
@@ -285,7 +286,7 @@ def _encoding_of(fmt: loc_formats.LocFormat, root: Path) -> str:
 
 
 class TmBuildCancelled(Exception):
-    """Сборка прервана пользователем — недописанная база удаляется."""
+    """The build was interrupted by the user — the unfinished database is deleted."""
 
 
 def build_tm_from_dirs(
