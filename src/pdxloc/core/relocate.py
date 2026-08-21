@@ -117,7 +117,7 @@ def project_row(conn: sqlite3.Connection, project_id: int) -> sqlite3.Row:
 
 
 def known_rel_paths(conn: sqlite3.Connection, project_id: int) -> list[str]:
-    """Файлы оригинала, которые база считает живыми."""
+    """The original files the database considers alive."""
     return [
         r["rel_path"] for r in conn.execute(
             "SELECT rel_path FROM files WHERE project_id = ? AND is_deleted = 0 "
@@ -133,7 +133,7 @@ def _disk_rel_paths(root: Path, src_lang: str) -> list[str]:
 
 
 def _match(known: list[str], on_disk: list[str]) -> tuple[list[str], list[str], list[str]]:
-    """Сопоставить наборы путей без учёта регистра (Windows его не различает)."""
+    """Match sets of paths case-insensitively: Windows does not tell case apart."""
     disk_by_lower = {rel.lower(): rel for rel in on_disk}
     matched, missing = [], []
     for rel in known:
@@ -144,11 +144,12 @@ def _match(known: list[str], on_disk: list[str]) -> tuple[list[str], list[str], 
 
 
 def candidate_roots(chosen: Path, src_lang: str) -> list[Path]:
-    """Сама выбранная папка и все папки языка внутри неё.
+    """The chosen folder itself and every language folder inside it.
 
-    Пользователь показывает то папку мода целиком, то localization, то нужную
-    папку языка. Выбирать за него молча нельзя, поэтому возвращаем все, а окно
-    объясняет, почему взята не та, которую ткнули.
+    People point sometimes at the whole mod folder, sometimes at localization,
+    sometimes at the language folder proper. Choosing for them in silence is not
+    allowed, so we return them all and the window explains why the one that was
+    taken is not the one that was clicked.
     """
     chosen = Path(chosen)
     if not chosen.is_dir():
@@ -165,7 +166,7 @@ def candidate_roots(chosen: Path, src_lang: str) -> list[Path]:
 def preview_root_change(
     conn: sqlite3.Connection, project_id: int, chosen: Path | str,
 ) -> RootPreview:
-    """Посчитать последствия смены папки оригинала, ничего не меняя."""
+    """Work out the consequences of changing the original folder, changing nothing."""
     chosen = Path(str(chosen).strip())
     proj = project_row(conn, project_id)
     src_lang = proj["src_lang"] if "src_lang" in proj.keys() else "english"
@@ -177,8 +178,8 @@ def preview_root_change(
             translate("Relocate", "Folder not found: %1"), chosen)
         return preview
 
-    # Лучшая папка — та, где нашлось больше всего знакомых базе файлов. При
-    # равенстве побеждает первая: сама выбранная, а не подпапка.
+    # The best folder is the one where most of the files the database knows were
+    # found. On a tie the first wins: the chosen folder itself, not a subfolder.
     scored: list[tuple[Path, int, list[str]]] = []
     for root in candidate_roots(chosen, src_lang):
         on_disk = _disk_rel_paths(root, src_lang)
@@ -193,8 +194,8 @@ def preview_root_change(
             lang_tag(src_lang), chosen)
         return preview
     if best[1] == 0:
-        # знакомых файлов нет, но файлы локализации есть — берём первую папку,
-        # где они вообще лежат, и предупреждаем в сводке
+        # no familiar files, but localisation files are there: take the first folder
+        # that holds any at all, and warn about it in the summary
         best = next(item for item in scored if item[2])
 
     root, _, on_disk = best
@@ -217,21 +218,22 @@ def preview_root_change(
 
 @dataclass
 class LanguagePreview:
-    """Последствия смены языка папки, посчитанные до записи.
+    """The consequences of changing a folder language, worked out before writing.
 
-    Смена `src_lang` опаснее, чем кажется: сканер ищет файлы по метке
-    `_l_<язык>` в имени, и после смены он попросту не найдёт ни одного — все
-    строки станут удалёнными, а переводы уедут в архив. То же, что при ошибке
-    в пути, только заметить труднее: папка-то на месте.
+    Changing `src_lang` is more dangerous than it looks: the scanner finds files
+    by the `_l_<language>` marker in the name, and after the change it will
+    simply find none — every row turns deleted and the translations move to the
+    archive. The same as a mistake in the path, only harder to notice: the folder
+    is right where it was.
     """
 
     src_lang: str
     tgt_lang: str
     known_files: int = 0
-    found: int = 0            # файлов оригинала с новой меткой языка
+    found: int = 0            # original files carrying the new language marker
     units_missing: int = 0
     translated_missing: int = 0
-    scan_needed: bool = False       # менялось то, что читает сканер
+    scan_needed: bool = False       # what the scanner reads was changed
 
     @property
     def risky(self) -> bool:
@@ -273,7 +275,7 @@ def preview_language_change(
     src_lang: str,
     tgt_lang: str,
 ) -> LanguagePreview:
-    """Посчитать последствия смены языков папок, ничего не меняя."""
+    """Work out the consequences of changing the folder languages, changing nothing."""
     current = project_row(conn, project_id)
     known = known_rel_paths(conn, project_id)
     preview = LanguagePreview(src_lang=src_lang, tgt_lang=tgt_lang,
@@ -308,7 +310,7 @@ def get_en_root(conn: sqlite3.Connection, project_id: int) -> Path:
 
 
 def set_en_root(conn: sqlite3.Connection, project_id: int, root: Path | str) -> Path:
-    """Записать новую папку оригинала. Строки не трогаются — их разберёт скан."""
+    """Write the new original folder. The rows are left alone: the scan sorts them out."""
     root = Path(root)
     conn.execute(
         "UPDATE projects SET en_root = ? WHERE id = ?", (str(root), project_id))
