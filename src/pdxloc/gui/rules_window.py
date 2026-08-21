@@ -1,15 +1,15 @@
-"""Окно настройки проверок (Shift+F6).
+"""The check settings window (Shift+F6).
 
-Зачем окно, а не список галок в «Параметрах». Повод к настройке всегда один и
-тот же: проверка ругается на приём, которым переводчик пользуется намеренно.
-Чтобы понять, тот ли это случай, нужно видеть три вещи разом — сколько раз
-правило срабатывает на этом проекте, что оно скажет на конкретной паре строк и
-какие примеры оно само считает ошибкой. Галка в диалоге настроек не отвечает ни
-на один из вопросов, и правило выключают вслепую.
+Why a window rather than a list of checkboxes in «Preferences». The reason for
+tuning is always the same: a check complains about a technique the translator uses
+on purpose. To tell whether this is that case you need three things at once — how
+many times the rule fires on this project, what it says about one particular pair
+of rows, and which examples it considers errors itself. A checkbox in a settings
+dialog answers none of those questions, and the rule gets switched off blind.
 
-Счётчик срабатываний считается в отдельном потоке со своим соединением: полный
-проход по 136 тысячам строк занимает секунды, а параметр крутят ползунком.
-Отсюда дебаунс и отмена предыдущего замера.
+The hit counter is computed on a thread of its own with a connection of its own: a
+full pass over 136 thousand rows takes seconds, while a parameter is turned with a
+slider. Hence the debounce and the cancelling of the previous count.
 """
 from __future__ import annotations
 
@@ -53,17 +53,17 @@ def severity_label(severity: str) -> str:
     return translate("RulesWindow", SEVERITY_LABELS.get(severity, severity))
 
 
-# --- фоновый счётчик срабатываний ----------------------------------------
+# --- the background hit counter ---
 
 
 class _CountWorker(QObject):
-    """Сколько раз каждое правило срабатывает на проекте.
+    """How many times each rule fires on the project.
 
-    Открывает своё соединение на чтение: делить sqlite между потоками нельзя,
-    а писать сюда нечего.
+    Opens a read-only connection of its own: sqlite must not be shared between
+    threads, and there is nothing to write here anyway.
     """
 
-    done = Signal(dict, int)        # {код: сколько}, всего строк
+    done = Signal(dict, int)        # {code: count}, plus the total number of rows
     failed = Signal(str)
 
     def __init__(self, project_path: Path, rules: RuleSet):
@@ -97,9 +97,7 @@ class _CountWorker(QObject):
         self.done.emit(counts, len(rows))
 
 
-
-
-# --- вкладка «Правила» ---------------------------------------------------
+# --- the «Rules» tab ---
 
 
 class RulesTab(QWidget):
@@ -110,7 +108,7 @@ class RulesTab(QWidget):
         super().__init__(parent)
         self.conn = conn
         self.project_path = project_path
-        # чем заполнить «Проверить на паре» по кнопке; None — кнопки нет
+        # what fills «Check on a pair» from the button; None means no button
         self.current_pair = current_pair
         self.scope = PROJECT if conn is not None else GLOBAL
         self._counts: dict[str, int] = {}
@@ -120,8 +118,8 @@ class RulesTab(QWidget):
         self._pending = False
         self._loading = False
 
-        # редактируемый набор и пресет каждого слоя — правки одного слоя не
-        # должны утекать в другой при переключении «Область»
+        # the editable rule set and the preset of each layer — edits to one layer must
+        # not leak into another when «Scope» is switched
         self._preset = {
             GLOBAL: qa_rules.preset_of(rules_state.global_overlay()),
             PROJECT: rules_state.project_overlay().get("preset") or qa_rules.CUSTOM,
@@ -146,15 +144,16 @@ class RulesTab(QWidget):
         self._sync_top()
         self._request_count()
 
-    # --- сборка ---
+    # --- assembly ---
 
     def _build_top(self) -> QHBoxLayout:
         row = QHBoxLayout()
         row.addWidget(QLabel(translate("RulesWindow", "Preset:")))
         self.preset_combo = QComboBox()
-        # Порядок и пометка — те же, что в меню главного окна: подходящий
-        # проекту набор стоит первым, остальные за разделителем. Витрин две, и
-        # расходиться им нельзя — человек выбирает набор то там, то тут.
+        # The order and the mark are the same as in the main window menu: the set that
+        # suits the project stands first, the rest behind a separator. There are two
+        # shop windows and they must not diverge — a person picks a set now here, now
+        # there.
         game, locale = rules_state.game(), rules_state.locale()
         best = qa_rules.recommended(game, locale)
         for name in qa_rules.display_order(game, locale):
@@ -194,9 +193,9 @@ class RulesTab(QWidget):
         self.export_btn.clicked.connect(self._export)
         row.addWidget(self.export_btn)
 
-        # Сброс — двумя разными действиями, а не одной кнопкой. Прежняя
-        # «Сбросить всё» заодно молча удаляла свои правила слоя: работа
-        # пользователя исчезала в действии, обещавшем «вернуть значения».
+        # The reset is two separate actions rather than one button. The old «Reset
+        # everything» also silently deleted the layer's own rules: the user's work
+        # vanished inside an action that promised to «return the values».
         self.reset_btn = QToolButton()
         self.reset_btn.setText(translate("RulesWindow", "Reset…"))
         self.reset_btn.setPopupMode(QToolButton.InstantPopup)
@@ -254,8 +253,8 @@ class RulesTab(QWidget):
         self.tree.setUniformRowHeights(True)
         header = self.tree.header()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
-        # счётчик и серьёзность — по содержимому: иначе имя правила съедает
-        # всю ширину, а числа, ради которых окно и открывают, уезжают за край
+        # the counter and the severity fit their content: otherwise the rule name eats
+        # the whole width and the numbers the window is opened for slide off the edge
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.tree.currentItemChanged.connect(lambda *_: self._show_current())
@@ -276,11 +275,11 @@ class RulesTab(QWidget):
         self.note_label.setWordWrap(True)
         box.addWidget(self.note_label)
 
-        # Два блока, потому что это две разные вещи, и раньше окно их не
-        # различало: **проверку** пишет автор — у базового правила её не
-        # тронуть, — а **настройку** (вкл/выкл, серьёзность, послабления) крутит
-        # переводчик у любого правила. Отсюда и был вопрос «что тут можно
-        # трогать»: поля выглядели одинаково доступными.
+        # Two blocks, because these are two different things and the window used not to
+        # tell them apart: the **check** is written by the author — on a built-in rule
+        # it cannot be touched — while the **settings**, on/off, severity, leniencies,
+        # are turned by the translator on any rule. Hence the question «what am I
+        # allowed to touch here»: the fields all looked equally editable.
         self.check_box = QGroupBox(translate("RulesWindow", "Check"))
         check_layout = QVBoxLayout(self.check_box)
         self.kind_label = QLabel()
@@ -326,8 +325,9 @@ class RulesTab(QWidget):
         params_layout.addWidget(self.params)
         self.no_params_label = QLabel(translate("RulesWindow", "This rule has no settings."))
         params_layout.addWidget(self.no_params_label)
-        # Битое выражение гасит своё правило молча (иначе проверка падала бы
-        # посреди прохода по сотне тысяч строк) — сказать об этом обязано окно.
+        # A broken expression silences its own rule quietly — otherwise the check would
+        # fall over halfway through a hundred thousand rows — so it is the window's job
+        # to say so.
         self.problem_label = QLabel()
         self.problem_label.setWordWrap(True)
         self.problem_label.setStyleSheet(f"color: {theme.color('issue.error')}")
@@ -350,8 +350,8 @@ class RulesTab(QWidget):
         self.examples.verticalHeader().setVisible(False)
         self.examples.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.examples.horizontalHeader().setStretchLastSection(True)
-        # свободную высоту отдаём таблице примеров, а не полю пробы: поле
-        # держит две строки текста, и растягивать его не за чем
+        # the spare height goes to the examples table rather than to the probe field:
+        # the field holds two lines of text and there is no point stretching it
         box.addWidget(self.examples, 1)
 
         area = QScrollArea()
@@ -387,15 +387,16 @@ class RulesTab(QWidget):
         outer.addLayout(row)
         return group
 
-    # --- дерево ---
+    # --- the tree ---
 
     def _fill_tree(self) -> None:
-        """Дерево двумя корнями: базовые правила и свои.
+        """The tree has two roots: the built-in rules and the user's own.
 
-        Раньше корней не было вовсе — категории шли плоским списком, и «Свои
-        правила» выглядели такой же категорией, как «Разметка». Из окна не было
-        видно главного: у базового правила проверку не переписать и его не
-        удалить, а своё принадлежит целиком пользователю.
+        There were no roots at all before — the categories went as a flat list,
+        and «Own rules» looked like just another category next to «Markup». The
+        main thing was invisible: a built-in rule's check cannot be rewritten and
+        the rule cannot be deleted, while an own rule belongs to the user
+        entirely.
         """
         self._loading = True
         self.tree.clear()
@@ -407,7 +408,7 @@ class RulesTab(QWidget):
                            "rewritten or deleted"))
         for key, _label in qa_rules.CATEGORIES.items():
             if key == "custom":
-                continue        # своим правилам отведён свой корень
+                continue        # own rules get a root of their own
             rules = [r for r in self._rules
                      if r.origin != qa_rules.USER and r.category == key
                      and self._for_this_project(r)]
@@ -418,8 +419,8 @@ class RulesTab(QWidget):
         foreign = [r for r in self._rules
                    if r.origin != qa_rules.USER and not self._for_this_project(r)]
         if foreign:
-            # Не прячем: правило чужого языка молчит, и без объяснения это
-            # выглядит поломкой. Включить его вручную по-прежнему можно.
+            # Not hidden: a rule of another language stays silent, and without an
+            # explanation that looks like breakage. It can still be switched on by hand.
             group = self._group(base_root,
                                 translate("RulesWindow", "Other languages"),
                                 expanded=False)
@@ -441,11 +442,12 @@ class RulesTab(QWidget):
         self._paint_counts()
 
     def _category_title(self, key: str) -> str:
-        """Подпись группы. У языковой — с языком проекта, а не «Язык перевода».
+        """A group label. The language group carries the project language rather
+        than the words «Target language».
 
-        Правило молчит именно потому, что оно про другой язык, и группа обязана
-        это назвать: иначе «Язык перевода» ничего не сообщает тому, кто и так
-        переводит.
+        A rule stays silent precisely because it is about another language, and the
+        group has to name it: «Target language» tells nothing to somebody who is
+        translating anyway.
         """
         label = translate("QaRules", qa_rules.CATEGORIES[key])
         locale = rules_state.locale()
@@ -479,11 +481,11 @@ class RulesTab(QWidget):
             return
 
     def _items(self, parent: QTreeWidgetItem | None = None):
-        """Все правила дерева. Обход рекурсивный: у групп появились группы.
+        """Every rule in the tree. The walk is recursive: groups gained groups.
 
-        Пока уровней было ровно два, обход считал детей корня правилами. С
-        подгруппами такой обход перестал бы находить правила — молча, потому
-        что и счётчик срабатываний, и правки ходят через него же.
+        While there were exactly two levels the walk treated the root's children
+        as rules. With subgroups such a walk would stop finding rules — silently,
+        because the hit counter and the edits both go through it.
         """
         if parent is None:
             for i in range(self.tree.topLevelItemCount()):
@@ -503,15 +505,15 @@ class RulesTab(QWidget):
         return None
 
     def _is_modified(self, rule: Rule) -> bool:
-        """Правило отличается от того, каким его задаёт набор."""
+        """The rule differs from what the set makes of it."""
         base = self._base_ruleset().get(rule.id)
         return base is not None and bool(qa_rules.rule_delta(base, rule))
 
     def _mark_modified(self, item: QTreeWidgetItem, rule: Rule) -> None:
-        """Настроенное вручную правило видно в дереве.
+        """A hand-tuned rule is visible in the tree.
 
-        Без пометки «вернуть к набору» бьёт вслепую: не видно ни того, что
-        отличается, ни того, что отличается хоть что-то.
+        Without the mark, «return to the set» strikes blind: neither what differs
+        nor that anything differs at all can be seen.
         """
         modified = self._is_modified(rule)
         font = item.font(0)
@@ -526,7 +528,7 @@ class RulesTab(QWidget):
             return None
         return self._rules.get(item.data(0, ROLE_RULE_ID) or "")
 
-    # --- правки ---
+    # --- edits ---
 
     def _on_item_changed(self, item: QTreeWidgetItem, column: int) -> None:
         if self._loading or column != 0:
@@ -578,12 +580,12 @@ class RulesTab(QWidget):
             self._show_current()
 
     def _reset_base(self) -> None:
-        """Базовые правила — к значениям набора. Свои не трогаем.
+        """Built-in rules go back to the set's values. Own rules are untouched.
 
-        Прежняя «Сбросить всё» делала и то и другое разом: правила, заведённые
-        руками, исчезали в действии, обещавшем «вернуть значения». Возврат к
-        умолчанию и удаление чужой работы — разные намерения, и путать их в
-        одной кнопке нельзя.
+        The old «Reset everything» did both at once: rules created by hand vanished
+        inside an action that promised to «return the values». Returning to a
+        default and deleting somebody's work are different intentions, and they
+        must not be confused in one button.
         """
         base = self._base_ruleset()
         changed = [r for r in self._rules
@@ -630,12 +632,12 @@ class RulesTab(QWidget):
         self.rulesEdited.emit()
 
     def _base_ruleset(self) -> RuleSet:
-        """Набор без ручных правок текущего слоя — от него считается дельта.
+        """The set without this layer's hand edits; the delta is measured from it.
 
-        Язык перевода передаётся тот же, что использует `rules_state`: иначе
-        дельта посчиталась бы относительно другого основания, и в оверлей
-        попало бы «включить русское правило» просто потому, что здесь оно
-        считалось включённым.
+        The translation language passed is the one `rules_state` uses: otherwise
+        the delta would be measured against a different base, and «switch the
+        Russian rule on» would land in the overlay simply because it counted as
+        on here.
         """
         locale = rules_state.locale()
         if self.scope == PROJECT:
@@ -644,7 +646,7 @@ class RulesTab(QWidget):
                                     locale=locale)
         return qa_rules.resolve({"preset": self._preset[GLOBAL]}, locale=locale)
 
-    # --- свои правила ---
+    # --- own rules ---
 
     def _add_user_rule(self) -> None:
         dialog = NewRuleDialog(self)
@@ -655,10 +657,10 @@ class RulesTab(QWidget):
             self._free_id(title), kind, title=title))
 
     def _duplicate_user_rule(self) -> None:
-        """Копия своего правила. Базовое скопировать нечем — это код.
+        """A copy of an own rule. A built-in one cannot be copied: it is code.
 
-        Нужна затем же, зачем «вернуть к набору» у базового: чтобы правку можно
-        было пробовать, не боясь потерять работающее правило.
+        It exists for the same reason as «return to the set» on a built-in rule:
+        so an edit can be tried without fear of losing a working rule.
         """
         rule = self.current_rule()
         if rule is None or rule.origin != qa_rules.USER:
@@ -679,11 +681,11 @@ class RulesTab(QWidget):
         self.rulesEdited.emit()
 
     def _free_id(self, title: str) -> str:
-        """Имя правила в файлах. Латиницей из заголовка, иначе по счёту.
+        """The rule's name in the files: Latin letters from the title, else a number.
 
-        Оно попадает не только в оверлей: пометка «это не ошибка» хранит код
-        правила рядом со строкой (`qa_ignores`), и меняться со временем имя не
-        имеет права — переименование правила в окне его не трогает.
+        It reaches more than the overlay: a «not an error» mark stores the rule's
+        id next to the row (`qa_ignores`), and the name has no right to change over
+        time — renaming a rule in the window does not touch it.
         """
         stem = "".join(c if c.isalnum() and c.isascii() else "_"
                        for c in title.lower()).strip("_")
@@ -708,7 +710,7 @@ class RulesTab(QWidget):
         self._rules = RuleSet(r for r in self._rules if r.id != rule.id)
         self._after_bulk_change()
 
-    # --- обмен ---
+    # --- sharing ---
 
     def _export(self) -> None:
         path, _ = QFileDialog.getSaveFileName(
@@ -774,7 +776,7 @@ class RulesTab(QWidget):
         self._request_count()
         self.rulesEdited.emit()
 
-    # --- пресет и область ---
+    # --- the preset and the scope ---
 
     def _on_preset(self) -> None:
         if self._loading:
@@ -783,11 +785,10 @@ class RulesTab(QWidget):
         if chosen == self._preset[self.scope]:
             return
         self._preset[self.scope] = chosen
-        # Пресет меняет основание, поэтому ручные правки слоя сбрасываются:
-        # оставить их значило бы показать набор, который пользователь не
-        # собирал ни одним осознанным действием. Свои правила при этом
-        # остаются: пресет — про строгость встроенных проверок и о заведённых
-        # руками правилах не говорит ничего.
+        # A preset changes the base, so the layer's hand edits are cleared: keeping them
+        # would show a set the user never assembled by a single deliberate action. Own
+        # rules stay, though: a preset is about the strictness of the built-in checks and
+        # says nothing about rules created by hand.
         base = self._base_ruleset()
         own = [r for r in self._rules
                if r.origin == qa_rules.USER and base.get(r.id) is None]
@@ -799,8 +800,8 @@ class RulesTab(QWidget):
             return
         self.scope = self.scope_combo.currentData()
         self._sync_top()
-        # «Удалить» и «Сбросить правило» отвечают за слой: правило, приехавшее
-        # снизу, здесь можно только выключить — и кнопки обязаны это показать
+        # «Delete» and «Reset rule» answer for the layer: a rule that arrived from below
+        # can only be switched off here, and the buttons have to show that
         self._show_current()
 
     def _sync_top(self) -> None:
@@ -811,9 +812,9 @@ class RulesTab(QWidget):
             self.preset_combo.findData(self._preset[self.scope]))
         note = translate(
             "QaRules", qa_rules.PRESET_NOTES.get(self._preset[self.scope], ""))
-        # Слой языка приходит с проектом. Без проекта его нет, и числа
-        # замечаний здесь честно отличаются от тех, что человек увидит в
-        # работе, — промолчать значило бы дать прочитать разницу как пропажу.
+        # The language layer arrives with the project. Without a project there is none,
+        # and the issue counts here honestly differ from the ones a person sees at work
+        # — staying silent would let that difference be read as a loss.
         if not rules_state.locale():
             note += "\n\n" + translate(
                 "RulesWindow",
@@ -822,12 +823,13 @@ class RulesTab(QWidget):
         self.preset_combo.setToolTip(note)
         self._loading = False
 
-    # --- панель справа ---
+    # --- the panel on the right ---
 
     def _show_current(self) -> None:
         rule = self.current_rule()
         if rule is None:
-            # выбрана группа, а не правило: кнопки правила ни к чему не относятся
+            # a group is selected rather than a rule: the rule buttons have nothing to act
+            # on
             for button in (self.delete_btn, self.duplicate_btn, self.reset_rule_btn):
                 button.setEnabled(False)
             return
@@ -851,7 +853,7 @@ class RulesTab(QWidget):
                 "" if rule.message == rule.title else rule.message)
         else:
             self.check_box.setTitle(translate("RulesWindow", "Check"))
-            # Замок словами, а не значком: значок пришлось бы объяснять
+            # The lock is words rather than an icon: an icon would have to be explained
             self.kind_label.setText(translate(
                 "RulesWindow",
                 "🔒 Built-in rule: the check and its wording live in the "
@@ -862,8 +864,8 @@ class RulesTab(QWidget):
         self.params.setVisible(bool(rule.params))
         self.no_params_label.setVisible(not rule.params)
         self.reset_rule_btn.setEnabled(self._is_modified(rule))
-        # Удалить и дублировать можно только то, что заведено в этом слое:
-        # правило нижнего слоя здесь чужое, его можно лишь выключить
+        # Delete and duplicate apply only to what was created in this layer: a rule from
+        # the layer below is a stranger here and can only be switched off
         deletable = own and not self._base_has(rule.id)
         self.delete_btn.setEnabled(deletable)
         self.duplicate_btn.setEnabled(own)
@@ -878,7 +880,7 @@ class RulesTab(QWidget):
         self._run_probe()
 
     def _base_has(self, rule_id: str) -> bool:
-        """Правило приехало снизу — из встроенных или из соседнего слоя."""
+        """The rule arrived from below: from the built-in set or a neighbouring layer."""
         return self._base_ruleset().get(rule_id) is not None
 
     def _show_problems(self, rule: Rule) -> None:
@@ -895,16 +897,17 @@ class RulesTab(QWidget):
         self.problem_label.setVisible(bool(problems))
 
     def _show_examples(self, rule: Rule) -> None:
-        """Примеры считаем правилом, принудительно включённым.
+        """The examples are checked with the rule forced on.
 
-        Иначе выключенное правило показывало бы «молчит» на своём же примере
-        ошибки, и колонка перестала бы отвечать на вопрос «а параметры-то
-        настроены верно?» — ради которого она и заведена.
+        Otherwise a disabled rule would show «silent» on its own example of an
+        error, and the column would stop answering the question «are the
+        parameters set right?» — the one it exists for.
         """
         pairs = [(en, ru, True) for en, ru in rule.example_bad]
         pairs += [(en, ru, False) for en, ru in rule.example_ok]
-        # Пустая таблица под заголовком «правило проверяет себя ими» обещает то,
-        # чего нет: у своего правила примеров и не бывает — вместо них проба.
+        # An empty table under the heading «the rule checks itself with these» promises
+        # what is not there: an own rule has no examples at all — the probe stands in
+        # for them.
         self.examples.setVisible(bool(pairs))
         self.examples_label.setText(translate(
             "RulesWindow", "Examples — the rule checks itself with them:")
@@ -948,7 +951,7 @@ class RulesTab(QWidget):
         if pair:
             self.set_probe(pair[0] or "", pair[1] or "")
 
-    # --- счётчик срабатываний ---
+    # --- the hit counter ---
 
     def _request_count(self) -> None:
         if self.project_path is None:
@@ -959,7 +962,7 @@ class RulesTab(QWidget):
         if self.project_path is None:
             return
         if self._thread is not None:
-            self._pending = True       # замер уже идёт — повторим после него
+            self._pending = True       # a count is already running: repeat after it
             return
         self._thread = QThread(self)
         self._worker = _CountWorker(self.project_path, self._rules)
@@ -987,7 +990,7 @@ class RulesTab(QWidget):
         self._paint_counts()
 
     def _on_count_failed(self, message: str) -> None:
-        """Замер не удался — колонка пустеет, настройка правил не страдает."""
+        """The count failed: the column empties and the rule settings are unharmed."""
         self._counts = {}
         self._scanned = 0
         self._paint_counts()
@@ -1017,14 +1020,14 @@ class RulesTab(QWidget):
             "RulesWindow", "Hits counted on %1 translated rows of the project."),
             self._scanned)
 
-    # --- сохранение ---
+    # --- saving ---
 
     def overlays(self) -> tuple[dict, dict]:
-        """Что записать в глобальный слой и в слой проекта.
+        """What to write into the global layer and into the project layer.
 
-        Язык перевода передаётся тот же, что в `_base_ruleset`: он входит в
-        основание, и без него в дельту попало бы «выключить правило чужого
-        языка» — правка, которой пользователь не делал.
+        The translation language passed here is the same as in `_base_ruleset`:
+        it is part of the base, and without it the delta would pick up «switch off
+        the rule of another language» — an edit the user never made.
         """
         locale = rules_state.locale()
         if self.scope == PROJECT:
@@ -1037,7 +1040,8 @@ class RulesTab(QWidget):
         return glob, rules_state.project_overlay()
 
     def shutdown(self) -> None:
-        """Отложенный замер не должен пережить окно: база бывает уже закрыта."""
+        """A pending count must not outlive the window: the database is sometimes
+        already closed."""
         self._debounce.stop()
         self._pending = False
         if self._thread is not None:
@@ -1045,16 +1049,17 @@ class RulesTab(QWidget):
             self._thread.wait(3000)
 
 
-# --- заведение своего правила --------------------------------------------
+# --- creating an own rule ---
 
 
 class NewRuleDialog(QDialog):
-    """Два поля: как назвать и какого вида.
+    """Two fields: what to call it and of what kind.
 
-    Больше здесь спрашивать нечего: серьёзность, текст замечания и параметры
-    правятся там же, где у встроенных правил, — в панели окна. Диалог, который
-    спрашивает всё сразу, заставляет выбирать выражение вслепую, не видя ни
-    счётчика срабатываний, ни пробы на паре строк.
+    There is nothing else to ask here: the severity, the message text and the
+    parameters are edited in the same place as for the built-in rules, in the
+    window's panel. A dialog that asks for everything at once forces you to choose
+    an expression blind, seeing neither the hit counter nor a probe on a pair of
+    rows.
     """
 
     def __init__(self, parent=None):
@@ -1103,11 +1108,11 @@ class NewRuleDialog(QDialog):
 
 
 
-# --- окно ----------------------------------------------------------------
+# --- the window ---
 
 
 class RulesWindow(QDialog):
-    """Настройка проверок: правила и заглушённые замечания."""
+    """The check settings: the rules and the silenced issues."""
 
     rulesChanged = Signal()
 
@@ -1147,7 +1152,7 @@ class RulesWindow(QDialog):
         self._show_status()
 
     def select_rule(self, rule_id: str) -> None:
-        """Открыть окно сразу на нужном правиле — из кнопки в отчёте F6."""
+        """Open the window straight on a rule, from the button in the F6 report."""
         item = self.rules_tab._item_of(rule_id)
         if item is not None:
             self.tabs.setCurrentIndex(0)
