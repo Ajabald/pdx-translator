@@ -1,9 +1,9 @@
-"""Оверлеи набора правил: дельта, два слоя, пресеты.
+"""The overlays of a rule set: the delta, the two layers, the presets.
 
-Главное свойство, ради которого оверлей сделан дельтой, а не полным дампом:
-обновление приложения обязано доезжать до пользователя. Сохранённый целиком
-набор заморозил бы правила на версии, в которой его записали, — новые правила
-не появились бы, а починенные дефолты не применились.
+The main property the overlay was made a delta and not a full dump for: an update
+of the application is obliged to reach the user. A set saved whole would freeze
+the rules at the version it was written in — new rules would not appear, and
+mended defaults would not apply.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from pdxloc import project as project_module
 from pdxloc.core import inflections, qa, qa_rules
 
 
-# --- слияние слоёв -------------------------------------------------------
+# --- merging the layers -------------------------------------------------
 
 
 def test_empty_overlay_changes_nothing() -> None:
@@ -39,7 +39,7 @@ def test_project_layer_wins_over_global() -> None:
 
 
 def test_project_layer_keeps_untouched_global_edits() -> None:
-    """Проект правит своё, глобальные настройки при этом остаются в силе."""
+    """The project edits its own, while the global settings stay in force."""
     rules = qa_rules.resolve(
         {"rules": {"len_ratio": {"enabled": True}}},
         {"rules": {"same_as_en": {"enabled": False}}},
@@ -49,7 +49,7 @@ def test_project_layer_keeps_untouched_global_edits() -> None:
 
 
 def test_unknown_rule_in_overlay_is_ignored() -> None:
-    """Оверлей писала другая версия — падать из-за этого нельзя."""
+    """The overlay was written by another version — falling over because of that will not do."""
     rules = qa_rules.resolve({"rules": {"такого_правила_нет": {"enabled": False}}})
     assert len(rules) == len(qa_rules.BUILTIN_RULES)
 
@@ -65,36 +65,36 @@ def test_unknown_severity_in_overlay_is_ignored() -> None:
     assert rules.severity("same_as_en") == qa_rules.BY_ID["same_as_en"].severity
 
 
-# --- пресеты -------------------------------------------------------------
+# --- the presets --------------------------------------------------------
 
 
 @pytest.mark.parametrize("name", qa_rules.PRESET_ORDER)
 def test_every_preset_is_applicable_and_described(name: str) -> None:
     rules = qa_rules.resolve({"preset": name})
     assert len(rules) == len(qa_rules.BUILTIN_RULES)
-    # Подпись игрового набора приезжает из реестра игр, а не из таблицы строк:
-    # «Crusader Kings III» одинаково на всех языках интерфейса.
+    # The label of a game set arrives from the registry of games and not from a
+    # table of strings: «Crusader Kings III» is the same in every interface language.
     assert qa_rules.preset_label(name)
     assert qa_rules.PRESET_NOTES[name]
 
 
 def test_the_recommended_preset_is_the_one_named_after_the_game() -> None:
-    """Набор зовётся игрой, поэтому подбирать его нечем — он и есть игра.
+    """A set is called by the game, so there is nothing to pick it by — it is the game.
 
-    До 0.1.2 здесь была таблица пар «игра плюс язык», потому что язык был вписан
-    в сам набор: у CK3 он звался `ck3_ru`. Язык уехал в свой слой, и таблица
-    схлопнулась.
+    Before 0.1.2 there was a table of «game plus language» pairs here, because the
+    language was written into the set itself: for CK3 it was called `ck3_ru`. The
+    language moved off into a layer of its own, and the table collapsed.
     """
     assert qa_rules.recommended("hoi4") == "hoi4"
     assert qa_rules.recommended("ck3") == "ck3"
-    # игра без своего набора и закрытый проект: молчание честнее выдумки
+    # a game without a set of its own and a closed project: silence is honester than invention
     assert qa_rules.recommended("vic3") is None
     assert qa_rules.recommended("") is None
 
 
 @pytest.mark.parametrize("game", ["hoi4", "vic3", ""])
 def test_display_order_is_a_permutation_of_the_registry(game) -> None:
-    """Витрина переставляет наборы, а не теряет и не двоит их."""
+    """The shop window rearranges the sets, it does not lose or double them."""
     order = qa_rules.display_order(game)
     assert sorted(order) == sorted(qa_rules.PRESET_ORDER)
     best = qa_rules.recommended(game)
@@ -105,9 +105,9 @@ def test_display_order_is_a_permutation_of_the_registry(game) -> None:
 
 
 def test_old_preset_names_still_resolve() -> None:
-    """Имена до 0.1.2 лежат в qa_rules.json, в проектах и в выгруженных .pdxqa.
+    """The names from before 0.1.2 lie in qa_rules.json, in projects and in exported .pdxqa.
 
-    Забудь про них — и настройка человека молча превратилась бы в «Свой».
+    Forget about them — and a human's setting would silently turn into «Custom».
     """
     for old, now in qa_rules.PRESET_ALIASES.items():
         assert qa_rules.preset_of({"preset": old}) == now, old
@@ -115,7 +115,7 @@ def test_old_preset_names_still_resolve() -> None:
 
 
 def test_the_language_layer_attaches_by_the_target_language() -> None:
-    """Слой языка не выбирают — он приходит с языком перевода проекта."""
+    """The language layer is not chosen — it comes with the target language of the project."""
     fr = qa_rules.resolve({"preset": "hoi4"}, locale="fr")
     ru = qa_rules.resolve({"preset": "hoi4"}, locale="ru")
     none = qa_rules.resolve({"preset": "hoi4"})
@@ -123,14 +123,14 @@ def test_the_language_layer_attaches_by_the_target_language() -> None:
     def tails(rules):
         return rules.get("brackets_mismatch").params["ignore_extra_tails"]
 
-    assert len(tails(fr)) > 100        # французский HOI4 склоняет активнее всех
+    assert len(tails(fr)) > 100        # the French HOI4 declines more actively than any
     assert len(tails(ru)) == len(inflections.HOI4_RU_CALLS)
-    assert not tails(none)             # языка нет — и врать нечем
+    assert not tails(none)             # there is no language — and nothing to invent with
     assert set(tails(fr)) != set(tails(ru))
 
 
 def test_preset_deltas_name_only_existing_rules_and_params() -> None:
-    """Опечатка в пресете иначе молча ничего бы не делала."""
+    """Otherwise a typo in a preset would silently do nothing."""
     for name, delta in qa_rules.PRESETS.items():
         for rule_id, changes in delta.items():
             rule = qa_rules.BY_ID.get(rule_id)
@@ -140,7 +140,7 @@ def test_preset_deltas_name_only_existing_rules_and_params() -> None:
 
 
 def test_recommended_preset_is_quieter_than_builtin_defaults() -> None:
-    """Ради этого пресет и заведён: обёртка ради склонения — приём, не ошибка."""
+    """That is what the preset was set up for: a wrapper for declension is a device, not an error."""
     en = "Dusk King [GetTitle]"
     ru = "[Select_CString(CHARACTER.IsFemale, 'Королева', 'Король')] заката"
     assert "brackets_mismatch" in qa.check_unit(en, ru)
@@ -152,7 +152,7 @@ def test_quiet_preset_keeps_only_what_breaks_the_game() -> None:
     quiet = qa_rules.resolve({"preset": "quiet"})
     assert "dollar_mismatch" in quiet.active_ids()
     assert "edge_space" not in quiet.active_ids()
-    # но и в нём потерянная переменная остаётся ошибкой
+    # but even in it a lost variable stays an error
     assert qa.check_unit("Cost: $V$", "Цена", ruleset=quiet) == ["dollar_mismatch"]
 
 
@@ -161,7 +161,7 @@ def test_strict_preset_turns_everything_on() -> None:
     assert strict.active_ids() == {r.id for r in qa_rules.BUILTIN_RULES}
 
 
-# --- запись дельты -------------------------------------------------------
+# --- writing the delta --------------------------------------------------
 
 
 def test_overlay_records_only_the_difference() -> None:
@@ -173,11 +173,11 @@ def test_overlay_records_only_the_difference() -> None:
 
 
 def test_overlay_over_a_preset_does_not_copy_the_preset() -> None:
-    """Иначе набор застыл бы: правку пресета в новой версии проект не увидит."""
+    """Otherwise the set would freeze: an edit of the preset in a new version the project will not see."""
     rules = qa_rules.resolve({"preset": "ck3_ru"})
     overlay = qa_rules.make_overlay("ck3_ru", rules)
     assert overlay["rules"] == {}
-    # прежнее имя понято, но записано нынешнее: файлы не должны плодить старое
+    # the former name is understood, but the present one is written: files must not breed the old one
     assert overlay["preset"] == "ck3"
 
 
@@ -189,18 +189,18 @@ def test_project_overlay_does_not_copy_global_edits() -> None:
 
 
 def test_overlay_round_trips_through_json_and_resolve() -> None:
-    # как это делает пользователь: выбрал набор, потом правит правило
+    # the way a user does it: chose a set, then edits a rule
     rules = qa_rules.resolve({"preset": "ck3_ru"})
     edited = rules.with_rule(qa_rules.replace(
         rules.get("same_as_en"), enabled=False, severity=qa_rules.INFO))
     overlay = json.loads(json.dumps(
         qa_rules.make_overlay("ck3_ru", edited), ensure_ascii=False))
-    assert set(overlay["rules"]) == {"same_as_en"}      # только правка, не весь набор
+    assert set(overlay["rules"]) == {"same_as_en"}      # only the edit, not the whole set
 
     restored = qa_rules.resolve(overlay)
     assert not restored.get("same_as_en").enabled
     assert restored.severity("same_as_en") == qa_rules.INFO
-    # и пресет доехал вместе с правкой
+    # and the preset arrived together with the edit
     assert restored.get("inconsistent").severity == qa_rules.INFO
 
 
@@ -210,7 +210,7 @@ def test_empty_overlay_is_recognised_and_not_stored() -> None:
     assert not qa_rules.is_empty_overlay({"preset": "quiet"})
 
 
-# --- слой внутри файла проекта ------------------------------------------
+# --- the layer inside the project file ----------------------------------
 
 
 @pytest.fixture

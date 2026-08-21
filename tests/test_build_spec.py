@@ -1,8 +1,8 @@
-"""Сборка релиза: спека, иконка и описание.
+"""Building a release: the spec, the icon and the description.
 
-Проверять важно потому, что ошибку здесь видно только на самой сборке, то
-есть уже по тегу, когда job `build` краснеет у всех на виду, а описание
-релиза правится и вовсе один раз в жизни выпуска.
+Checking matters because an error here shows only at the build itself, that is,
+already on a tag, when the `build` job goes red in front of everyone, while the
+description of a release gets edited once in the life of an issue at all.
 """
 from __future__ import annotations
 
@@ -10,12 +10,12 @@ import re
 
 
 def test_the_spec_builds_a_version_resource_from_the_real_version() -> None:
-    """Свойства exe собираются из `__version__`, а не переписываются руками.
+    """The properties of the exe are assembled from `__version__`, not rewritten by hand.
 
-    Продублированная версия разъезжается с настоящей на первом же выпуске, и
-    заметить это некому: вкладку «Подробно» никто не открывает, пока она не
-    понадобится. Здесь заголовок спеки выполняется и сверяется с пакетом —
-    если кто-то впишет число литералом, тест это увидит.
+    A duplicated version parts ways with the real one at the very first release,
+    and there is nobody to notice: nobody opens the «Details» tab until they need
+    it. Here the head of the spec is executed and checked against the package — if
+    somebody writes the number as a literal, the test will see it.
     """
     from pathlib import Path
 
@@ -25,7 +25,7 @@ def test_the_spec_builds_a_version_resource_from_the_real_version() -> None:
     head = (root / "pdx-translator.spec").read_text(
         encoding="utf-8").split("a = Analysis(")[0]
     namespace: dict = {}
-    exec(compile(head, "spec", "exec"), namespace)   # noqa: S102 — свой же файл
+    exec(compile(head, "spec", "exec"), namespace)   # noqa: S102 — a file of our own
 
     assert namespace["VERSION"] == __version__
     assert namespace["COPYRIGHT"] == COPYRIGHT
@@ -37,10 +37,10 @@ def test_the_spec_builds_a_version_resource_from_the_real_version() -> None:
 
 
 def test_the_spec_points_at_a_real_icon_file() -> None:
-    """Спека обещает `.ico` — файл обязан существовать.
+    """The spec promises an `.ico` — the file is obliged to exist.
 
-    Иначе PyInstaller упадёт на сборке релиза, а узнаем мы об этом уже по тегу,
-    когда job `build` покраснеет у всех на виду.
+    Otherwise PyInstaller falls over at the release build, and we learn about it
+    already on a tag, when the `build` job goes red in front of everyone.
     """
     import re
     from pathlib import Path
@@ -54,10 +54,11 @@ def test_the_spec_points_at_a_real_icon_file() -> None:
 
 
 def test_release_notes_point_at_the_current_version() -> None:
-    """Ссылка на архив в описании релиза содержит версию — значит протухает.
+    """The link to the archive in the release description holds the version — so it goes stale.
 
-    Ровно как «15 встроенных правил» в README: текст остаётся верным на вид, а
-    ведёт на файл прошлого выпуска, и человек скачивает не то.
+    Exactly like «15 built-in rules» in the README: the text stays right to the
+    eye while it leads to the file of the past issue, and a human downloads the
+    wrong thing.
     """
     from pathlib import Path
 
@@ -74,7 +75,7 @@ def test_release_notes_point_at_the_current_version() -> None:
 
 
 def test_the_workflow_uses_the_release_notes() -> None:
-    """Файл без ссылки из workflow — просто текст, который никто не увидит."""
+    """A file without a link from the workflow is just text nobody will see."""
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
@@ -83,12 +84,12 @@ def test_the_workflow_uses_the_release_notes() -> None:
 
 
 def test_the_installer_stays_out_of_program_files() -> None:
-    """Установщик обязан ставить для пользователя, а не в Program Files.
+    """The installer is obliged to install for the user, not into Program Files.
 
-    Приложение держит `Bdd`, `Projects`, `backups`, `qa_rules.json` и лог рядом
-    с собой (`settings.app_root`). В Program Files обычному пользователю писать
-    нельзя, и всё это молча сломалось бы. Поменяй кто-нибудь `PrivilegesRequired`
-    — тест это увидит.
+    The application keeps `Bdd`, `Projects`, `backups`, `qa_rules.json` and the log
+    next to itself (`settings.app_root`). An ordinary user must not write into
+    Program Files, and all of that would break silently. Should somebody change
+    `PrivilegesRequired` — the test will see it.
     """
     from pathlib import Path
 
@@ -98,10 +99,11 @@ def test_the_installer_stays_out_of_program_files() -> None:
 
 
 def test_the_installer_does_not_delete_translator_work() -> None:
-    """Удаление не должно уносить папки с работой переводчика.
+    """Uninstalling must not carry off the folders with the translator's work.
 
-    `[UninstallDelete]` в скрипте быть не должно вовсе: базы памяти, проекты и
-    резервные копии переводов — месяцы чужого труда, и вернуть их неоткуда.
+    `[UninstallDelete]` must not be in the script at all: the memory databases, the
+    projects and the backups of translations are months of somebody's labour, and
+    there is nowhere to bring them back from.
     """
     from pathlib import Path
 
@@ -111,7 +113,7 @@ def test_the_installer_does_not_delete_translator_work() -> None:
 
 
 def test_the_installer_version_comes_from_outside() -> None:
-    """Версия приходит параметром, а не третьей копией в скрипте."""
+    """The version comes as a parameter, not as a third copy in the script."""
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
@@ -130,10 +132,11 @@ def test_the_workflow_builds_and_attaches_the_installer() -> None:
 
 
 def test_the_uninstaller_speaks_up_about_kept_data() -> None:
-    """Оставшаяся папка выглядит как недоделанное удаление — надо объяснить.
+    """A folder left behind looks like an unfinished uninstall — it has to be explained.
 
-    Данные мы не трогаем (см. тест выше), но молчать об этом нельзя: человек
-    видит папку на месте и не понимает, сработало ли удаление вообще.
+    We do not touch the data (see the test above), but keeping quiet about it will
+    not do: a human sees the folder in place and does not understand whether the
+    uninstall worked at all.
     """
     from pathlib import Path
 
@@ -145,10 +148,10 @@ def test_the_uninstaller_speaks_up_about_kept_data() -> None:
 
 
 def test_the_uninstaller_stays_silent_when_asked_to() -> None:
-    """В тихом режиме окно показывать нельзя — закрыть его некому.
+    """In silent mode a window must not be shown — there is nobody to close it.
 
-    Без этой оговорки `/VERYSILENT` повис бы навсегда, а именно так удаляют
-    из скриптов и при обновлении.
+    Without this proviso `/VERYSILENT` would hang forever, and that is exactly how
+    uninstalling is done from scripts and at an update.
     """
     from pathlib import Path
 
