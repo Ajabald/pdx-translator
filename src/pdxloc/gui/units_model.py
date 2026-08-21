@@ -147,7 +147,7 @@ class UnitFilters:
     file_prefix: str | None = None # a folder prefix, for the tree
     search: str = ""
     show_deleted: bool = False
-    only_issues: bool = False      # только строки с замечаниями проверки
+    only_issues: bool = False      # only the rows with check remarks
 
 
 def _cell(text: str | None) -> str:
@@ -158,7 +158,7 @@ def _cell(text: str | None) -> str:
 
 
 class UnitsTableModel(QAbstractTableModel):
-    unitSaved = Signal(int)   # после правки в ячейке
+    unitSaved = Signal(int)   # after an edit in a cell
 
     def __init__(self, conn: sqlite3.Connection, parent=None):
         super().__init__(parent)
@@ -166,11 +166,11 @@ class UnitsTableModel(QAbstractTableModel):
         self.project_id: int | None = None
         self._rows: list[sqlite3.Row] = []
         self._row_by_id: dict[int, int] = {}
-        self._issues: dict[int, list[str]] = {}   # unit_id -> коды замечаний
-        self._issue_rank: dict[int, tuple[int, int]] = {}   # unit_id -> (всего, ошибок)
-        # порядок из SQL: третий клик по заголовку возвращает именно его
+        self._issues: dict[int, list[str]] = {}   # unit_id -> remark codes
+        self._issue_rank: dict[int, tuple[int, int]] = {}   # unit_id -> (total, errors)
+        # the order out of SQL: the third click on a header brings back exactly it
         self._natural_rank: dict[int, int] = {}
-        self._sort: tuple[int, bool] | None = None    # (колонка, по убыванию)
+        self._sort: tuple[int, bool] | None = None    # (column, descending)
         theme.on_change(self._on_theme_changed)
 
     def _on_theme_changed(self) -> None:
@@ -227,11 +227,11 @@ class UnitsTableModel(QAbstractTableModel):
         self.beginResetModel()
         self.project_id = project_id
         self._rows = self.conn.execute(" ".join(sql), params).fetchall()
-        # естественный порядок запоминаем до фильтрации и сортировки
+        # the natural order is remembered before filtering and sorting
         self._natural_rank = {r["id"]: i for i, r in enumerate(self._rows)}
         self._recheck_all()
         if filters.only_issues:
-            # фильтр по замечаниям — уже после проверки: в SQL их нет
+            # the filter by remarks comes after the check: SQL holds none of them
             self._rows = [r for r in self._rows if r["id"] in self._issues]
         self._rows = self._sorted_rows()
         self._reindex()
@@ -241,12 +241,13 @@ class UnitsTableModel(QAbstractTableModel):
         self._row_by_id = {r["id"]: i for i, r in enumerate(self._rows)}
 
     def _recheck_all(self) -> None:
-        """Проверки по загруженным строкам — колонка «!» показывает результат.
+        """The checks over the loaded rows — the «!» column shows the result.
 
-        Считаем сразу, а не по кнопке: замечания видны там же, где идёт работа.
-        Полный проход стоит дорого — 3,35 с на 124 893 строках ванильной HOI4, —
-        поэтому строка помнит свой результат до следующей правки (см. `core/qa`),
-        и заново считаются только те, где текст или набор правил изменились.
+        We count at once and not on a button: the remarks are visible right where
+        the work is going on. A full pass is expensive — 3.35 s on the 124,893
+        rows of vanilla HOI4 — so a row remembers its result until the next edit
+        (see `core/qa`), and only those where the text or the rule set has
+        changed are counted anew.
         """
         self._issues.clear()
         self._issue_rank.clear()
@@ -258,10 +259,10 @@ class UnitsTableModel(QAbstractTableModel):
                 self._set_issues(unit_id, codes)
 
     def _set_issues(self, unit_id: int, codes: list[str]) -> None:
-        """Замечания строки и её вес для сортировки колонки «!».
+        """The remarks of a row and its weight for sorting the «!» column.
 
-        Число ошибок считаем здесь, а не в data(): раньше `has_error`
-        пересчитывался на каждую отрисовку ячейки.
+        The number of errors is counted here and not in data(): `has_error` used
+        to be recomputed at every drawing of a cell.
         """
         self._issues[unit_id] = codes
         rules = rules_state.ruleset()
@@ -269,7 +270,7 @@ class UnitsTableModel(QAbstractTableModel):
         self._issue_rank[unit_id] = (len(codes), errors)
 
     def recheck_unit(self, unit_id: int) -> None:
-        """Пересчитать замечания одной строки — после сохранения перевода."""
+        """Recount the remarks of one row — after a translation has been saved."""
         self._issues.pop(unit_id, None)
         self._issue_rank.pop(unit_id, None)
         ignored = {c for uid, c in qa.ignored_pairs(self.conn) if uid == unit_id}
@@ -282,24 +283,24 @@ class UnitsTableModel(QAbstractTableModel):
         return self._issues.get(unit_id, [])
 
     def issue_count(self) -> int:
-        """Сколько загруженных строк имеют замечания — для чипа «!»."""
+        """How many of the loaded rows have remarks — for the «!» chip."""
         return len(self._issues)
 
-    # --- сортировка ---
+    # --- sorting ---
 
     def set_sort(self, spec: tuple[int, bool] | None) -> None:
-        """Задать порядок и сразу переставить строки."""
+        """Set the order and rearrange the rows at once."""
         if spec == self._sort:
             return
         self._sort = spec
         self.apply_sort()
 
     def apply_sort(self) -> None:
-        """Переставить строки по текущему ключу.
+        """Rearrange the rows by the current key.
 
-        layoutChanged, а не beginResetModel: сброс гасит выделение, текущий
-        индекс и позицию прокрутки — а строка, на которой стоит переводчик,
-        обязана остаться выбранной и видимой.
+        layoutChanged and not beginResetModel: a reset kills the selection, the
+        current index and the scroll position — while the row the translator is
+        standing on is obliged to stay selected and visible.
         """
         if not self._rows:
             return
@@ -318,19 +319,19 @@ class UnitsTableModel(QAbstractTableModel):
             return sorted(self._rows, key=lambda r: nat[r["id"]])
         column, descending = self._sort
         key = self._sort_key(column)
-        # Естественный ранг вторым элементом: строки с одинаковым ключом (весь
-        # файл при сортировке по имени файла) остаются в порядке строк файла,
-        # а не как ляжет.
+        # The natural rank as the second element: rows with an equal key (a whole
+        # file when sorting by file name) stay in the order of the rows of the
+        # file instead of falling as they may.
         return sorted(self._rows, key=lambda r: (key(r), nat[r["id"]]),
                       reverse=descending)
 
     def _sort_key(self, column: int):
-        """Ключ сортировки колонки.
+        """The sorting key of a column.
 
-        У служебных колонок первый клик означает «сверху то, что требует
-        внимания», а не алфавит: статус идёт в порядке работы переводчика,
-        правки — от смысловых к косметическим, замечания — от многих к
-        немногим. Второй клик переворачивает.
+        For the service columns the first click means "on top what needs
+        attention" and not the alphabet: the status goes in the order of the
+        translator's work, the edits from the meaningful to the cosmetic, the
+        remarks from many to few. The second click turns it over.
         """
         if column == COL_KEY:
             return lambda r: _text_key(r["key"])
@@ -481,7 +482,7 @@ class UnitsTableModel(QAbstractTableModel):
                 deleted = translate("UnitsTable", "deleted")
                 return f"{label} ({deleted})" if r["is_deleted"] else label
         elif role == Qt.EditRole and col == COL_RU:
-            return r["ru_text"] or ""          # сырой полный текст, не обрезка
+            return r["ru_text"] or ""          # the raw full text, not a trim
         elif role == Qt.BackgroundRole:
             return self._row_bg(r)
         elif role == Qt.ForegroundRole:
@@ -511,7 +512,7 @@ class UnitsTableModel(QAbstractTableModel):
             return False
         if target == Status.REVIEWED:
             return r["ru_text"] is not None and status != Status.REVIEWED.value
-        if target == Status.TRANSLATED:     # «снять подтверждение»
+        if target == Status.TRANSLATED:     # «remove the confirmation»
             return status == Status.REVIEWED.value
         if target == Status.CUSTOM:
             return r["ru_text"] is not None and status != Status.CUSTOM.value

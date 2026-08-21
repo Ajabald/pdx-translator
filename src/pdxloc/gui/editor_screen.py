@@ -122,10 +122,10 @@ class FilterBar(QWidget):
 
 
 class EditorScreen(QWidget):
-    statsChanged = Signal()      # после сохранений — обновить статус-бар/чипы
-    manageTmRequested = Signal() # открыть менеджер памяти переводов
-    selectionChanged = Signal(int)   # сколько строк выделено — для статус-бара
-    filtersChanged = Signal()    # фильтр сменили — подсветить все его витрины
+    statsChanged = Signal()      # after saves — refresh the status bar and chips
+    manageTmRequested = Signal() # open the translation memory manager
+    selectionChanged = Signal(int)   # how many rows are selected — for the status bar
+    filtersChanged = Signal()    # the filter changed — light up all of its shop windows
 
     def __init__(self, conn: sqlite3.Connection | None = None, parent=None):
         super().__init__(parent)
@@ -312,10 +312,10 @@ class EditorScreen(QWidget):
             self.detail.clear()
 
     def _resort(self) -> None:
-        """Сменился только порядок — перезапрашивать базу незачем.
+        """Only the order changed — there is no point re-asking the database.
 
-        Полная перезагрузка стоит SQL-запроса и пересчёта всех проверок
-        качества; на клик по заголовку это непозволительно дорого.
+        A full reload costs an SQL query and a recount of all the quality
+        checks; for a click on a header that is unaffordably expensive.
         """
         self._sync_filter_actions()
         self.filtersChanged.emit()
@@ -330,7 +330,7 @@ class EditorScreen(QWidget):
         if self.project_id is not None:
             self.file_tree.update_counts(file_stats(self.conn, self.project_id))
 
-    # --- выделение/клики ---
+    # --- selection and clicks ---
 
     def _select_row(self, row: int) -> None:
         index = self.model.index(row, 0)
@@ -345,7 +345,7 @@ class EditorScreen(QWidget):
         if current.isValid():
             unit_id = self.model.unit_id_at(current.row())
             if unit_id is not None and unit_id != self.detail.unit_id:
-                self.detail.load_unit(unit_id)   # detail сам сохранит несохранённое
+                self.detail.load_unit(unit_id)   # detail saves the unsaved itself
 
     def _on_table_clicked(self, index) -> None:
         if index.column() < COL_QS_FIRST:
@@ -359,11 +359,11 @@ class EditorScreen(QWidget):
         unit_ops.set_status(self.conn, [r["id"]], target)
         self._after_change([r["id"]])
 
-    # --- сохранения ---
+    # --- saves ---
 
     def _on_unit_saved(self, unit_id: int) -> None:
-        """Правка в ячейке: синхронизировать детальную панель (иначе её автосейв
-        со старым текстом перезапишет свежую правку)."""
+        """An edit in a cell: synchronise the detail pane (otherwise its autosave
+        with the old text would overwrite the fresh edit)."""
         if self.detail.unit_id == unit_id:
             self.detail.load_unit(unit_id)
         self.statsChanged.emit()
@@ -375,10 +375,10 @@ class EditorScreen(QWidget):
         self._refresh_tree()
 
     def _after_change(self, unit_ids: list[int]) -> None:
-        """После bulk-операции: обновить строки/панель/статистику."""
+        """After a bulk operation: refresh the rows, the pane, the statistics."""
         if self.state.status or self.state.only_issues:
-            # активен фильтр по статусу или замечаниям — состав строк мог
-            # измениться, точечным обновлением строк не обойтись
+            # a filter by status or by remarks is on — the composition of the
+            # rows may have changed, a spot refresh of the rows will not do
             self._reload()
         else:
             for uid in unit_ids:
@@ -388,14 +388,14 @@ class EditorScreen(QWidget):
         self.statsChanged.emit()
         self._refresh_tree()
 
-    # --- контекстное меню и действия ---
+    # --- the context menu and the actions ---
 
     def bind_actions(self, registry: act_spec.ActionRegistry) -> None:
-        """Подключить команды экрана к общему реестру.
+        """Connect the commands of the screen to the common registry.
 
-        Свои QAction экран больше не заводит: раньше «Подтвердить» жило и здесь,
-        и в тулбаре главного окна двумя разными объектами — с разным текстом и
-        разными клавишами.
+        The screen no longer sets up QActions of its own: «Confirm» used to live
+        both here and in the toolbar of the main window as two different objects
+        — with different text and different keys.
         """
         self.actions = registry
         c = registry.connect
@@ -424,7 +424,7 @@ class EditorScreen(QWidget):
         c("concordance", self._show_concordance)
         self._sync_filter_actions()
 
-    # --- фильтры: витрины одного состояния ---
+    # --- filters: the shop windows of one state ---
 
     def _on_only_issues_action(self, checked: bool) -> None:
         if not self._syncing:

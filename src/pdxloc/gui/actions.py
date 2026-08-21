@@ -31,12 +31,12 @@ from pdxloc.core.i18n import QT_TRANSLATE_NOOP, translate
 # loses the string in silence (checked by `test_i18n.py`).
 CTX = "Actions"
 
-SEP = None                      # разделитель в меню и на панели
+SEP = None                      # a separator in the menu and on the toolbar
 
-# когда действие доступно
-ALWAYS = "always"               # всегда, даже без открытого проекта
-PROJECT = "project"             # только при открытом проекте
-NEVER = "never"                 # заглушка на будущее — выключена всегда
+# when an action is available
+ALWAYS = "always"               # always, even without an open project
+PROJECT = "project"             # only while a project is open
+NEVER = "never"                 # a stub for the future — always off
 
 # who owns an action and in what context its shortcut works.
 #
@@ -45,8 +45,8 @@ NEVER = "never"                 # заглушка на будущее — вы�
 # «copy/paste/undo typing» rather than an operation on a table row. Everything
 # else — F7, F8, F10… — is meaningless in a text field, so it works across the
 # whole window, as in EET where F10 fires wherever the cursor happens to be.
-WINDOW = "window"               # окно целиком
-TABLE = "table"                 # таблица строк и её потомки
+WINDOW = "window"               # the window whole
+TABLE = "table"                 # the table of rows and its children
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,7 +54,7 @@ class Act:
     id: str
     text: str
     keys: tuple[str, ...] = ()
-    icon: str | None = None     # имя файла в gui/icons без расширения
+    icon: str | None = None     # the file name in gui/icons without the extension
     tip: str = ""
     checkable: bool = False
     scope: str = PROJECT
@@ -64,7 +64,7 @@ class Act:
 # --- the commands themselves ---
 
 ACTIONS: tuple[Act, ...] = (
-    # файл и проект как файл
+    # the file and the project as a file
     Act("projects", QT_TRANSLATE_NOOP("Actions","Projects…"), icon="projects", scope=ALWAYS,
         tip=QT_TRANSLATE_NOOP("Actions","Back to the project list")),
     Act("open", QT_TRANSLATE_NOOP("Actions","Open project…"), ("Ctrl+O",), icon="open",
@@ -80,7 +80,7 @@ ACTIONS: tuple[Act, ...] = (
     Act("prefs", QT_TRANSLATE_NOOP("Actions","Preferences…"), icon="prefs", scope=ALWAYS),
     Act("quit", QT_TRANSLATE_NOOP("Actions","Quit"), scope=ALWAYS),
 
-    # правка
+    # editing
     Act("copy_cell", QT_TRANSLATE_NOOP("Actions","Copy cell"), ("Ctrl+C",), icon="copy",
         owner=TABLE),
     Act("paste_ru", QT_TRANSLATE_NOOP("Actions","Paste into translation"), ("Ctrl+V",),
@@ -95,7 +95,7 @@ ACTIONS: tuple[Act, ...] = (
         tip=QT_TRANSLATE_NOOP("Actions","Rolls back the last batch of edits. In the "
                                    "translation field Ctrl+Z still undoes typing")),
 
-    # перевод
+    # translation
     Act("ru_eq_en", QT_TRANSLATE_NOOP("Actions","Translation = Original"), ("F8",),
         icon="ru-eq-en",
         tip=QT_TRANSLATE_NOOP("Actions","For names, numbers and anything untranslatable")),
@@ -123,7 +123,7 @@ ACTIONS: tuple[Act, ...] = (
     Act("save_and_next", QT_TRANSLATE_NOOP("Actions","Save and go to next"),
         ("Ctrl+Return", "Ctrl+Enter")),
 
-    # фильтры
+    # filters
     Act("find", QT_TRANSLATE_NOOP("Actions","Find row…"), ("Ctrl+F",), icon="find",
         tip=QT_TRANSLATE_NOOP("Actions","Puts the cursor in the search box")),
     Act("only_issues", QT_TRANSLATE_NOOP("Actions","Only with issues"), ("Ctrl+Shift+I",),
@@ -136,13 +136,13 @@ ACTIONS: tuple[Act, ...] = (
         tip=QT_TRANSLATE_NOOP("Actions","Drops the status, file and search filters. "
                                    "The sort order stays")),
 
-    # вид
+    # the view
     Act("show_toolbar", QT_TRANSLATE_NOOP("Actions","Toolbar"), checkable=True, scope=ALWAYS),
     Act("show_tree", QT_TRANSLATE_NOOP("Actions","File tree"), checkable=True, scope=ALWAYS),
     Act("show_context", QT_TRANSLATE_NOOP("Actions","Languages and databases in the header"),
         checkable=True, scope=ALWAYS),
 
-    # проект
+    # the project
     Act("scan", QT_TRANSLATE_NOOP("Actions","Scan"), ("F5",), icon="scan",
         tip=QT_TRANSLATE_NOOP("Actions","Re-read the original files and find changes")),
     Act("actualize_cosmetic", QT_TRANSLATE_NOOP("Actions","Actualize cosmetic edits…"),
@@ -157,8 +157,9 @@ ACTIONS: tuple[Act, ...] = (
                                          "the text is actually written in")),
     Act("open_file", QT_TRANSLATE_NOOP("Actions","Show original in Explorer")),
 
-    # проверка — у EET проверки живут отдельным меню, и не зря: их три разных
-    # действия, и в «Проекте» они тонули между сканом и архивом
+    # checking — in EET the checks live in a menu of their own, and not for
+    # nothing: there are three different actions, and in "Project" they drowned
+    # between the scan and the archive
     Act("qa", QT_TRANSLATE_NOOP("Actions","Check the whole project…"), ("F6",), icon="qa"),
     Act("qa_rules", QT_TRANSLATE_NOOP("Actions","Configure checks…"), ("Shift+F6",),
         icon="qa-rules", scope=ALWAYS,
@@ -169,12 +170,13 @@ ACTIONS: tuple[Act, ...] = (
         tip=QT_TRANSLATE_NOOP("Actions","Silenced issues — they can be put back into the "
                                    "check")),
 
-    # инструменты
+    # tools
     Act("tm", QT_TRANSLATE_NOOP("Actions","Translation memory…"), ("F9",), icon="tm",
         tip=QT_TRANSLATE_NOOP("Actions","Memory entries, attached databases and building "
                                    "new ones — in a single window")),
-    # Shift+F9 рядом с F9 по уже сложившемуся правилу окна-спутника: F6
-    # проверка → Shift+F6 её настройка, F9 память → Shift+F9 глоссарий.
+    # Shift+F9 next to F9 by the companion-window rule that has already taken
+    # shape: F6 the check → Shift+F6 its setup, F9 the memory → Shift+F9 the
+    # glossary.
     Act("glossary", QT_TRANSLATE_NOOP("Actions","Glossary…"), ("Shift+F9",), icon="glossary",
         tip=QT_TRANSLATE_NOOP("Actions","Terms and candidates for them: statistics "
                                    "suggests, you accept")),
@@ -188,14 +190,14 @@ ACTIONS: tuple[Act, ...] = (
         tip=QT_TRANSLATE_NOOP("Actions","Translate many rows at once through the "
                                    "service set up in «File → Preferences»")),
 
-    # справка
+    # help
     Act("shortcuts", QT_TRANSLATE_NOOP("Actions","Keyboard shortcuts"), scope=ALWAYS),
     Act("about", QT_TRANSLATE_NOOP("Actions","About"), scope=ALWAYS),
 )
 
 BY_ID: dict[str, Act] = {a.id: a for a in ACTIONS}
 
-# «@имя» — порождаемое подменю (радиогруппа), его строит ActionRegistry
+# «@name» — a generated submenu (a radio group), built by ActionRegistry
 MENU: tuple[tuple[str, tuple[str | None, ...]], ...] = (
     (QT_TRANSLATE_NOOP("MainWindow", "&File"),
      ("projects", "open", "save_as", SEP, "import", "export",
@@ -223,9 +225,10 @@ MENU: tuple[tuple[str, tuple[str | None, ...]], ...] = (
     (QT_TRANSLATE_NOOP("MainWindow", "&Help"), ("shortcuts", "about")),
 )
 
-# Панель — витрина: всё, что здесь, обязано иметь пункт меню (см. тест
-# test_toolbar_has_no_action_outside_menu). «Загрузить перевод из мода» в
-# панель не идёт намеренно: операция редкая и разрушительная, ей место в меню.
+# The toolbar is a shop window: everything here is obliged to have a menu item
+# (see the test test_toolbar_has_no_action_outside_menu). "Load a translation
+# from a mod" deliberately does not go onto the toolbar: the operation is rare
+# and destructive, its place is in the menu.
 TOOLBAR: tuple[str | None, ...] = (
     "scan", "export",
     SEP, "find", "only_issues", "reset_filters",
@@ -235,9 +238,10 @@ TOOLBAR: tuple[str | None, ...] = (
     SEP, "qa", "qa_rules", "tm",
 )
 
-# Кнопки статуса панели: их видимость переключается в «Вид → Кнопки статуса»
-# (приём EET). Прятать `QAction` нельзя — он один и тот же в меню, панели и
-# контекстном меню; прячется именно кнопка панели.
+# The status buttons of the toolbar: their visibility is switched in "View →
+# Status buttons" (an EET device). A `QAction` cannot be hidden — it is one and
+# the same in the menu, on the toolbar and in the context menu; what is hidden is
+# the toolbar button itself.
 STATUS_BUTTONS: tuple[str, ...] = ("validate", "unvalidate", "custom", "ignore")
 
 CONTEXT: tuple[str | None, ...] = (
@@ -251,12 +255,12 @@ CONTEXT: tuple[str | None, ...] = (
 
 @dataclass
 class ActionRegistry:
-    """Живые QAction по спеке: создание, включение, раскладка по витринам."""
+    """Live QActions from the spec: creation, enabling, layout over the shop windows."""
 
     actions: dict[str, QAction] = field(default_factory=dict)
 
     def build(self, window, table) -> None:
-        """Создать все действия. `table` — владелец действий над строками.
+        """Create all the actions. `table` is the owner of the actions over rows.
 
         The parent decides the context of a shortcut. Ctrl+Z, Ctrl+C and Ctrl+V
         have to belong to the table: a QAction of the main window defaults to the
