@@ -1,4 +1,4 @@
-"""Окно памяти переводов: три вкладки вместо трёх окон."""
+"""The translation memory window: three tabs instead of three windows."""
 from __future__ import annotations
 
 import os
@@ -41,13 +41,13 @@ def window(conn, qtbot):
 
 
 def test_all_three_tools_live_in_one_window(window) -> None:
-    """Раньше это были три окна, отсылавшие друг к другу текстом подсказок."""
+    """These used to be three windows referring to one another in the text of their hints."""
     assert [window.tabs.tabText(i) for i in range(window.tabs.count())] == [
         "Entries", "Databases", "Build a database"]
 
 
 def test_status_line_shows_the_active_tab(window) -> None:
-    """Счётчик уехал от кнопок в общую нижнюю полосу."""
+    """The counter moved away from the buttons into the common bottom bar."""
     assert "shown:" in window.status_label.text()
     window.tabs.setCurrentWidget(window.sources)
     assert "databases in the folder:" in window.status_label.text()
@@ -74,7 +74,7 @@ def test_entries_sorting_cycles_through_three_states(window) -> None:
 
 
 def test_readonly_colour_follows_the_theme(window) -> None:
-    """Записи подключённых баз красились жёстко-серым мимо палитры."""
+    """The records of attached databases were painted a hard grey past the palette."""
     light = theme.color("tm.readonly")
     theme.apply_theme(None, theme.DARK, save=False)
     try:
@@ -94,7 +94,7 @@ def test_editing_a_translation_updates_the_memory(window, conn) -> None:
 
 
 def test_sources_apply_immediately_without_ok_button(window) -> None:
-    """Во вкладке кнопки ОК нет — галка обязана действовать сразу."""
+    """There is no OK button on the tab — the tick is obliged to take effect at once."""
     from PySide6.QtWidgets import QDialogButtonBox
 
     assert not window.sources.findChildren(QDialogButtonBox)
@@ -105,7 +105,7 @@ def test_sources_apply_immediately_without_ok_button(window) -> None:
 
 
 def test_closing_stops_every_pending_timer(window) -> None:
-    """Отложенный поиск, переживший окно, падал на закрытом соединении."""
+    """A delayed search that outlived the window fell over on a closed connection."""
     window.entries.search.setText("что-нибудь")
     assert window.entries._debounce.isActive()
     window.done(0)
@@ -121,7 +121,7 @@ def test_build_tab_offers_project_export(window) -> None:
 
 
 def test_build_tab_works_without_a_project(qtbot) -> None:
-    """Собирать базу из папок можно и до открытия проекта."""
+    """A database can be built out of folders before a project is opened too."""
     from pdxloc.gui.tm_build_tab import TmBuildTab
 
     tab = TmBuildTab()
@@ -131,28 +131,28 @@ def test_build_tab_works_without_a_project(qtbot) -> None:
 
 
 def test_the_window_opens_without_a_project(qtbot, tmp_path, monkeypatch) -> None:
-    """Мастер первого запуска зовёт это окно, когда проекта нет ни одного.
+    """The first-start wizard calls this window when there is not a single project.
 
-    Раньше здесь падал `languages(None)` — прямо в слоте кнопки мастера. У
-    собранного приложения консоли нет, трейсбек уходил в никуда, и кнопка
-    «Собрать базу…» выглядела мёртвой: нажатие не делало ровно ничего.
+    `languages(None)` used to fall over here — right in the slot of the wizard's
+    button. An assembled application has no console, the traceback went nowhere,
+    and the «Build a database…» button looked dead: a press did exactly nothing.
     """
     monkeypatch.setattr(settings, "bdd_dir", lambda: tmp_path / "Bdd")
     win = TmWindow(None)
     qtbot.addWidget(win)
-    # «Записи» и «Базы» без проекта показывали бы пустоту, объяснить которую
-    # нечем: первая — его собственная память, вторая — подключённые к нему базы
+    # «Records» and «Databases» without a project would show an emptiness there is
+    # nothing to explain by: the first is its own memory, the second the databases attached to it
     assert [win.tabs.tabText(i) for i in range(win.tabs.count())] == [
         "Build a database"]
     assert win.entries is None and win.sources is None
     assert not win.build.mode_project.isEnabled()
     win.show_build_tab()
     assert win.tabs.currentWidget() is win.build
-    win.done(0)         # закрытие ходит по тем же вкладкам — и не спотыкается
+    win.done(0)         # the closing walks the same tabs — and does not stumble
 
 
 def test_close_is_blocked_while_a_build_is_running(window, monkeypatch) -> None:
-    """Уйти на другую вкладку и закрыть окно посреди сборки не должно молча."""
+    """Going off to another tab and closing the window in the middle of a build must not pass silently."""
     from PySide6.QtWidgets import QMessageBox
 
     monkeypatch.setattr(window.build, "is_busy", lambda: True)

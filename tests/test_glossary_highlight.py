@@ -1,10 +1,10 @@
-"""Подсветка терминов в поле оригинала — и то, что она ничего не затирает.
+"""The highlighting of terms in the source field — and that it erases nothing.
 
-Главный здесь — `test_both_highlights_survive_together`. Список ExtraSelections
-у поля один, `setExtraSelections` заменяет его целиком, и до появления
-`_refresh_extra_selections` подсветка изменений звала его сама. Второй вызов из
-подсветки терминов стёр бы дифф у устаревшей строки молча — ошибка, которую
-глазами замечают через неделю.
+The main one here is `test_both_highlights_survive_together`. The field has one
+list of ExtraSelections, `setExtraSelections` replaces it whole, and before
+`_refresh_extra_selections` appeared the highlighting of changes called it itself.
+A second call from the highlighting of terms would silently erase the diff of a
+stale row — an error one notices by eye a week later.
 """
 from __future__ import annotations
 
@@ -44,13 +44,14 @@ def add_unit(conn, *, status=Status.TRANSLATED, prev=None) -> int:
 
 @pytest.fixture
 def pane(conn, qtbot):
-    """Панель, отпускающая проект в конце теста.
+    """A pane that lets the project go at the end of the test.
 
-    `clear()` здесь — не украшение: настройки глобальные, и `prefs.set` из
-    одного теста будит панели всех остальных через общий нотификатор. Живая
-    панель с `unit_id` от закрытой базы полезет в неё читать — ровно так же,
-    как полезла бы в приложении, если бы проект закрывали, не отпуская панель.
-    Приложение отпускает (`editor_screen.close_session`), и тест обязан тоже.
+    `clear()` here is no decoration: the settings are global, and a `prefs.set`
+    from one test wakes the panes of all the others through the common notifier. A
+    live pane with a `unit_id` from a closed database will go reading into it —
+    exactly as it would in the application, were a project closed without letting
+    the pane go. The application does let it go (`editor_screen.close_session`),
+    and the test is obliged to as well.
     """
     prefs.set("detail/highlight_terms", True)
     prefs.set("detail/highlight_changes", True)
@@ -78,19 +79,18 @@ def test_the_translation_hangs_on_the_highlight_as_a_tooltip(pane, conn):
 
 
 def test_a_candidate_is_not_highlighted(pane, conn):
-    """Подсвечивается подтверждённое. Кандидат — ещё не решение переводчика."""
+    """What is highlighted is what was accepted. A candidate is not yet a decision of the translator."""
     glossary.save_candidates(conn, [glossary.Candidate(
         en_term="Winterfell", ru_term="винтерфелл", score=0.63, pairs=9, runner_up=0.1)])
     pane.reload_glossary()
     pane.load_unit(add_unit(conn))
-    assert len(selections(pane)) == 1        # только Maester, без Winterfell
+    assert len(selections(pane)) == 1        # only Maester, without Winterfell
 
 
 def test_both_highlights_survive_together(pane, conn):
-    """Устаревшая строка: виден и дифф оригинала, и термин.
+    """A stale row: both the diff of the original and the term are visible.
 
-    Ровно та регрессия, ради которой заведён единственный владелец
-    setExtraSelections.
+    Exactly the regression the single owner of setExtraSelections was set up for.
     """
     pane.load_unit(add_unit(conn, status=Status.STALE, prev=PREV))
     found = selections(pane)
@@ -129,7 +129,7 @@ def test_an_empty_glossary_highlights_nothing(conn, qtbot):
 
 
 def test_the_pane_survives_a_closed_project(pane, conn):
-    """Проект закрыли — панель обязана погасить термины, а не упасть."""
+    """The project was closed — the pane is obliged to put the terms out, not to fall over."""
     conn.close()
     pane.reload_glossary()
     assert pane._terms == {}

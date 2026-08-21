@@ -1,4 +1,4 @@
-"""Тесты v3-M1: правило ru==en, конфликты, дубликаты, _updated в оригинале."""
+"""Tests of v3-M1: the ru==en rule, conflicts, duplicates, _updated in the original."""
 from __future__ import annotations
 
 from pdxloc.core.exporter import export_project
@@ -11,8 +11,8 @@ from test_scanner import get_unit, make_project
 
 
 def test_ru_equals_en_accepted_in_translated_file(db, make_tree):
-    """Совпадающий с оригиналом перевод — норма (имена, «OK», числа),
-    если в файле есть и настоящие переводы."""
+    """A translation coinciding with the original is the norm (names, «OK», numbers),
+    if the file holds real translations as well."""
     en = make_tree({"m_l_english.yml":
                     'l_english:\n greet:0 "Hello"\n name:0 "Stark"\n'}, "en")
     ru = make_tree({"m_l_russian.yml":
@@ -25,7 +25,7 @@ def test_ru_equals_en_accepted_in_translated_file(db, make_tree):
 
 
 def test_ru_equals_en_rejected_in_copy_file(db, make_tree):
-    """Файл — тупая копия оригинала: ничего не переведено."""
+    """The file is a dumb copy of the original: nothing is translated."""
     en = make_tree({"m_l_english.yml":
                     'l_english:\n a:0 "Hello"\n b:0 "World"\n'}, "en")
     ru = make_tree({"m_l_russian.yml":
@@ -37,7 +37,7 @@ def test_ru_equals_en_rejected_in_copy_file(db, make_tree):
 
 
 def test_marker_still_wins_over_equality(db, make_tree):
-    """Маркер старых скриптов сильнее правила равенства."""
+    """The marker of the old scripts is stronger than the rule of equality."""
     en = make_tree({"m_l_english.yml":
                     'l_english:\n a:0 "Hello"\n b:0 "World"\n'}, "en")
     ru = make_tree({"m_l_russian.yml":
@@ -48,8 +48,8 @@ def test_marker_still_wins_over_equality(db, make_tree):
 
 
 def test_existing_untranslated_not_flipped_by_equality(db, make_tree):
-    """Уже известная непереведённая строка не становится переведённой из-за
-    того, что кто-то положил рядом копию оригинала (защита живых данных)."""
+    """A row already known as untranslated does not become translated because
+    somebody put a copy of the original next to it (protection of live data)."""
     en = make_tree({"m_l_english.yml":
                     'l_english:\n a:0 "Hello"\n b:0 "World"\n'}, "en")
     ru = make_tree({"m_l_russian.yml":
@@ -57,7 +57,7 @@ def test_existing_untranslated_not_flipped_by_equality(db, make_tree):
     pid = make_project(db, en, ru)
     scan_project(db, pid)
     assert get_unit(db, "b")["status"] == Status.UNTRANSLATED.value
-    # экспорт с фолбэком стёр бы маркер — проверяем, что рескан не «переведёт» строку
+    # an export with a fallback would erase the marker — we check that a rescan does not «translate» the row
     make_tree({"m_l_russian.yml":
                'l_russian:\n a:0 "Привет"\n b:0 "World"\n'}, "ru")
     scan_project(db, pid)
@@ -65,7 +65,7 @@ def test_existing_untranslated_not_flipped_by_equality(db, make_tree):
 
 
 def test_conflict_detected_when_en_also_changed(db, make_tree):
-    """Раньше правка перевода на диске терялась молча, если EN тоже изменился."""
+    """An edit of the translation on the disk used to be lost silently if the EN changed too."""
     en = make_tree({"m_l_english.yml": 'l_english:\n a:0 "Hello"\n'}, "en")
     ru = make_tree({"m_l_russian.yml": 'l_russian:\n a:0 "Привет"\n'}, "ru")
     pid = make_project(db, en, ru)
@@ -76,7 +76,7 @@ def test_conflict_detected_when_en_also_changed(db, make_tree):
     assert stats.ru_conflicts == 1
     _rel, key, db_ru, disk_ru = stats.ru_conflict_list[0]
     assert key == "a" and db_ru == "Привет" and disk_ru == "Здравствуйте"
-    assert get_unit(db, "a")["ru_text"] == "Привет"      # база главнее
+    assert get_unit(db, "a")["ru_text"] == "Привет"      # the database rules
     assert get_unit(db, "a")["status"] == Status.STALE.value
 
 
@@ -87,12 +87,12 @@ def test_ru_duplicate_keys_counted(db, make_tree):
     pid = make_project(db, en, ru)
     stats = scan_project(db, pid)
     assert len(stats.duplicate_keys_ru) == 1
-    assert get_unit(db, "a")["ru_text"] == "Второй"      # последний побеждает
+    assert get_unit(db, "a")["ru_text"] == "Второй"      # the last one wins
 
 
 def test_updated_in_source_tree_is_scanned(db, make_tree):
-    """«_updated» отсеивается только в дереве перевода: в оригинале это
-    легальное имя файла."""
+    """«_updated» is sifted out only in the translation tree: in the original that is
+    a lawful file name."""
     en = make_tree({"mod_updated_events_l_english.yml":
                     'l_english:\n evt:0 "Event text"\n'}, "en")
     ru = make_tree({}, "ru")
@@ -103,8 +103,8 @@ def test_updated_in_source_tree_is_scanned(db, make_tree):
 
 
 def test_fallback_export_writes_marker(db, make_tree, tmp_path):
-    """Непереведённые строки в режиме фолбэка помечаются, чтобы следующий
-    скан не принял их за готовый перевод."""
+    """Untranslated rows in fallback mode are marked, so that the next scan does not
+    take them for a ready translation."""
     en = make_tree({"m_l_english.yml":
                     'l_english:\n a:0 "Hello"\n b:0 "World"\n'}, "en")
     ru = make_tree({"m_l_russian.yml": 'l_russian:\n a:0 "Привет"\n'}, "ru")
@@ -115,4 +115,4 @@ def test_fallback_export_writes_marker(db, make_tree, tmp_path):
     entries = {e.key: e for e in parse_file(out / "m_l_russian.yml").entries}
     assert entries["b"].text == "World"
     assert LEGACY_MARKER in entries["b"].comment_inline
-    assert entries["a"].comment_inline == ""       # переведённые — без пометок
+    assert entries["a"].comment_inline == ""       # the translated ones without marks

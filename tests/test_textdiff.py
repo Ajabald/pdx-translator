@@ -1,4 +1,4 @@
-"""Тесты сравнения редакций оригинала."""
+"""Tests of the comparison of revisions of the original."""
 from __future__ import annotations
 
 import pytest
@@ -9,32 +9,32 @@ from pdxloc.core.textdiff import (
 
 
 @pytest.mark.parametrize("old,new", [
-    ("Winter is coming", "Winter is coming."),                 # добавлена точка
-    ("Winter is coming", "Winter  is   coming"),               # лишние пробелы
-    ("Winter is Coming", "winter is coming"),                  # регистр
-    ("Hello, world!", "Hello world"),                          # пунктуация
-    ("A quote — dash", "A quote - dash"),                      # тире
+    ("Winter is coming", "Winter is coming."),                 # a full stop added
+    ("Winter is coming", "Winter  is   coming"),               # extra spaces
+    ("Winter is Coming", "winter is coming"),                  # the case
+    ("Hello, world!", "Hello world"),                          # the punctuation
+    ("A quote — dash", "A quote - dash"),                      # the dash
 ])
 def test_cosmetic(old, new):
     assert classify_change(old, new) == COSMETIC
 
 
 @pytest.mark.parametrize("old,new", [
-    ("Winter is coming", "Summer is coming"),                  # слово
-    ("Gain 10 gold", "Gain 20 gold"),                          # число
-    ("Winter is coming", "Winter is coming soon"),             # добавлено слово
-    ("Plain text", "#bold Plain text#!"),                      # появилась разметка
-    ("Gain $VALUE$", "Gain $AMOUNT$"),                         # другая переменная
-    ("Cost £gold£", "Cost £prestige£"),                        # другая иконка
-    ("Cost @gold!", "Cost @prestige!"),                        # иконка CK3
-    ("#indent_newline:2 T", "#indent_newline:4 T"),            # параметр тега
+    ("Winter is coming", "Summer is coming"),                  # a word
+    ("Gain 10 gold", "Gain 20 gold"),                          # a number
+    ("Winter is coming", "Winter is coming soon"),             # a word added
+    ("Plain text", "#bold Plain text#!"),                      # markup appeared
+    ("Gain $VALUE$", "Gain $AMOUNT$"),                         # a different variable
+    ("Cost £gold£", "Cost £prestige£"),                        # a different icon
+    ("Cost @gold!", "Cost @prestige!"),                        # a CK3 icon
+    ("#indent_newline:2 T", "#indent_newline:4 T"),            # the parameter of a tag
 ])
 def test_meaningful(old, new):
     assert classify_change(old, new) == MEANINGFUL
 
 
 def test_markup_change_is_meaningful_even_with_same_words():
-    """Разметку придётся перенести в перевод — это не косметика."""
+    """The markup will have to be carried into the translation — that is no cosmetics."""
     assert classify_change("The #weak north#!", "The #bold north#!") == MEANINGFUL
 
 
@@ -64,7 +64,7 @@ def test_changed_ranges_within_bounds():
 
 
 def test_word_diff_reconstructs_texts():
-    """Дифф пословный, поэтому сверяем слова: пробелы между ними не значимы."""
+    """The diff goes by words, so we check the words: the spaces between them do not matter."""
     old, new = "Winter is coming", "Winter is coming soon"
     parts = word_diff(old, new)
     assert "".join(t for op, t in parts if op in ("equal", "insert")).split() == new.split()
