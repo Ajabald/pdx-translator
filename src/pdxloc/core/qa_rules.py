@@ -1,36 +1,39 @@
-"""Реестр правил проверки: что проверяем, насколько строго и с какими послаблениями.
+"""The registry of check rules: what we check, how strictly, and with what leniency.
 
-Зачем понадобился. Замеры на живом переводе (136 113 строк) показали, что
-проверка ругается втрое чаще, чем есть ошибок: 18 527 замечаний о скобках, из
-которых настоящих ~20%, потому что переводчик оборачивает подстановку в
-`Concept(…)` ради склонения — штатный приём, а не опечатка. Подстраивать
-перевод под проверку — хвост виляет собакой; правильно настроить проверку.
+Why it was needed. Measurements on a live translation (136,113 rows) showed that
+the check complains three times more often than there are errors: 18,527 remarks
+about brackets, of which the real ones are ~20%, because the translator wraps a
+substitution in `Concept(…)` for the sake of declension — a standard device, not
+a typo. Fitting the translation to the check is the tail wagging the dog; the
+right thing is to set the check up properly.
 
-Устройство гибридное, и это осознанно:
+The arrangement is hybrid, and that is deliberate:
 
-* **встроенные правила** — функции с параметрами. Именно параметры, а не
-  «свои регулярки», убирают измеренный шум: девять галок против десятков тысяч
-  ложных срабатываний;
-* **пользовательские правила** — шесть декларативных видов (`KINDS`). Полностью
-  декларативный язык для встроенных был бы самообманом: на «пропущен пробел
-  перед подстановкой» и «такой же оригинал переведён иначе» он выродился бы в
-  поле, куда вписывают имя питоновской функции.
+* **built-in rules** — functions with parameters. It is the parameters, and not
+  "regexes of one's own", that remove the measured noise: nine tick boxes
+  against tens of thousands of false hits;
+* **user rules** — six declarative kinds (`KINDS`). A fully declarative language
+  for the built-in ones would have been self-deception: on "a space is missing
+  before the substitution" and "the same source is translated differently" it
+  would have degenerated into a field where one writes the name of a Python
+  function.
 
-И то и другое живёт в одном наборе с одинаковой схемой, одинаково включается и
-одинаково показывается. Границы пользователь видеть не должен.
+Both live in one set with the same schema, are switched on the same way and are
+shown the same way. The user is not supposed to see the border.
 
-Значения параметров по умолчанию воспроизводили поведение до появления реестра.
-Два из них с тех пор изменены — `edge_space.compare_with_source` и
-`unbalanced_quotes.only_if_source_balanced`: замер показал, что 93% и 74%
-срабатываний приходились на пробел и кавычку, которые стоят в самом оригинале.
-Оба дефолта только гасят срабатывания и ни одного не добавляют (проверяется
-`test_qa_defaults.py`), поэтому смена безопасна.
+The default parameter values reproduced the behaviour from before the registry.
+Two of them have been changed since — `edge_space.compare_with_source` and
+`unbalanced_quotes.only_if_source_balanced`: the measurement showed that 93% and
+74% of the hits fell on a space and a quote standing in the source itself. Both
+defaults only quiet hits down and add not a single one (checked by
+`test_qa_defaults.py`), so the change is safe.
 
-Поверх набора ложатся **оверлеи** — дельты, а не полные дампы. Слоёв два,
-глобальный и проектный; порядок применения: встроенные значения → пресет и
-правки глобального слоя → пресет и правки проекта. Дельта важна: полный дамп
-заморозил бы набор на версии приложения, в которой его сохранили, и новые
-правила с починенными дефолтами до пользователя бы не доехали.
+**Overlays** lie on top of the set — deltas, not full dumps. There are two
+layers, the global one and the project one; the order of application is:
+built-in values → the preset and the edits of the global layer → the preset and
+the edits of the project. The delta matters: a full dump would freeze the set at
+the version of the application it was saved in, and new rules with mended
+defaults would never reach the user.
 """
 from __future__ import annotations
 
@@ -50,23 +53,23 @@ SEVERITY_RANK = {ERROR: 0, WARNING: 1, INFO: 2}
 
 BUILTIN = "builtin"
 
-# Сколько времени своё правило вправе потратить на ОДНУ строку, прежде чем его
-# погасят до конца прохода.
+# How much time a rule of one's own is entitled to spend on ONE row before it is
+# put out for the rest of the pass.
 #
-# Повод — катастрофический бэктрекинг: `(\w+)+$` на длинной строке считается
-# минутами, а проход идёт по сотне тысяч строк. Полсекунды на строку — это уже
-# на три порядка больше, чем у любого честного правила, так что ложных
-# срабатываний ждать неоткуда.
+# The reason is catastrophic backtracking: `(\w+)+$` on a long row is computed
+# for minutes, while a pass goes over a hundred thousand rows. Half a second per
+# row is already three orders of magnitude more than any honest rule takes, so
+# there is nowhere for false hits to come from.
 #
-# **Чего это не даёт, и обещать обратное было бы неправдой.** Одиночный
-# зависший вызов `re` так не прервать: таймаута у модуля нет, сигналы на
-# Windows не работают, а сторонний движок сломал бы принцип единственной
-# зависимости. Защита здесь от «правило испортило весь проход», а не от
-# «правило повесило приложение». Второе ловится раньше — `regex_warning`
-# предупреждает в окне правил ещё до запуска.
+# **What this does not give, and promising otherwise would be untrue.** A single
+# hung `re` call cannot be interrupted this way: the module has no timeout,
+# signals do not work on Windows, and an outside engine would break the
+# principle of a single dependency. The protection here is against "a rule
+# spoiled the whole pass", not against "a rule hung the application". The second
+# is caught earlier — `regex_warning` warns in the rules window before the run.
 SLOW_RULE_SECONDS = 0.5
 
-# Категории — порядок задаёт порядок групп в окне правил
+# Categories — the order sets the order of the groups in the rules window
 CATEGORIES: dict[str, str] = {
     "markup": QT_TRANSLATE_NOOP("QaRules", "Markup"),
     "format": QT_TRANSLATE_NOOP("QaRules", "Formatting"),
@@ -89,23 +92,26 @@ class Rule:
     kind: str = BUILTIN
     params: Mapping = field(default_factory=dict)
     note: str = ""
-    # Язык перевода, к которому правило относится. Пусто — любой. Заведено
-    # ради `glued_markup` и `linking_calque`: оба про русскую грамматику, и
-    # французу они выдали бы замечания про склонение на ровном месте.
+    # The target language the rule belongs to. Empty means any. Set up for the
+    # sake of `glued_markup` and `linking_calque`: both are about Russian
+    # grammar, and a translator into French would get remarks about declension
+    # for nothing.
     locale: str = ""
-    # Примеры работают самопроверкой: и в окне правил, и в pytest. Приём
-    # подсмотрен у LanguageTool, где каждое правило обязано нести пример.
-    example_ok: tuple[tuple[str, str], ...] = ()      # (оригинал, перевод) — молчит
-    example_bad: tuple[tuple[str, str], ...] = ()     # (оригинал, перевод) — срабатывает
+    # The examples work as a self-check: both in the rules window and in pytest.
+    # The device is borrowed from LanguageTool, where every rule is obliged to
+    # carry an example.
+    example_ok: tuple[tuple[str, str], ...] = ()      # (source, translation) — quiet
+    example_bad: tuple[tuple[str, str], ...] = ()     # (source, translation) — fires
     origin: str = BUILTIN
 
     def with_params(self, **changes) -> Rule:
         return replace(self, params={**self.params, **changes})
 
-    # Подписи переводятся здесь, а не в окне правил: к ним ходят и отчёт F6,
-    # и подсказка колонки «!», и разошлись бы они мгновенно. Текст своего
-    # правила не переводится вовсе: его написал пользователь, и совпадение с
-    # английской строкой интерфейса подменяло бы его чужим переводом.
+    # The labels are translated here and not in the rules window: both the F6
+    # report and the hint of the «!» column come for them, and they would
+    # diverge instantly. The text of a rule of one's own is not translated at
+    # all: the user wrote it, and a coincidence with an English interface string
+    # would replace it with somebody else's translation.
     def _text(self, source: str) -> str:
         if not source:
             return ""
@@ -121,16 +127,16 @@ class Rule:
         return self._text(self.note)
 
 
-# --- вспомогательное -----------------------------------------------------
+# --- helpers -------------------------------------------------------------
 
 RE_ESCAPE_SEQ = re.compile(r"\\[nrt]")
-# Вставка, приклеенная к целому слову: «дома[GetPlayer…]» → в игре «домаСтарк»
+# An insert glued to a whole word: «дома[GetPlayer…]» → in the game «домаСтарк»
 RE_GLUED_TAIL = r"\[[^\[\]]*\]"
-# Голова вызова внутри скобки: [Concept('faith','вера')|E] → Concept
+# The head of a call inside the bracket: [Concept('faith','вера')|E] → Concept
 RE_HEAD = re.compile(r"^\[\s*([A-Za-z_][A-Za-z0-9_]*)")
-# То же имя, но без скобки слева — им `tail_of` разбирает последнее звено
+# The same name without the bracket on the left — `tail_of` parses the last link
 RE_HEAD_BARE = re.compile(r"^[?]?([A-Za-z_][A-Za-z0-9_]*)")
-# Флаги оформления в конце токена: [men_at_arms|E] → [men_at_arms]
+# Presentation flags at the end of a token: [men_at_arms|E] → [men_at_arms]
 RE_TOKEN_FLAGS = re.compile(r"\|[^\[\]|]*(?=\]$)")
 
 DEFAULT_PAIRS = (("«", "»"), ("(", ")"), ("[", "]"), ("{", "}"))
@@ -141,23 +147,23 @@ def _multiset(pattern: re.Pattern, text: str) -> Counter:
 
 
 def head_of(token: str) -> str:
-    """Имя функции внутри скобки — по нему отличают приём от опечатки."""
+    """The name of the function inside the bracket — it tells a device from a typo."""
     match = RE_HEAD.match(token)
     return match.group(1) if match else ""
 
 
 def tail_of(token: str) -> str:
-    """Имя вызываемой функции — последнее звено цепочки внутри скобки.
+    """The name of the called function — the last link of the chain in the bracket.
 
-    `head_of` смотрит на первое слово, и в CK3 это и есть функция
-    (`[GetTrait('x').GetName]` → `GetTrait`). В HOI4 первым стоит область
-    видимости — тег страны или `ROOT`/`FROM`, — а функция оказывается в конце:
-    `[JAP.GetAdjRuLower]`. Русская локализация HOI4 склоняет ровно этими
-    хвостами, и без них замену `GetAdjective` → `GetAdjRuLower` не отличить от
-    потерянной ссылки: 5 028 строк ванильного перевода против 746 настоящих
-    расхождений.
+    `head_of` looks at the first word, and in CK3 that is the function
+    (`[GetTrait('x').GetName]` → `GetTrait`). In HOI4 the scope comes first — a
+    country tag or `ROOT`/`FROM` — and the function turns out to be at the end:
+    `[JAP.GetAdjRuLower]`. The Russian localisation of HOI4 declines with exactly
+    these tails, and without them the replacement `GetAdjective` →
+    `GetAdjRuLower` cannot be told from a lost reference: 5,028 rows of the
+    vanilla translation against 746 real divergences.
     """
-    inner = token.strip("[]").split("|")[0]     # флаги оформления не в счёт
+    inner = token.strip("[]").split("|")[0]     # presentation flags do not count
     last = inner.split(".")[-1].strip()
     match = RE_HEAD_BARE.match(last)
     return match.group(1) if match else ""
@@ -179,29 +185,30 @@ def _differs(en_tokens: Counter, ru_tokens: Counter, *,
              allow_replacement: bool = False,
              ignore_extra_tails: tuple[str, ...] = (),
              allow_extra: bool = False) -> bool:
-    """Расходятся ли наборы токенов с учётом послаблений."""
+    """Do the token sets diverge, with the leniencies taken into account."""
     if compare == "count":
         return sum(en_tokens.values()) != sum(ru_tokens.values())
-    extra = ru_tokens - en_tokens          # появилось в переводе
-    missing = en_tokens - ru_tokens        # потерялось при переводе
+    extra = ru_tokens - en_tokens          # appeared in the translation
+    missing = en_tokens - ru_tokens        # lost in the translation
 
     if ignore_extra_heads or ignore_extra_tails:
-        # Обёртка ради грамматики — не расхождение: переводчик добавил
-        # Concept(…)/Select_CString(…), чтобы просклонять термин. В HOI4 то же
-        # самое делается не обёрткой, а склоняющей функцией на конце цепочки
-        # ([JAP.GetAdjRuLower] вместо [JAP.GetAdjective]) — отсюда второй
-        # список, по хвостам.
+        # A wrapper for the sake of grammar is not a divergence: the translator
+        # added Concept(…)/Select_CString(…) to decline a term. In HOI4 the same
+        # thing is done not by a wrapper but by a declining function at the end
+        # of the chain ([JAP.GetAdjRuLower] instead of [JAP.GetAdjective]) —
+        # hence the second list, the one by tails.
         forgiven = Counter({t: n for t, n in extra.items()
                             if head_of(t) in ignore_extra_heads
                             or tail_of(t) in ignore_extra_tails})
         extra -= forgiven
         if allow_replacement and forgiven and not extra:
-            # Обёртка не «сверх», а «вместо»: английское [CharAreIs(actor)]
-            # заменено на [Select_CString(actor.IsFemale, 'ведьма', 'колдун')],
-            # потому что русскому нужен род. Замер на живом переводе: таких
-            # случаев 59% всех расхождений по скобкам — больше, чем чистых
-            # обёрток. Гасим столько потерянных токенов, сколько добавлено
-            # обёрток: замена один к одному прощается, настоящая потеря — нет.
+            # The wrapper is not "on top of" but "instead of": the English
+            # [CharAreIs(actor)] is replaced by [Select_CString(actor.IsFemale,
+            # 'ведьма', 'колдун')], because Russian needs a gender. Measured on
+            # a live translation: such cases are 59% of all bracket divergences,
+            # more than pure wrappers. We quiet as many lost tokens as there are
+            # wrappers added: a one-for-one replacement is forgiven, a real loss
+            # is not.
             budget = sum(forgiven.values())
             for token in list(missing):
                 taken = min(budget, missing[token])
@@ -213,11 +220,11 @@ def _differs(en_tokens: Counter, ru_tokens: Counter, *,
                     break
 
     if allow_extra:
-        # Подстановка, которой в оригинале не было, игру не ломает: она
-        # валидна, просто текста стало больше. Русскому это нужно часто —
-        # «Ты славно сража[X.GetLasLsya], [X.GetFirstName].» там, где по-английски
-        # обращение опущено. Потерянная подстановка, наоборот, оставляет в игре
-        # дыру, и её этот параметр не трогает.
+        # A substitution that was not in the source does not break the game: it
+        # is valid, there is simply more text. Russian needs this often — «Ты
+        # славно сража[X.GetLasLsya], [X.GetFirstName].» where in English the
+        # address is dropped. A lost substitution, on the contrary, leaves a hole
+        # in the game, and this parameter does not touch it.
         extra = Counter()
 
     if compare == "set":
@@ -232,10 +239,10 @@ def _glue_re(min_word_len: int) -> re.Pattern:
 
 @lru_cache(maxsize=64)
 def _calque_re(verbs: tuple[str, ...]) -> re.Pattern:
-    """Связка + подстановка. Глаголы — фрагменты регулярки, не простые слова.
+    """A linking word plus a substitution. The verbs are regex fragments, not plain words.
 
-    Отрицание отсекаем: «целью не может быть [Имя]» ставит подстановку в
-    позицию подлежащего, и именительный падеж там правилен.
+    The negation is cut off: «целью не может быть [Имя]» puts the substitution
+    into the position of the subject, and the nominative case is right there.
     """
     return re.compile(r"(?<!не )\b(?:" + "|".join(verbs) + r")"
                       r"\s*\[(?:Get|[A-Z_]+\.Get)")
@@ -244,16 +251,18 @@ def _calque_re(verbs: tuple[str, ...]) -> re.Pattern:
 def _returns_word_ending(token: str, wrappers: tuple[str, ...],
                          suffixes: tuple[str, ...],
                          calls: tuple[str, ...] = ()) -> bool:
-    """Подстановка возвращает окончание слова, а не имя.
+    """The substitution returns the ending of a word and not a name.
 
-    К таким её и дописывают вплотную, и это норма, а не потеря пробела:
-    `Select_CString(X.IsFemale, 'а', '')` превращает «даровал» в «даровала», а
-    функции с суффиксом `_END` (`GetAnimalType_RU_Acc_END`) заведены
-    переводчиками ровно под падежные окончания.
+    To such ones it is written right up close, and that is the norm, not a lost
+    space: `Select_CString(X.IsFemale, 'а', '')` turns «даровал» into
+    «даровала», and the functions with the `_END` suffix
+    (`GetAnimalType_RU_Acc_END`) were set up by translators for exactly the case
+    endings.
 
-    В HOI4 то же самое делает сама игра, отдельными функциями:
-    «объявил[CHI.GetVerbGendEndA_RU]» — 1 097 таких склеек в ванильном русском
-    переводе. Их узнаём по имени вызова (`calls`), а не по аргументу.
+    In HOI4 the same thing is done by the game itself, with separate functions:
+    «объявил[CHI.GetVerbGendEndA_RU]» — 1,097 such joins in the vanilla Russian
+    translation. We know them by the name of the call (`calls`), not by the
+    argument.
     """
     if head_of(token) in wrappers:
         return True
@@ -263,7 +272,7 @@ def _returns_word_ending(token: str, wrappers: tuple[str, ...],
 
 
 def _glued_count(text: str, params: Mapping) -> int:
-    text = RE_ESCAPE_SEQ.sub(" ", text)     # «\n» — не буква n перед скобкой
+    text = RE_ESCAPE_SEQ.sub(" ", text)     # «\n» is not the letter n before a bracket
     wrappers = tuple(params.get("ending_wrappers", ()))
     suffixes = tuple(params.get("ending_suffixes", ()))
     calls = tuple(params.get("ending_calls", ()))
@@ -274,9 +283,10 @@ def _glued_count(text: str, params: Mapping) -> int:
         chunk = match.group(0)
         if _returns_word_ending(chunk[chunk.index("["):], wrappers, suffixes, calls):
             continue
-        # Подстановка не перед словом, а внутри него: «анти[X.GetAdjective]ое»
-        # — приставка слева, окончание справа, и пробелу там взяться неоткуда.
-        # 279 склеек ванильного русского HOI4 против 5 настоящих потерь пробела.
+        # The substitution is not before the word but inside it:
+        # «анти[X.GetAdjective]ое» — a prefix on the left, an ending on the
+        # right, and there is nowhere for a space to come from. 279 joins in the
+        # vanilla Russian HOI4 against 5 real lost spaces.
         after = text[match.end():match.end() + 1]
         if inside_word_ok and after.isalpha():
             continue
@@ -291,9 +301,9 @@ def _unbalanced(text: str, pairs) -> bool:
     return text.count('"') % 2 == 1
 
 
-# --- сами проверки -------------------------------------------------------
+# --- the checks themselves -----------------------------------------------
 #
-# Каждая получает (оригинал, перевод, параметры) и отвечает «есть замечание».
+# Each gets (source, translation, parameters) and answers "there is a remark".
 
 
 def _check_dollar(en: str, ru: str, p: Mapping) -> bool:
@@ -301,11 +311,12 @@ def _check_dollar(en: str, ru: str, p: Mapping) -> bool:
     en_tokens = _tokens(markup.pattern("dollar"), en, ignore_flags=flags)
     ru_tokens = _tokens(markup.pattern("dollar"), ru, ignore_flags=flags)
     if p.get("only_if_all_lost"):
-        # Замер на живом переводе развёл два разных случая: 789 строк, где в
-        # переводе не осталось ни одной переменной (дыра в тексте прямо в игре),
-        # и 624, где набор просто отличается — там переводчик чаще всего
-        # переставил или заменил подстановку осознанно. Параметр гасит вторые,
-        # не трогая первые; выключен по умолчанию — замена бывает и ошибкой.
+        # A measurement on a live translation parted two different cases: 789
+        # rows where not a single variable was left in the translation (a hole
+        # in the text right in the game), and 624 where the set simply differs —
+        # there the translator most often moved or replaced a substitution
+        # deliberately. The parameter quiets the second without touching the
+        # first; off by default — a replacement happens to be an error too.
         return bool(en_tokens) and not ru_tokens
     return _differs(en_tokens, ru_tokens,
                     compare=p.get("compare", "multiset"), ignore_extra_heads=(),
@@ -313,11 +324,11 @@ def _check_dollar(en: str, ru: str, p: Mapping) -> bool:
 
 
 def _check_icon(en: str, ru: str, p: Mapping) -> bool:
-    """Иконки обеих записей — по каждой отдельно.
+    """The icons of both records — each kind on its own.
 
-    Не одним общим мультимножеством: `£gold£`, замененное на `@gold!`, в общем
-    мешке дало бы равенство, а это разные токены разных игр, и подмена одного
-    другим — как раз ошибка.
+    Not as one common multiset: `£gold£` replaced by `@gold!` would come out
+    equal in a common bag, whereas these are different tokens of different
+    games, and swapping one for the other is exactly an error.
     """
     return any(_multiset(markup.pattern(token_id), en)
                != _multiset(markup.pattern(token_id), ru)
@@ -325,12 +336,12 @@ def _check_icon(en: str, ru: str, p: Mapping) -> bool:
 
 
 def _check_color(en: str, ru: str, p: Mapping) -> bool:
-    """Цветовые коды HOI4/EU4/Stellaris — по каждому виду отдельно.
+    """The colour codes of HOI4/EU4/Stellaris — each kind on its own.
 
-    Раздельно, как и у иконок: `§Y` (жёлтый) вместо `§R` (красный) — не то же
-    самое, что «цвет на месте», а закрывающий `§!` без открывающего красит
-    остаток строки целиком. `compare: count` оставляет только счёт, если
-    переводчик осознанно меняет оттенки.
+    Separately, as with the icons: `§Y` (yellow) instead of `§R` (red) is not the
+    same as "the colour is in place", and a closing `§!` without an opening one
+    paints the rest of the row whole. `compare: count` leaves only the count, if
+    the translator changes the shades deliberately.
     """
     compare = p.get("compare", "multiset")
     for token_id in ("color_open", "color_close", "color_script"):
@@ -342,13 +353,14 @@ def _check_color(en: str, ru: str, p: Mapping) -> bool:
 
 
 def _check_grammar(en: str, ru: str, p: Mapping) -> bool:
-    """Грамматика Stellaris: тег или вариант, потерянный при переводе.
+    """Stellaris grammar: a tag or a variant lost in the translation.
 
-    Сравнение одностороннее, и это не послабление, а устройство системы:
-    варианты для падежей дописывает **переводчик** (6 327 строк русского дерева
-    против 463 английского), поэтому добавленное расхождением не считается.
-    А вот потерянный `&!fem` меняет род имени во всех фразах, куда оно
-    подставится, — и заметить это в игре можно только случайно.
+    The comparison is one-sided, and that is not leniency but how the system is
+    built: the variants for the cases are written by the **translator** (6,327
+    rows of the Russian tree against 463 of the English), so what is added does
+    not count as a divergence. A lost `&!fem`, on the other hand, changes the
+    gender of a name in every phrase it gets substituted into — and noticing
+    that in the game is only possible by chance.
     """
     for token_id in ("grammar_tags", "grammar_variant"):
         pattern = markup.pattern(token_id)
@@ -374,15 +386,15 @@ def _check_fmt(en: str, ru: str, p: Mapping) -> bool:
     en_tags, ru_tags = bag(en), bag(ru)
     extra = ru_tags - en_tags
     if allowed:
-        # Переводчик дописал #L ради падежа — приём, а не потеря тега
+        # The translator added #L for the sake of a case — a device, not a lost tag
         extra = Counter({t: n for t, n in extra.items() if t not in allowed})
     return bool(extra or (en_tags - ru_tags))
 
 
 def _check_fmt_broken(en: str, ru: str, p: Mapping) -> bool:
     opens, closes = markup.pattern("fmt_open"), markup.pattern("fmt_close")
-    # Только когда оригинал закрыт: в CK3 #weak в конце строки закрывать не
-    # обязательно, и несбалансирован бывает сам мод.
+    # Only when the source is closed: in CK3 a #weak at the end of a row need not
+    # be closed, and it is the mod itself that happens to be unbalanced.
     return (len(opens.findall(en)) == len(closes.findall(en))
             and len(opens.findall(ru)) != len(closes.findall(ru)))
 
@@ -400,15 +412,15 @@ def _check_brackets(en: str, ru: str, p: Mapping) -> bool:
 
 
 def _delta_fails(delta: int, p: Mapping) -> bool:
-    """Расхождение в числе токенов с учётом допуска и направления.
+    """A divergence in the number of tokens, tolerance and direction included.
 
-    `delta` — сколько токенов потерялось: положительное значит «в переводе
-    меньше». Отдельной функцией, потому что тем же самым меряет и
-    пользовательский вид `token_count`.
+    `delta` is how many tokens were lost: positive means "fewer in the
+    translation". A function of its own, because the user kind `token_count`
+    measures the very same thing.
     """
     tolerance = int(p.get("tolerance", 0))
     direction = p.get("direction", "any")
-    if direction == "fewer":        # ругаться только на потерянные токены
+    if direction == "fewer":        # complain only about lost tokens
         return delta > tolerance
     if direction == "more":
         return -delta > tolerance
@@ -426,14 +438,14 @@ def _check_same_as_en(en: str, ru: str, p: Mapping) -> bool:
 
 def _check_edge_space(en: str, ru: str, p: Mapping) -> bool:
     if p.get("compare_with_source"):
-        # Краевой пробел бывает и в оригинале — так склеивают строки в игре
+        # An edge space happens in the source too — that is how rows are glued in the game
         return (ru != ru.strip()) and (en == en.strip())
     return ru != ru.strip()
 
 
 def _check_double_space(en: str, ru: str, p: Mapping) -> bool:
     pattern = markup.pattern("newline")
-    # Абзацный разрыв \n\n — не двойной пробел: считаем внутри отрезков
+    # A paragraph break \n\n is not a double space: we count inside the pieces
     hit = any("  " in part for part in pattern.split(ru.strip()))
     if hit and p.get("ignore_if_in_source"):
         return not any("  " in part for part in pattern.split(en.strip()))
@@ -448,19 +460,19 @@ def _check_unbalanced(en: str, ru: str, p: Mapping) -> bool:
     if not _unbalanced(text_ru, pairs):
         return False
     if p.get("only_if_source_balanced") and _unbalanced(text_en, pairs):
-        return False        # несбалансирован сам оригинал — перевод ни при чём
+        return False        # the source itself is unbalanced — the translation is not at fault
     return True
 
 
 def _check_glued(en: str, ru: str, p: Mapping) -> bool:
-    # Сравниваем с оригиналом: «[command_modifier_i|E]Minimum» — законная
-    # склейка, и перевод вправе её унаследовать.
+    # We compare with the source: «[command_modifier_i|E]Minimum» is a lawful
+    # join, and the translation is entitled to inherit it.
     return _glued_count(ru, p) > _glued_count(en, p)
 
 
 def _check_calque(en: str, ru: str, p: Mapping) -> bool:
-    # С оригиналом не сравниваем: по-английски «tend to be [Trait]» безупречно,
-    # ломается только русский текст.
+    # We do not compare with the source: in English "tend to be [Trait]" is
+    # impeccable, it is only the Russian text that breaks.
     verbs = tuple(p.get("verbs", ()))
     return bool(verbs) and bool(_calque_re(verbs).search(ru))
 
@@ -493,10 +505,10 @@ CHECKS: dict[str, Callable[[str, str, Mapping], bool]] = {
     "len_ratio": _check_len_ratio,
 }
 
-# Проверки, которым нужен не одна строка, а весь проект
+# Checks that need not one row but the whole project
 PROJECT_WIDE = ("inconsistent",)
-# Пустой перевод — особый случай: отвечать на него всеми остальными
-# замечаниями бессмысленно, поэтому проверка обрывает разбор строки
+# An empty translation is a special case: answering it with all the other
+# remarks is pointless, so the check breaks off the parsing of the row
 EMPTY = "empty_translated"
 
 CALQUE_VERBS = (
@@ -506,29 +518,32 @@ CALQUE_VERBS = (
 )
 
 
-# --- виды пользовательских правил ---------------------------------------
+# --- the kinds of user rules ---------------------------------------------
 #
-# Шесть видов, а не язык описания правил. Причина та же, по которой встроенные
-# правила остались функциями: настоящие проверки опираются на разбор скобок, на
-# соседние строки проекта, на реестр разметки — выразить это декларацией нельзя,
-# и попытка выродилась бы в поле «имя питоновской функции».
+# Six kinds, and not a language for describing rules. The reason is the same one
+# for which the built-in rules stayed functions: the real checks lean on parsing
+# brackets, on the neighbouring rows of the project, on the markup registry —
+# that cannot be expressed by a declaration, and an attempt would have
+# degenerated into a field named "the name of a Python function".
 #
-# Виды покрывают то, что переводчик формулирует сам: «этих символов в переводе
-# быть не должно», «сколько таких кусков в оригинале, столько и в переводе»,
-# «после такого в оригинале в переводе обязано быть вот такое». Всё остальное —
-# повод завести встроенное правило, а не строчку в настройке.
+# The kinds cover what a translator formulates for themselves: "these characters
+# must not be in the translation", "as many such pieces in the translation as in
+# the source", "after such a thing in the source the translation is obliged to
+# hold this". Everything else is a reason to set up a built-in rule, not a line
+# in a setting.
 
 USER = "user"
 
 
 @lru_cache(maxsize=256)
 def _user_re(pattern: str, ignore_case: bool = False) -> re.Pattern | None:
-    """Выражение пользователя; `None` — не разбирается.
+    """The user's expression; `None` — it does not parse.
 
-    Битое выражение гасит своё правило и не трогает остальные: проверка идёт по
-    сотне тысяч строк, и падать посреди прохода из-за незакрытой скобки в чужой
-    настройке она не имеет права. Что именно не так, показывает окно правил
-    (`regex_error`) — там ошибке и место, рядом с полем ввода.
+    A broken expression quiets its own rule and does not touch the rest: the
+    check goes over a hundred thousand rows, and it has no right to fall over
+    mid-pass because of an unclosed bracket in somebody else's setting. What
+    exactly is wrong is shown by the rules window (`regex_error`) — that is
+    where an error belongs, next to the input field.
     """
     if not pattern:
         return None
@@ -539,7 +554,7 @@ def _user_re(pattern: str, ignore_case: bool = False) -> re.Pattern | None:
 
 
 def regex_error(pattern: str) -> str:
-    """Жалоба разборщика на выражение или пусто, если всё в порядке."""
+    """The parser's complaint about the expression, or empty if all is well."""
     if not pattern:
         return ""
     try:
@@ -549,21 +564,22 @@ def regex_error(pattern: str) -> str:
     return ""
 
 
-# Квантификатор над группой, внутри которой тоже квантификатор: `(\w+)+`,
-# `(a*)*`, `(\d+\s?)+`. На строке, которая почти подходит, разборщик перебирает
-# экспоненциально много вариантов — секунды на одной строке, а проверка идёт по
-# сотне тысяч. Модуль `re` прервать нельзя ничем: ни таймаута, ни сигнала на
-# Windows, — поэтому единственная защита в том, чтобы предупредить человека
-# раньше, чем он нажмёт F6.
+# A quantifier over a group that holds a quantifier inside it as well: `(\w+)+`,
+# `(a*)*`, `(\d+\s?)+`. On a row that almost fits, the parser goes through
+# exponentially many variants — seconds on a single row, while the check runs
+# over a hundred thousand. The `re` module cannot be interrupted by anything: no
+# timeout, no signal on Windows — so the only protection is to warn the human
+# before they press F6.
 _NESTED_QUANTIFIER = re.compile(r"\((?![?*+])[^()]*[*+][^()]*\)\s*[*+]")
 
 
 def regex_warning(pattern: str) -> str:
-    """Предупреждение о выражении, которое может подвесить проверку.
+    """A warning about an expression that may hang the check.
 
-    Не ошибка: выражение разбирается и, скорее всего, работает. Но правила
-    ездят между переводчиками файлом `.pdxqa`, и полученное со стороны правило
-    так же способно занять процессор надолго, как и написанное своей рукой.
+    Not an error: the expression parses and most likely works. But rules travel
+    between translators in a `.pdxqa` file, and a rule received from outside is
+    just as able to occupy the processor for a long time as one written by one's
+    own hand.
     """
     if not pattern or regex_error(pattern):
         return ""
@@ -576,11 +592,11 @@ def regex_warning(pattern: str) -> str:
 
 
 def _found(pattern: re.Pattern, text: str) -> Counter:
-    """Совпадения целиком, а не группы.
+    """The matches whole, not the groups.
 
-    `findall` при скобках в выражении отдаёт группы, и `(\\w+)` вместо
-    `(?:\\w+)` менял бы смысл правила молча. Пользователю такое различие знать
-    не за чем.
+    With brackets in the expression `findall` hands back the groups, and
+    `(\\w+)` instead of `(?:\\w+)` would change the meaning of the rule
+    silently. The user has no business knowing such a difference.
     """
     return Counter(m.group(0) for m in pattern.finditer(text))
 
@@ -615,13 +631,14 @@ def _check_target_regex(en: str, ru: str, p: Mapping) -> bool:
 
 
 def _check_pair_regex(en: str, ru: str, p: Mapping) -> bool:
-    """Нашли в оригинале — значит, ждём соответствующее в переводе.
+    """Found in the source — then we expect the matching thing in the translation.
 
-    Приём взят у Okapi CheckMate (там это Patterns): выражение по оригиналу и
-    шаблон ответа, куда подставляются группы (`\\1`). Шаблон по умолчанию ищется
-    как текст, а не как выражение, — иначе самый очевидный случай ломался бы
-    молча: `$\\1$` в роли выражения означает «конец строки, VALUE, конец
-    строки» и не совпадёт ни с чем.
+    The device is taken from Okapi CheckMate (Patterns there): an expression over
+    the source and a template for the answer, into which the groups are
+    substituted (`\\1`). By default the template is looked for as text and not as
+    an expression — otherwise the most obvious case would break silently:
+    `$\\1$` in the role of an expression means "end of row, VALUE, end of row"
+    and will match nothing.
     """
     ignore_case = bool(p.get("ignore_case"))
     src = _user_re(str(p.get("source", "")), ignore_case)
@@ -634,7 +651,7 @@ def _check_pair_regex(en: str, ru: str, p: Mapping) -> bool:
         try:
             wanted = match.expand(template)
         except (re.error, IndexError):
-            return False        # шаблон ссылается на группу, которой нет
+            return False        # the template refers to a group that is not there
         if as_regex:
             rx = _user_re(wanted, ignore_case)
             if rx is None or not rx.search(ru):
@@ -654,8 +671,8 @@ def _check_balance(en: str, ru: str, p: Mapping) -> bool:
         text_ru, text_en = markup.strip_markup(ru), markup.strip_markup(en)
 
     def unbalanced(text: str) -> bool:
-        # Одинаковые половинки («"» и «"») считаются на чётность: равенство
-        # счётчиков для них выполняется всегда и не значит ничего.
+        # Identical halves («"» and «"») are counted for parity: equality of the
+        # counters holds for them always and means nothing.
         return any(text.count(left) % 2 == 1 if left == right
                    else text.count(left) != text.count(right)
                    for left, right in pairs)
@@ -681,7 +698,7 @@ def _check_forbidden_chars(en: str, ru: str, p: Mapping) -> bool:
 
 @dataclass(frozen=True, slots=True)
 class Kind:
-    """Вид пользовательского правила: чем настраивается и чем проверяет."""
+    """The kind of a user rule: what it is set up with and what it checks with."""
 
     id: str
     title: str
@@ -753,7 +770,7 @@ KIND_ORDER: tuple[str, ...] = tuple(KINDS)
 
 
 def check_of(rule: Rule) -> Callable[[str, str, Mapping], bool] | None:
-    """Проверяющая функция правила — своя у встроенного, общая у вида."""
+    """The checking function of a rule — its own for a built-in, shared for a kind."""
     if rule.kind == BUILTIN:
         return CHECKS.get(rule.id)
     kind = KINDS.get(rule.kind)
@@ -765,18 +782,19 @@ def make_user_rule(rule_id: str, kind: str, *, title: str,
                    category: str = "custom", enabled: bool = True,
                    params: Mapping | None = None, note: str = "",
                    locale: str = "") -> Rule:
-    """Своё правило: параметры вида плюс то, что задал пользователь.
+    """A rule of one's own: the parameters of the kind plus what the user set.
 
-    Незнакомые параметры отбрасываются здесь же — как и в оверлее, чтобы
-    правило, приехавшее из чужой версии, не таскало за собой поле, которого
-    больше нет.
+    Unknown parameters are dropped right here — as in the overlay, so that a
+    rule arrived from somebody else's version does not drag along a field that
+    no longer exists.
     """
     spec = KINDS[kind]
     known = {k: v for k, v in (params or {}).items() if k in spec.defaults}
     return Rule(
         id=rule_id, title=title,
-        # Незнакомая категория увела бы правило из дерева окна целиком: там
-        # группы строятся по `CATEGORIES`, и чужая строка не совпала бы ни с одной.
+        # An unknown category would take the rule out of the window tree
+        # entirely: the groups there are built from `CATEGORIES`, and a foreign
+        # string would match none of them.
         category=category if category in CATEGORIES else "custom",
         message=message or title,
         severity=severity if severity in SEVERITIES else WARNING,
@@ -786,11 +804,11 @@ def make_user_rule(rule_id: str, kind: str, *, title: str,
 
 
 def dump_user_rule(rule: Rule) -> dict:
-    """Запись правила для оверлея и файла обмена — целиком, а не дельтой.
+    """The record of a rule for the overlay and the exchange file — whole, not a delta.
 
-    Дельта тут невозможна: у своего правила нет основания, от которого её
-    считать. Зато и «новые поля доедут сами» здесь не нужно — поля задаёт
-    пользователь.
+    A delta is impossible here: a rule of one's own has no base to count it from.
+    On the other hand "the new fields will arrive by themselves" is not needed
+    here either — the fields are set by the user.
     """
     return {
         "id": rule.id, "kind": rule.kind, "title": rule.title,
@@ -801,11 +819,12 @@ def dump_user_rule(rule: Rule) -> dict:
 
 
 def load_user_rule(record: Mapping) -> Rule | None:
-    """Правило из записи; `None` — запись не понята.
+    """A rule from a record; `None` — the record was not understood.
 
-    Молча пропускаем три случая: незнакомый вид (правило из будущей версии),
-    подмену встроенного правила (иначе чужой файл мог бы переопределить
-    проверку скобок собственным выражением) и запись без имени.
+    We silently skip three cases: an unknown kind (a rule from a future version),
+    the substitution of a built-in rule (otherwise somebody else's file could
+    redefine the bracket check with an expression of its own) and a record
+    without a name.
     """
     if not isinstance(record, Mapping):
         return None
@@ -828,7 +847,7 @@ def load_user_rule(record: Mapping) -> Rule | None:
 
 
 def user_rules(overlay: Mapping | None) -> tuple[Rule, ...]:
-    """Свои правила слоя, в порядке записи."""
+    """The rules of one's own in the layer, in the order of the record."""
     records = (overlay or {}).get("custom")
     if not isinstance(records, (list, tuple)):
         return ()
@@ -836,14 +855,15 @@ def user_rules(overlay: Mapping | None) -> tuple[Rule, ...]:
     return tuple(r for r in loaded if r is not None)
 
 
-# --- встроенный набор ----------------------------------------------------
+# --- the built-in set ----------------------------------------------------
 #
-# Порядок объявления = порядок проверки = порядок кодов в замечаниях.
+# The order of declaration = the order of checking = the order of codes in remarks.
 
-# Примеры (`example_bad`/`example_ok`) намеренно НЕ переводятся: это не подписи,
-# а самопроверка правила. Русские глаголы в примере `linking_calque` обязаны
-# заставить правило сработать — переведи их, и правило замолчит на собственном
-# примере (это ловит `test_qa_defaults.py`).
+# The examples (`example_bad`/`example_ok`) are deliberately NOT translated: they
+# are not labels but the self-check of a rule. The Russian verbs in the
+# `linking_calque` example are obliged to make the rule fire — translate them,
+# and the rule falls silent on its own example (this is caught by
+# `test_qa_defaults.py`).
 
 BUILTIN_RULES: tuple[Rule, ...] = (
     Rule(
@@ -1061,20 +1081,21 @@ BY_ID: dict[str, Rule] = {r.id: r for r in BUILTIN_RULES}
 
 
 class RuleSet:
-    """Готовый к применению набор правил."""
+    """A rule set ready to be applied."""
 
     def __init__(self, rules):
         self.rules: tuple[Rule, ...] = tuple(rules)
         self.by_id: dict[str, Rule] = {r.id: r for r in self.rules}
-        # Своё правило, съевшее на одной строке больше SLOW_RULE_SECONDS,
-        # выключается до конца прохода. Копится здесь, а не в глобальной
-        # переменной: набор живёт ровно один проход, и следующий начинается
-        # с чистого листа — правило могло споткнуться об одну строку из ста
-        # тысяч, и наказывать его навсегда не за что.
+        # A rule of one's own that has eaten more than SLOW_RULE_SECONDS on a
+        # single row is switched off for the rest of the pass. It piles up here
+        # and not in a global variable: a set lives exactly one pass, and the
+        # next one starts from a clean sheet — the rule may have stumbled over
+        # one row out of a hundred thousand, and there is nothing to punish it
+        # forever for.
         self.exhausted: set[str] = set()
         self.spent: dict[str, float] = {}
 
-    # --- доступ ---
+    # --- access ---
 
     def __iter__(self):
         return iter(self.rules)
@@ -1100,24 +1121,24 @@ class RuleSet:
         return rule.message_text() if rule else code
 
     def codes(self) -> dict[str, tuple[str, str]]:
-        """Совместимый с прежним qa.CODES словарь."""
+        """A dictionary compatible with the former qa.CODES."""
         return {r.id: (r.severity, self.message(r.id)) for r in self.rules}
 
     def restricted_to(self, codes) -> RuleSet:
-        """Только перечисленные правила — и они включены, каким бы ни был дефолт."""
+        """Only the listed rules — and they are on, whatever the default may be."""
         wanted = set(codes)
         return RuleSet(replace(r, enabled=r.id in wanted) for r in self.rules)
 
     def with_rule(self, rule: Rule) -> RuleSet:
         return RuleSet(rule if r.id == rule.id else r for r in self.rules)
 
-    # --- применение ---
+    # --- application ---
 
     def check(self, en_text: str, ru_text: str) -> list[str]:
-        """Коды замечаний для пары «оригинал — перевод».
+        """The remark codes for a pair "source — translation".
 
-        Правило, съевшее слишком много времени, гаснет до конца прохода — см.
-        `SLOW_RULE_SECONDS` и `exhausted`.
+        A rule that has eaten too much time goes out for the rest of the pass —
+        see `SLOW_RULE_SECONDS` and `exhausted`.
         """
         found: list[str] = []
         for rule in self.rules:
@@ -1126,8 +1147,8 @@ class RuleSet:
             if rule.id in self.exhausted:
                 continue
             if rule.id == EMPTY:
-                # Пустой перевод обрывает разбор: остальные замечания к пустой
-                # строке отношения не имеют и только затопили бы список.
+                # An empty translation breaks off the parsing: the other remarks
+                # have nothing to do with an empty row and would only flood the list.
                 if not ru_text.strip():
                     return [EMPTY]
                 continue
@@ -1137,14 +1158,16 @@ class RuleSet:
             started = time.perf_counter()
             try:
                 hit = check(en_text, ru_text, rule.params)
-            except Exception:   # noqa: BLE001 — правило с битой настройкой гасим
-                # Настройку правят руками: `qa_rules.json` носят между машинами,
-                # `.pdxqa` пересылают друг другу — ради этого файлы и заведены.
-                # Опечатка в числе (`min_word_len: "три"`) добирается до `int()`
-                # уже внутри проверки, а идёт она по сотне тысяч строк, и падать
-                # посреди прохода из-за одного правила нельзя. Гасим его, как
-                # уже гасим правило с неразбираемым выражением (`_user_re`);
-                # разбираться с настройкой — работа окна правил.
+            except Exception:   # noqa: BLE001 — a rule with a broken setting is quieted
+                # The setting is edited by hand: `qa_rules.json` is carried
+                # between machines, `.pdxqa` files are sent to one another — that
+                # is what the files are for. A typo in a number
+                # (`min_word_len: "три"`) reaches `int()` already inside the
+                # check, and the check goes over a hundred thousand rows, so
+                # falling over mid-pass because of one rule will not do. We quiet
+                # it, as we already quiet a rule with an unparsable expression
+                # (`_user_re`); sorting the setting out is the work of the rules
+                # window.
                 continue
             spent = time.perf_counter() - started
             self.spent[rule.id] = self.spent.get(rule.id, 0.0) + spent
@@ -1153,7 +1176,7 @@ class RuleSet:
             if hit:
                 found.append(rule.id)
         if not ru_text.strip():
-            return []           # пусто, но правило про пустоту выключено
+            return []           # empty, but the rule about emptiness is off
         return found
 
 
@@ -1161,17 +1184,17 @@ def default_ruleset() -> RuleSet:
     return RuleSet(BUILTIN_RULES)
 
 
-# --- пресеты -------------------------------------------------------------
+# --- presets -------------------------------------------------------------
 #
-# Пресет — такая же дельта, как пользовательская правка, только готовая. Числа
-# в комментариях сняты на живом переводе agoot (136 113 переведённых строк).
+# A preset is the same kind of delta as a user edit, only ready-made. The numbers
+# in the comments were measured on the live agoot translation (136,113 rows).
 
 CUSTOM = "custom"
 
 PRESET_ORDER = ("strict", "ck3", "hoi4", "ck2", "stellaris", "quiet", CUSTOM)
-# Только те наборы, у которых имя своё. Игровые зовутся самой игрой, и это имя
-# не переводится — то же правило, что в `core/games.py`: «Crusader Kings III»
-# одинаково на всех языках интерфейса.
+# Only the sets that have a name of their own. The game ones are called by the
+# game itself, and that name is not translated — the same rule as in
+# `core/games.py`: «Crusader Kings III» is the same in every interface language.
 PRESET_LABELS = {
     "strict": QT_TRANSLATE_NOOP("QaRules", "Strict"),
     "quiet": QT_TRANSLATE_NOOP("QaRules", "Breakage only"),
@@ -1180,14 +1203,15 @@ PRESET_LABELS = {
 
 
 def preset_label(name: str) -> str:
-    """Подпись набора на языке интерфейса. Игра остаётся собой."""
+    """The label of a set in the interface language. A game stays itself."""
     if name in PRESET_LABELS:
         return translate("QaRules", PRESET_LABELS[name])
     return games.title(name)
 
-# Как наборы звались до 0.1.2, когда игра и язык были склеены в один пресет.
-# Имена лежат в qa_rules.json пользователей, в оверлеях внутри файлов проектов
-# и в выгруженных .pdxqa — читать их придётся всегда.
+# What the sets were called before 0.1.2, when the game and the language were
+# glued into one preset. The names lie in users' qa_rules.json, in the overlays
+# inside project files and in exported .pdxqa — reading them will always be
+# necessary.
 PRESET_ALIASES = {"ck3_ru": "ck3", "hoi4_ru": "hoi4",
                   "ck2_ru": "ck2", "stellaris_ru": "stellaris"}
 PRESET_NOTES = {
@@ -1222,33 +1246,34 @@ PRESET_NOTES = {
                    "every rule by hand."),
 }
 
-# Пресетом стала сама игра, поэтому таблицы соответствия больше нет: набор для
-# CK3 так и называется «Crusader Kings III». До 0.1.2 здесь лежала пара «игра
-# плюс язык», потому что язык был вписан в сам пресет.
+# The game itself has become the preset, so there is no table of correspondence
+# any more: the set for CK3 is called «Crusader Kings III». Before 0.1.2 a pair
+# of "game plus language" lay here, because the language was written into the
+# preset itself.
 
-# «(recommended)» стояло прямо внутри ярлыка `ck3_ru`, то есть обещалось всем —
-# включая переводчика HOI4, которому рекомендован соседний набор. Пометка
-# отдельная затем, чтобы приклеиваться к тому пресету, который подходит
-# открытому проекту, и ни к какому при закрытом.
+# «(recommended)» stood right inside the `ck3_ru` label, that is, was promised to
+# everyone — including the HOI4 translator, for whom a neighbouring set is the
+# recommended one. The mark is separate so that it sticks to the preset that
+# suits the open project, and to none at all when none is open.
 RECOMMENDED_MARK = QT_TRANSLATE_NOOP(
     "QaRules", "%1 — recommended for this project")
 
 
 def recommended(game: str, locale: str = "") -> str | None:
-    """Набор под игру проекта. `None` — своей игры у неё нет.
+    """The set for the game of the project. `None` — it has no game of its own.
 
-    Язык на выбор набора больше не влияет: он подцепляет свой слой сам, см.
-    `language_profile`.
+    The language no longer affects the choice of the set: it picks up its own
+    layer by itself, see `language_profile`.
     """
     return game if game in PRESETS and game != CUSTOM else None
 
 
 def display_order(game: str = "", locale: str = "") -> tuple[str, ...]:
-    """Порядок пресетов на витрине: подходящий проекту — первым.
+    """The order of the presets on the shop window: the one for the project first.
 
-    Без открытого проекта (и для пары, которой нет в таблице) остаётся
-    `PRESET_ORDER`: тасовать список, не зная, чей он, значило бы менять
-    привычное расположение ни на чём.
+    Without an open project (and for a pair that is not in the table)
+    `PRESET_ORDER` remains: shuffling the list without knowing whose it is would
+    mean changing the familiar arrangement for nothing.
     """
     first = recommended(game, locale)
     if first is None:
@@ -1256,19 +1281,20 @@ def display_order(game: str = "", locale: str = "") -> tuple[str, ...]:
     return (first, *(name for name in PRESET_ORDER if name != first))
 
 
-# Головы вызовов, которыми переводчик оборачивает подстановку ради склонения.
-# Не опечатка, а штатный приём: 59% всех расхождений по скобкам — замена
-# английской ссылки на такую обёртку.
+# The heads of the calls a translator wraps a substitution in for the sake of
+# declension. Not a typo but a standard device: 59% of all bracket divergences
+# are the replacement of an English reference by such a wrapper.
 GRAMMAR_WRAPPERS = ["Concept", "Select_CString"]
 
-# Склоняющие функции русских переводов живут отдельно (`core/inflections.py`):
-# это данные, снятые с живых деревьев, и место им рядом друг с другом, а не
-# посреди описания правил. Здесь — только имена, которыми их зовут пресеты.
+# The declining functions of the Russian translations live separately
+# (`core/inflections.py`): they are data taken off live trees, and their place is
+# next to one another, not in the middle of a description of rules. Here — only
+# the names by which the presets call them.
 HOI4_RU_CALLS = inflections.HOI4_RU_CALLS
 HOI4_RU_ENDINGS = inflections.HOI4_RU_ENDINGS
 CK2_RU_CALLS = inflections.CK2_RU_CALLS
 
-# Что остаётся включённым в «Только поломках»
+# What stays on in "Breakages only"
 _QUIET_KEEP = frozenset(
     {EMPTY, "dollar_mismatch", "icon_mismatch", "fmt_broken", "brackets_mismatch"})
 
@@ -1281,58 +1307,59 @@ PRESETS: dict[str, dict] = {
         "unbalanced_quotes": {"params": {"only_if_source_balanced": False}},
     },
     "ck3": {
-        # 33 703 → 26 001 (обёртки) → 13 582 (обёртка вместо ссылки) → 9 955
-        # (флаги оформления вида |E не считаются расхождением)
+        # 33,703 → 26,001 (wrappers) → 13,582 (a wrapper instead of a reference)
+        # → 9,955 (presentation flags of the |E kind do not count as a divergence)
         "brackets_mismatch": {"params": {
             "ignore_extra_heads": GRAMMAR_WRAPPERS,
             "allow_replacement": True,
             "ignore_flags": True,
         }},
-        # 1 179 → 513: дописанный ради падежа #L — приём, а не потеря тега
+        # 1,179 → 513: a #L added for the sake of a case is a device, not a lost tag
         "fmt_mismatch": {"params": {"allow_extra_tags": ["#L"]}},
         # 380 → 345
         "double_space": {"params": {"ignore_if_in_source": True}},
-        # не ошибка, а повод свериться — 11 449 строк с завышенной серьёзностью
+        # not an error but a reason to check — 11,449 rows with inflated severity
         "inconsistent": {"severity": INFO},
     },
     "hoi4": {
-        # Замер на ванильном русском HOI4 (124 893 строки с переводом):
-        # brackets_mismatch 5 028 → 746, glued_markup 1 249 → 5. Оставшееся —
-        # кандидаты в настоящие ошибки, включая опечатки Paradox в именах
-        # функций и потерянные пробелы («регионе[350.GetName],»).
+        # Measured on the vanilla Russian HOI4 (124,893 rows with a translation):
+        # brackets_mismatch 5,028 → 746, glued_markup 1,249 → 5. What is left are
+        # candidates for real errors, including Paradox's own typos in function
+        # names and lost spaces («регионе[350.GetName],»).
         "brackets_mismatch": {"params": {
             "allow_replacement": True,
             "ignore_flags": True,
         }},
         "glued_markup": {"params": {"allow_inside_word": True}},
-        # Двойной пробел приезжает из самого оригинала — «£command_power  §Y…»
-        # разделяет иконку и число именно так. 292 → 15.
+        # The double space arrives from the source itself — «£command_power  §Y…»
+        # parts the icon and the number exactly like that. 292 → 15.
         "double_space": {"params": {"ignore_if_in_source": True}},
-        # Тот же довод, что и в ck3_ru: одинаковый оригинал, переведённый
-        # по-разному, — повод свериться, а не ошибка.
+        # The same argument as in ck3_ru: the same source translated in different
+        # ways is a reason to check, not an error.
         "inconsistent": {"severity": INFO},
     },
     "stellaris": {
-        # Замер на ванильной паре (148 751 строка с переводом): 32 969 → 29 525.
-        # Главный источник шума здесь другой, чем у соседей: 17 156 строк, где
-        # перевод совпал с оригиналом, — это термины и названия видов, планет и
-        # модификаторов. Правило не выключаем (среди них прячется и настоящий
-        # непереведённый текст), но криком оно быть перестаёт.
+        # Measured on the vanilla pair (148,751 rows with a translation): 32,969
+        # → 29,525. The main source of noise here is a different one from the
+        # neighbours': 17,156 rows where the translation coincided with the
+        # source — those are terms and the names of species, planets and
+        # modifiers. We do not switch the rule off (real untranslated text hides
+        # among them), but it stops being a shout.
         "same_as_en": {"severity": INFO},
-        # Русский переводчик Stellaris дописывает ссылки и подстановки в
-        # варианты для падежей, поэтому «появилось в переводе» здесь норма;
-        # потерянное правила по-прежнему ловят.
+        # The Russian translator of Stellaris writes references and substitutions
+        # into the variants for the cases, so "appeared in the translation" is
+        # the norm here; what is lost the rules still catch.
         "brackets_mismatch": {"params": {"allow_extra": True}},
         "dollar_mismatch": {"params": {"allow_extra": True}},
         "inconsistent": {"severity": INFO},
     },
     "ck2": {
-        # Замер на ванильной паре (89 616 строк с переводом): всего 45 593 →
-        # 24 047, brackets_mismatch 21 905 → 9 924, glued_markup 13 101 → 3 546.
-        # `allow_extra` — здесь не роскошь: русский переводчик CK2 постоянно
-        # дописывает обращение там, где по-английски его нет («Ты славно
-        # сража[X.GetLasLsya], [X.GetFirstName]»), и добавленная подстановка
-        # игру не ломает. Потерянная — ломает, и её правило по-прежнему ловит.
+        # Measured on the vanilla pair (89,616 rows with a translation): 45,593 →
+        # 24,047 in total, brackets_mismatch 21,905 → 9,924, glued_markup 13,101
+        # → 3,546. `allow_extra` is no luxury here: the Russian translator of CK2
+        # constantly adds an address where English has none («Ты славно
+        # сража[X.GetLasLsya], [X.GetFirstName]»), and an added substitution does
+        # not break the game. A lost one does, and the rule still catches it.
         "brackets_mismatch": {"params": {
             "allow_replacement": True,
             "allow_extra": True,
@@ -1353,19 +1380,20 @@ PRESETS: dict[str, dict] = {
 }
 
 
-# --- языковой слой -------------------------------------------------------
+# --- the language layer --------------------------------------------------
 #
-# Что остаётся от пресета, когда из него вынули игру: списки функций, которыми
-# перевод на конкретный язык чинит грамматику. Пара «игра плюс язык», потому
-# что имена даёт игра, а нужду в них — язык. Слой не выбирается человеком: он
-# подцепляется по языку перевода открытого проекта, и это ровно то, из-за чего
-# в названии набора больше не нужно слово «русский».
+# What is left of a preset once the game has been taken out of it: the lists of
+# functions with which a translation into a particular language mends the
+# grammar. A pair of "game plus language", because the names are given by the
+# game and the need for them by the language. The layer is not chosen by a human:
+# it is picked up by the target language of the open project, and that is exactly
+# why the name of a set no longer needs the word "Russian".
 #
-# Данные и способ, которым они сняты, — в `core/inflections.py`.
+# The data and the way it was taken off are in `core/inflections.py`.
 
 
 def language_profile(preset: str, locale: str) -> dict | None:
-    """Дельта языка поверх игрового профиля. `None` — пары нет, и врать нечем."""
+    """The delta of a language over the game profile. `None` — no such pair, nothing to tell."""
     calls = inflections.calls(preset, locale)
     if not calls:
         return None
@@ -1375,18 +1403,19 @@ def language_profile(preset: str, locale: str) -> dict | None:
     return delta
 
 
-# --- оверлеи: дельта поверх набора --------------------------------------
+# --- overlays: a delta over the set --------------------------------------
 
 OVERLAY_VERSION = 1
 
 
 def _rule_with_delta(rule: Rule, delta: Mapping) -> Rule:
-    """Правило с применённой дельтой. Неизвестное в дельте молча пропускается.
+    """A rule with the delta applied. What is unknown in the delta is silently skipped.
 
-    Пропускаем намеренно: оверлей писала прошлая версия приложения, и параметр
-    мог с тех пор исчезнуть. Падать из-за настройки, которой больше нет,
-    приложение не должно — а незнакомый ключ, попав в `params`, сделал бы
-    правило неотличимым от изменённого и навсегда осел бы в дельте.
+    We skip deliberately: the overlay was written by a former version of the
+    application, and the parameter may have disappeared since. The application
+    must not fall over because of a setting that is no longer there — and an
+    unknown key, once in `params`, would make the rule indistinguishable from a
+    changed one and would settle in the delta forever.
     """
     changes: dict = {}
     if "enabled" in delta:
@@ -1402,7 +1431,7 @@ def _rule_with_delta(rule: Rule, delta: Mapping) -> Rule:
 
 
 def apply_delta(rules: RuleSet, delta: Mapping | None) -> RuleSet:
-    """Набор с применённой дельтой `{id правила: {enabled/severity/params}}`."""
+    """The set with the delta `{rule id: {enabled/severity/params}}` applied."""
     if not delta:
         return rules
     return RuleSet(
@@ -1413,10 +1442,11 @@ def apply_delta(rules: RuleSet, delta: Mapping | None) -> RuleSet:
 
 
 def preset_of(overlay: Mapping | None) -> str:
-    """Пресет оверлея; `custom` — если не задан или незнаком.
+    """The preset of the overlay; `custom` — if it is not set or not known.
 
-    Прежние имена (`ck3_ru`) переводятся в нынешние: до 0.1.2 игра и язык
-    жили в одном пресете, и настройки с теми именами лежат у людей на дисках.
+    The former names (`ck3_ru`) are translated into the present ones: before
+    0.1.2 the game and the language lived in one preset, and settings with those
+    names lie on people's disks.
     """
     name = (overlay or {}).get("preset")
     name = PRESET_ALIASES.get(name, name)
@@ -1424,14 +1454,15 @@ def preset_of(overlay: Mapping | None) -> str:
 
 
 def for_locale(rules: RuleSet, locale: str) -> RuleSet:
-    """Выключить правила чужого языка перевода.
+    """Switch off the rules of a foreign target language.
 
-    Выключаем, а не выбрасываем: правило остаётся видимым в окне настройки —
-    там понятно, почему оно молчит, — и включить его вручную по-прежнему можно.
-    Выброшенное же правило выглядело бы как пропавшее без объяснений.
+    We switch off instead of throwing out: the rule stays visible in the setup
+    window — there it is plain why it is silent — and switching it on by hand is
+    still possible. A rule thrown out would look like one gone missing without
+    explanation.
 
-    Пустая локаль не выключает ничего: язык неизвестен, и молчать наугад
-    хуже, чем показать лишнее.
+    An empty locale switches nothing off: the language is unknown, and being
+    silent at random is worse than showing too much.
     """
     if not locale:
         return rules
@@ -1441,11 +1472,11 @@ def for_locale(rules: RuleSet, locale: str) -> RuleSet:
 
 
 def with_user_rules(rules: RuleSet, incoming) -> RuleSet:
-    """Добавить свои правила к набору; одноимённое заменяется целиком.
+    """Add the rules of one's own to the set; one of the same name is replaced whole.
 
-    Замена, а не слияние: правило верхнего слоя написано пользователем целиком,
-    и «унаследовать половину параметров» тут значило бы получить набор, который
-    он не собирал.
+    A replacement and not a merge: the rule of the upper layer was written by the
+    user whole, and "inherit half the parameters" would mean here getting a set
+    they never assembled.
     """
     incoming = tuple(incoming)
     if not incoming:
@@ -1456,16 +1487,17 @@ def with_user_rules(rules: RuleSet, incoming) -> RuleSet:
 
 
 def resolve(*overlays: Mapping | None, locale: str = "") -> RuleSet:
-    """Действующий набор: встроенные значения, язык перевода, затем слои.
+    """The set in force: the built-in values, the target language, then the layers.
 
-    Язык — часть **основания**, а не последний штрих: иначе он затирал бы
-    осознанный выбор пользователя. Включив «пропущен пробел перед
-    подстановкой» вручную во французском проекте, он должен его получить —
-    правило написано под русский, но переводчику виднее.
+    The language is part of the **base** and not the last touch: otherwise it
+    would wipe out the deliberate choice of the user. Having switched on "a space
+    is missing before the substitution" by hand in a French project, they are to
+    get it — the rule is written for Russian, but the translator knows better.
 
-    Свои правила слоя приезжают до его дельты: дельта вправе их подправить, а
-    вот заменить своё правило нижнего слоя целиком может только верхний слой,
-    и делает он это своей записью в `custom`.
+    The rules of one's own in a layer arrive before its delta: the delta is
+    entitled to correct them, whereas replacing a rule of one's own from a lower
+    layer whole can only be done by an upper layer, and it does that with its own
+    record in `custom`.
     """
     rules = for_locale(default_ruleset(), locale)
     for overlay in overlays:
@@ -1481,7 +1513,7 @@ def resolve(*overlays: Mapping | None, locale: str = "") -> RuleSet:
 
 
 def rule_delta(base: Rule, current: Rule) -> dict:
-    """Чем `current` отличается от `base`. Пусто — правило не трогали."""
+    """How `current` differs from `base`. Empty — the rule was not touched."""
     delta: dict = {}
     if current.enabled != base.enabled:
         delta["enabled"] = current.enabled
@@ -1504,21 +1536,22 @@ def delta_between(base: RuleSet, current: RuleSet) -> dict:
 
 def make_overlay(preset: str, rules: RuleSet, *,
                  under: Mapping | None = None, locale: str = "") -> dict:
-    """Оверлей, который вместе с `under` даёт ровно `rules`.
+    """An overlay that together with `under` gives exactly `rules`.
 
-    `under` — слой, лежащий ниже (для проектного оверлея это глобальный):
-    иначе проект записал бы себе копию глобальных правок и перестал бы за ними
-    следовать. По той же причине в `custom` попадают только правила, которых
-    внизу нет: правило, заведённое на все проекты, остаётся жить там, а правка
-    его в проекте уходит в дельту.
+    `under` is the layer lying below (for a project overlay that is the global
+    one): otherwise the project would write itself a copy of the global edits and
+    stop following them. For the same reason only the rules that are not below
+    get into `custom`: a rule set up for all projects goes on living there, while
+    an edit of it in the project goes into the delta.
 
-    `locale` — язык перевода, на котором собран `rules`. Он тоже должен войти в
-    основание, а не в дельту: иначе француз записал бы себе «выключить правила
-    русской грамматики», и они остались бы выключенными после смены языка
-    проекта — без всякого следа о том, кто их выключил.
+    `locale` is the target language `rules` was assembled on. It too has to go
+    into the base and not into the delta: otherwise a French translator would
+    write themselves "switch off the rules of Russian grammar", and those would
+    stay switched off after a change of the project language — without a trace of
+    who switched them off.
     """
-    # Читать прежние имена умеем, писать их — нет: файл, созданный сегодня,
-    # должен нести нынешнее имя набора.
+    # Reading the former names we can, writing them we cannot: a file created
+    # today is to carry the present name of the set.
     preset = PRESET_ALIASES.get(preset, preset)
     base = resolve(under, {"preset": preset}, locale=locale)
     overlay = {
@@ -1534,7 +1567,7 @@ def make_overlay(preset: str, rules: RuleSet, *,
 
 
 def is_empty_overlay(overlay: Mapping | None) -> bool:
-    """Ничего не настроено — такой оверлей можно не хранить вовсе."""
+    """Nothing is set up — such an overlay need not be stored at all."""
     overlay = overlay or {}
     return (preset_of(overlay) == CUSTOM
             and not overlay.get("rules") and not user_rules(overlay))
