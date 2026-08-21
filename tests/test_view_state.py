@@ -1,9 +1,9 @@
-"""Единое состояние фильтров: все витрины показывают одно и то же.
+"""One state of the filters: every shop window shows one and the same thing.
 
-Фильтр ставится из пяти мест — панель, чипы статус-бара, дерево файлов, сводка
-сканирования и меню «Фильтры». Раньше каждое знало только про себя: чип
-загорался, лишь когда кликнули по самому чипу, а кнопка «Показать» в сводке
-двигала комбобокс мимо чипов и мимо меню.
+The filter is set from five places — the toolbar, the status bar chips, the file
+tree, the scan summary and the «Filters» menu. Every one of them used to know only
+about itself: a chip lit up only when the chip itself was clicked, while the
+«Show» button in the summary moved the combo box past the chips and past the menu.
 """
 from __future__ import annotations
 
@@ -24,26 +24,26 @@ EN = 'l_english:\n a:0 "Hello"\n b:0 "World"\n c:0 "Third"\n'
 RU = 'l_russian:\n a:0 "Привет"\n'
 
 
-# --- само состояние, без окна -------------------------------------------
+# --- the state itself, without a window ---------------------------------
 
 
 def test_only_issues_is_derived_from_the_column_not_stored_twice() -> None:
-    """У фильтра «с замечаниями» нет собственного поля — иначе они разъедутся."""
+    """The «with remarks» filter has no field of its own — otherwise they come apart."""
     s = ViewState()
     assert not s.only_issues
-    s.click_column(COL_ISSUES)                 # первый клик — только порядок
+    s.click_column(COL_ISSUES)                 # the first click — only the order
     assert not s.only_issues
     assert s.sort_spec == (COL_ISSUES, False)
-    s.click_column(COL_ISSUES)                 # второй — ещё и фильтр
+    s.click_column(COL_ISSUES)                 # the second — the filter as well
     assert s.only_issues
     assert s.filters().only_issues
-    s.click_column(COL_ISSUES)                 # третий — сброс
+    s.click_column(COL_ISSUES)                 # the third — a reset
     assert not s.only_issues
     assert s.sort_spec is None
 
 
 def test_issues_column_never_reverses_order() -> None:
-    """Показывать проблемные снизу бессмысленно — второй шаг сужает выборку."""
+    """Showing the problematic ones at the bottom is pointless — the second step narrows the selection."""
     s = ViewState()
     s.click_column(COL_ISSUES)
     s.click_column(COL_ISSUES)
@@ -55,8 +55,8 @@ def test_checkbox_and_column_are_the_same_switch() -> None:
     s.set_only_issues(True)
     assert s.sort.column == COL_ISSUES and s.sort.step == SECOND
     s.set_only_issues(False)
-    # фильтр снят, но порядок «проблемные сверху» остаётся: выборка
-    # расширяется, а строки не прыгают
+    # the filter is off, but the order «the problematic on top» stays: the selection
+    # widens while the rows do not jump
     assert not s.only_issues
     assert s.sort_spec == (COL_ISSUES, False)
 
@@ -70,7 +70,7 @@ def test_click_on_another_column_drops_the_issues_filter() -> None:
 
 
 def test_sort_click_and_filter_change_use_different_signals() -> None:
-    """Перестановка строк не должна стоить SQL-запроса с пересчётом проверок."""
+    """A rearrangement of rows must not cost an SQL query with a recount of the checks."""
     s = ViewState()
     changed, sorted_ = [], []
     s.changed.connect(lambda: changed.append(1))
@@ -82,8 +82,8 @@ def test_sort_click_and_filter_change_use_different_signals() -> None:
     s.set_status(Status.UNTRANSLATED.value)
     assert changed == [1]
 
-    s.click_column(COL_ISSUES)          # порядок
-    s.click_column(COL_ISSUES)          # + фильтр: состав строк меняется
+    s.click_column(COL_ISSUES)          # the order
+    s.click_column(COL_ISSUES)          # + the filter: the composition of the rows changes
     assert changed == [1, 1]
 
 
@@ -106,7 +106,7 @@ def test_reset_filters_lifts_the_issues_filter_but_keeps_its_order() -> None:
     assert s.sort.step == FIRST
 
 
-# --- живое окно: витрины ------------------------------------------------
+# --- a live window: the shop windows ------------------------------------
 
 
 @pytest.fixture
@@ -137,7 +137,7 @@ def checked_status(win) -> str | None:
 
 
 def test_combo_lights_the_chip_and_the_menu(window) -> None:
-    """Раньше чип загорался только от клика по самому чипу."""
+    """The chip used to light up only from a click on the chip itself."""
     window.editor_screen.filter_bar.status_combo.setCurrentIndex(
         window.editor_screen.filter_bar.status_combo.findData(Status.TRANSLATED.value))
     assert window.chips._active == Status.TRANSLATED.value
@@ -160,7 +160,7 @@ def test_second_chip_click_clears_every_view(window) -> None:
 
 
 def test_scan_summary_button_lights_the_chip(window) -> None:
-    """Кнопка «Показать» в сводке сканирования — пятая витрина того же фильтра."""
+    """The «Show» button in the scan summary is the fifth shop window of the same filter."""
     window.editor_screen.set_status_filter(Status.UNTRANSLATED.value)
     assert window.chips._active == Status.UNTRANSLATED.value
     assert window.editor_screen.filter_bar.status() == Status.UNTRANSLATED.value

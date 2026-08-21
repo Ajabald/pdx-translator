@@ -1,7 +1,8 @@
-"""Главный сценарий инструмента: вышла новая версия мода.
+"""The main scenario of the tool: a new version of the mod has come out.
 
-Проверяем, что переводы переживают обновление, изменения классифицируются,
-редакции оригинала копятся, а массовые операции откатываются.
+We check that the translations survive the update, that the changes are
+classified, that the revisions of the original pile up, and that bulk operations
+are rolled back.
 """
 from __future__ import annotations
 
@@ -31,24 +32,25 @@ def setup(db, make_tree):
 
 
 def test_translations_survive_update(db, make_tree):
-    """Переводы не теряются, когда автор мода правит оригинал."""
+    """The translations are not lost when the author of the mod edits the original."""
     pid, tree = setup(db, make_tree)
     tree({"m_l_english.yml": EN_V1.replace(
         '"The old lord of Winterfell"', '"The young lord of Winterfell"')}, "en")
     scan_project(db, pid)
     u = get_unit(db, "desc")
-    assert u["ru_text"] == "Старый лорд Винтерфелла"      # перевод на месте
+    assert u["ru_text"] == "Старый лорд Винтерфелла"      # the translation is in place
     assert u["status"] == Status.STALE.value
     assert u["prev_en_text"] == "The old lord of Winterfell"
     assert u["en_changed_at"] is not None
 
 
 def test_machine_translation_does_not_survive_a_changed_original(db, make_tree):
-    """Машинный перевод прежней редакции не остаётся при новом оригинале.
+    """A machine translation of a former revision does not stay with a new original.
 
-    Его никто не читал, и относится он к другому тексту. Оставить как есть —
-    значит держать перевод чужой строки под видом почти готового: он и в мод
-    уедет по галке «включая машинный». Ведёт себя как «Авто»: сброс.
+    Nobody has read it, and it belongs to another text. To leave it as it is means
+    to keep the translation of a foreign row in the guise of a nearly ready one:
+    it would travel into the mod too, by the «including machine» tick. It behaves
+    like «Auto»: a reset.
     """
     pid, tree = setup(db, make_tree)
     unit_id = get_unit(db, "desc")["id"]
@@ -69,19 +71,19 @@ def test_change_kind_cosmetic_vs_meaningful(db, make_tree):
     pid, tree = setup(db, make_tree)
     tree({"m_l_english.yml": (
         'l_english:\n'
-        ' greet:0 "Winter is coming."\n'                       # косметика: точка
-        ' desc:0 "The young lord of Winterfell"\n'             # смысл: слово
+        ' greet:0 "Winter is coming."\n'                       # cosmetic: a full stop
+        ' desc:0 "The young lord of Winterfell"\n'             # meaningful: a word
         ' keep:0 "Unchanged line"\n')}, "en")
     stats = scan_project(db, pid)
     assert stats.changed_cosmetic == 1
     assert stats.changed_meaningful == 1
     assert get_unit(db, "greet")["change_kind"] == COSMETIC
     assert get_unit(db, "desc")["change_kind"] == MEANINGFUL
-    assert get_unit(db, "keep")["status"] == Status.TRANSLATED.value    # не тронута
+    assert get_unit(db, "keep")["status"] == Status.TRANSLATED.value    # untouched
 
 
 def test_source_history_accumulates(db, make_tree):
-    """Каждая редакция оригинала запоминается, а не только последняя."""
+    """Every revision of the original is remembered, not only the last one."""
     pid, tree = setup(db, make_tree)
     unit_id = get_unit(db, "greet")["id"]
     assert len(unit_ops.source_history(db, unit_id)) == 1
@@ -94,7 +96,7 @@ def test_source_history_accumulates(db, make_tree):
     history = unit_ops.source_history(db, unit_id)
     assert [h["en_text"] for h in history] == [
         "Winter came early", "Winter has come", "Winter is coming"]
-    # база для диффа осталась той, на которой основан перевод
+    # the base for the diff stayed the one the translation is founded on
     assert get_unit(db, "greet")["prev_en_text"] == "Winter is coming"
 
 
@@ -120,15 +122,15 @@ def test_mass_actualize_cosmetic(db, make_tree):
     batch = unit_ops.new_batch_id()
     assert unit_ops.actualize(db, ids, batch_id=batch) == 1
     assert get_unit(db, "greet")["status"] == Status.TRANSLATED.value
-    assert get_unit(db, "desc")["status"] == Status.STALE.value      # смысловая осталась
+    assert get_unit(db, "desc")["status"] == Status.STALE.value      # the meaningful one stayed
 
-    # и это можно откатить
+    # and this can be rolled back
     assert unit_ops.undo_batch(db, batch) == 1
     assert get_unit(db, "greet")["status"] == Status.STALE.value
 
 
 def test_status_change_keeps_previous_source(db, make_tree):
-    """Смена статуса больше не стирает прежнюю редакцию оригинала."""
+    """A change of status no longer erases the former revision of the original."""
     pid, tree = setup(db, make_tree)
     tree({"m_l_english.yml": EN_V1.replace(
         '"The old lord of Winterfell"', '"The young lord of Winterfell"')}, "en")
@@ -137,8 +139,8 @@ def test_status_change_keeps_previous_source(db, make_tree):
     unit_ops.set_status(db, [unit_id], Status.REVIEWED)
     u = get_unit(db, "desc")
     assert u["status"] == Status.REVIEWED.value
-    assert u["prev_en_text"] == "The old lord of Winterfell"    # раньше терялось
-    assert u["change_kind"] is None                            # но пометка снята
+    assert u["prev_en_text"] == "The old lord of Winterfell"    # it used to be lost
+    assert u["change_kind"] is None                            # but the mark is taken off
 
 
 def test_history_records_manual_edit_and_undo(db, make_tree):
@@ -149,7 +151,7 @@ def test_history_records_manual_edit_and_undo(db, make_tree):
     assert get_unit(db, "greet")["ru_text"] == "Зима на пороге"
 
     history = unit_ops.unit_history(db, unit_id)
-    assert history[0]["ru_text"] == "Зима близко"      # состояние ДО правки
+    assert history[0]["ru_text"] == "Зима близко"      # the state BEFORE the edit
     assert unit_ops.undo_batch(db, batch) == 1
     assert get_unit(db, "greet")["ru_text"] == "Зима близко"
 

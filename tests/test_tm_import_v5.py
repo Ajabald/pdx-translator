@@ -1,8 +1,9 @@
-"""Схема .pdxtm версии 2: индекс похожих строк внутри самой базы.
+"""The .pdxtm schema of version 2: the index of similar rows inside the database.
 
-Индекс живёт в файле базы, а не строится при открытии проекта: над ванильной
-локализацией (244 тыс. записей) постройка занимает полсекунды, а держать такой
-индекс в памяти стоило бы 94 МБ и три секунды на каждом запуске.
+The index lives in the file of the database and is not built at the opening of a
+project: over the vanilla localisation (244 thousand records) the building takes
+half a second, while keeping such an index in memory would cost 94 MB and three
+seconds at every start.
 """
 from __future__ import annotations
 
@@ -43,7 +44,7 @@ def test_new_base_has_index(loc_tree, tmp_path):
 
     assert report.pairs == 2
     assert tm_meta(out)["schema_version"] == str(tm_import.TM_SCHEMA_VERSION)
-    assert _fts_rows(out) == 2      # индекс наполнен, а не просто создан
+    assert _fts_rows(out) == 2      # the index is filled, not merely created
 
 
 def test_index_finds_by_word(loc_tree, tmp_path):
@@ -61,7 +62,7 @@ def test_index_finds_by_word(loc_tree, tmp_path):
 
 
 def test_project_export_base_has_index(db, tmp_path):
-    """База, выгруженная из проекта, тоже должна подсказывать похожие."""
+    """A database exported out of a project has to prompt similar rows as well."""
     from pdxloc.core.tm_import import export_project_tm
 
     db.execute("INSERT INTO projects (id, name, en_root, ru_root) VALUES (1, 'P', 'e', 'r')")
@@ -80,7 +81,7 @@ def test_project_export_base_has_index(db, tmp_path):
 
 
 def _v1_base(path):
-    """База прежней схемы — такие лежат у пользователей после прошлых версий."""
+    """A database of the former schema — such lie with users after past versions."""
     conn = sqlite3.connect(str(path))
     conn.executescript(tm_import.TM_DDL)
     conn.executemany(
@@ -112,15 +113,15 @@ def test_build_index_is_idempotent(tmp_path):
     tm_import.build_fts_index(old)
     size = old.stat().st_size
 
-    assert tm_import.build_fts_index(old) == 2      # повтор не портит и не растит файл
+    assert tm_import.build_fts_index(old) == 2      # a repeat neither spoils nor grows the file
 
     assert _fts_rows(old) == 2
     assert old.stat().st_size == size
 
 
 def test_index_matches_entries_after_rebuild(loc_tree, tmp_path):
-    """Индекс с внешним содержимым не обновляется вставками сам — проверяем,
-    что сборка базы не оставляет его отстающим от таблицы."""
+    """An index with external content does not refresh itself on inserts — we check
+    that the building of a database does not leave it behind the table."""
     out = tmp_path / "mod.pdxtm"
     tm_import.build_tm_from_dirs(loc_tree / "english", loc_tree / "russian", out, name="Мод")
     conn = sqlite3.connect(f"file:{out.as_posix()}?mode=ro", uri=True)
