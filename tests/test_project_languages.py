@@ -1,13 +1,13 @@
-"""Папка игры и язык текста — разные вещи.
+"""The game folder and the language of the text are different things.
 
-Одно поле «язык перевода» делало две работы. Для CK3+русского они совпадали и
-не жали; расходятся ровно там, где переводят на язык, которого в игре нет:
-португальский в CK3 лежит в файлах `l_english`. Без разделения такой перевод
-в проекте не выразить.
+One field, «the target language», did two jobs. For CK3 plus Russian they
+coincided and did not pinch; they diverge exactly where the translation goes into
+a language the game does not have: Portuguese in CK3 lies in `l_english` files.
+Without the split such a translation cannot be expressed in a project.
 
-Правило хранения: локаль, совпадающая с выведенной из папки, **не хранится**.
-Так проект не зарастает значениями, которые и так известны, а смена папки сама
-тянет за собой язык текста.
+The rule of storage: a locale that coincides with the one derived from the folder
+is **not stored**. That way the project does not grow over with values that are
+known anyway, and a change of the folder drags the language of the text with it.
 """
 from __future__ import annotations
 
@@ -36,19 +36,19 @@ def conn(tmp_path, make_tree):
     c.close()
 
 
-# --- схема ---------------------------------------------------------------
+# --- the schema ---------------------------------------------------------
 
 
 def test_schema_version_is_pinned() -> None:
-    """Число здесь затем, чтобы схему нельзя было изменить не заметив.
+    """The number is here so that the schema cannot be changed unnoticed.
 
-    Поменял — напиши миграцию и её тест, а потом уже правь эту строку.
+    Changed it — write a migration and a test for it, and only then edit this line.
     """
     assert db.SCHEMA_VERSION == 10
 
 
 def test_migration_adds_locale_columns_without_touching_rows(tmp_path, make_tree) -> None:
-    """Миграция 4→5 только дописывает колонки: строки не пересобираются."""
+    """The 4→5 migration only adds columns: the rows are not rebuilt."""
     en = make_tree({"m_l_english.yml": EN}, "en")
     ru = make_tree({"m_l_russian.yml": RU}, "ru")
     path = tmp_path / "old.pdxproj"
@@ -56,7 +56,7 @@ def test_migration_adds_locale_columns_without_touching_rows(tmp_path, make_tree
     scan_project(c, 1)
     before = c.execute("SELECT COUNT(*) FROM units").fetchone()[0]
 
-    # откатываем проект к состоянию v4: колонок нет, версия прежняя
+    # we roll the project back to the v4 state: no columns, the former version
     c.execute("ALTER TABLE projects DROP COLUMN src_locale")
     c.execute("ALTER TABLE projects DROP COLUMN tgt_locale")
     c.execute("UPDATE schema_meta SET value = '4' WHERE key = 'schema_version'")
@@ -68,7 +68,7 @@ def test_migration_adds_locale_columns_without_touching_rows(tmp_path, make_tree
         cols = {r[1] for r in again.execute("PRAGMA table_info(projects)")}
         assert {"src_locale", "tgt_locale"} <= cols
         assert again.execute("SELECT COUNT(*) FROM units").fetchone()[0] == before
-        # значения пустые: «совпадает с папкой языка»
+        # the values are empty: «the same as the language folder»
         row = again.execute(
             "SELECT src_locale, tgt_locale FROM projects WHERE id = 1").fetchone()
         assert row["src_locale"] == "" and row["tgt_locale"] == ""
@@ -76,7 +76,7 @@ def test_migration_adds_locale_columns_without_touching_rows(tmp_path, make_tree
         again.close()
 
 
-# --- выведение локали ----------------------------------------------------
+# --- deriving the locale ------------------------------------------------
 
 
 def test_empty_locale_is_derived_from_the_game_folder(conn) -> None:
@@ -87,25 +87,25 @@ def test_empty_locale_is_derived_from_the_game_folder(conn) -> None:
 
 
 def test_unknown_folder_gives_no_locale() -> None:
-    """Мод завёл своё имя папки — угадывать по нему нечего."""
+    """A mod has set up a folder name of its own — there is nothing to guess by it."""
     assert languages.default_locale("средиземноморский") == ""
     assert languages.resolve_locale("средиземноморский", "") == ""
     assert languages.resolve_locale("средиземноморский", "it") == "it"
 
 
 def test_translation_into_a_language_the_game_does_not_know(conn) -> None:
-    """Португальский в CK3 живёт в файлах l_english — ради этого и разделяли."""
+    """Portuguese in CK3 lives in l_english files — that is what the split was for."""
     project.set_languages(conn, project.ProjectLanguages(
         src_lang="english", tgt_lang="english",
         src_locale="en", tgt_locale="pt"))
     langs = project.languages(conn)
-    assert langs.tgt_lang == "english"      # файлы по-прежнему l_english
-    assert langs.tgt_locale == "pt"         # а текст португальский
+    assert langs.tgt_lang == "english"      # the files are still l_english
+    assert langs.tgt_locale == "pt"         # while the text is Portuguese
     assert langs.split
 
 
 def test_matching_locale_is_not_stored(conn) -> None:
-    """Иначе смена папки языка не тянула бы за собой язык текста."""
+    """Otherwise a change of the language folder would not drag the language of the text with it."""
     project.set_languages(conn, project.ProjectLanguages(
         src_lang="english", tgt_lang="russian",
         src_locale="en", tgt_locale="ru"))
@@ -119,7 +119,7 @@ def test_matching_locale_is_not_stored(conn) -> None:
     assert project.languages(conn).tgt_locale == "fr"
 
 
-# --- предпросмотр смены языка -------------------------------------------
+# --- the preview of a language change -----------------------------------
 
 
 def test_changing_only_the_text_language_does_not_need_a_scan(conn) -> None:
@@ -129,11 +129,11 @@ def test_changing_only_the_text_language_does_not_need_a_scan(conn) -> None:
 
 
 def test_changing_the_folder_language_warns_about_lost_rows(conn) -> None:
-    """Сканер ищет файлы по метке _l_<язык>; смена языка их «теряет»."""
+    """The scanner looks for files by the _l_<language> mark; a change of language «loses» them."""
     preview = relocate.preview_language_change(conn, 1, "french", "russian")
     assert preview.scan_needed and preview.risky
     assert preview.found == 0
-    assert preview.units_missing == 2        # обе строки проекта
+    assert preview.units_missing == 2        # both rows of the project
     assert "Not a single file was found" in preview.summary()
 
 
@@ -143,14 +143,14 @@ def test_keeping_the_folder_language_finds_every_file(conn) -> None:
     assert preview.found == preview.known_files == 1
 
 
-# --- языковые правила проверки ------------------------------------------
+# --- the language check rules -------------------------------------------
 
 
 RU_ONLY = ("glued_markup", "linking_calque")
 
 
 def test_russian_rules_are_off_for_other_languages() -> None:
-    """Француз не должен получать замечания про русское склонение."""
+    """A translator into French must not get remarks about Russian declension."""
     for code in RU_ONLY:
         assert qa_rules.BY_ID[code].locale == "ru"
 
@@ -171,17 +171,17 @@ def test_russian_rule_stays_silent_on_a_french_project() -> None:
 
 
 def test_unknown_locale_silences_nothing() -> None:
-    """Язык неизвестен — молчать наугад хуже, чем показать лишнее."""
+    """The language is unknown — being silent at random is worse than showing too much."""
     rules = qa_rules.resolve(locale="")
     for code in RU_ONLY:
         assert rules.get(code).enabled
 
 
 def test_the_translator_can_switch_a_foreign_rule_back_on() -> None:
-    """Правило написано под русский, но переводчику виднее.
+    """The rule is written for Russian, but the translator knows better.
 
-    Поэтому язык — часть основания набора, а не последний штрих: иначе он
-    затирал бы осознанный выбор.
+    That is why the language is part of the base of the set and not the last
+    touch: otherwise it would wipe out a deliberate choice.
     """
     rules = qa_rules.resolve(
         {"rules": {"glued_markup": {"enabled": True}}}, locale="fr")
@@ -189,17 +189,17 @@ def test_the_translator_can_switch_a_foreign_rule_back_on() -> None:
 
 
 def test_rules_of_a_foreign_language_stay_visible() -> None:
-    """Выключенное правило видно в окне настройки; выброшенное — пропало бы."""
+    """A switched-off rule shows in the setup window; a thrown-out one would be gone."""
     french = qa_rules.resolve(locale="fr")
     assert len(french) == len(qa_rules.BUILTIN_RULES)
     assert french.get("linking_calque") is not None
 
 
-# --- окно ----------------------------------------------------------------
+# --- the window ---------------------------------------------------------
 
 
 def test_dialog_hides_text_languages_until_asked(conn, qtbot) -> None:
-    """Поле, которое нечем заполнить, только путает."""
+    """A field that there is nothing to fill in with only confuses."""
     from pdxloc.gui.languages_dialog import LanguagesDialog
 
     dlg = LanguagesDialog(conn)
@@ -209,7 +209,7 @@ def test_dialog_hides_text_languages_until_asked(conn, qtbot) -> None:
 
     dlg.split.setChecked(True)
     assert dlg.locales.isVisibleTo(dlg)
-    # подставлено то, что и так подразумевается папками
+    # what the folders imply anyway is filled in
     assert dlg.src_locale.currentText() == "en"
     assert dlg.tgt_locale.currentText() == "ru"
 

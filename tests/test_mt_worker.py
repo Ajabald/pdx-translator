@@ -1,12 +1,12 @@
-"""Поток машинного перевода: своё соединение, свой контракт сигналов.
+"""The machine translation thread: its own connection, its own contract of signals.
 
-Модуль до сих пор не был покрыт вовсе, а он опаснее соседей: правило потоков в
-этом приложении — **одно соединение на поток**, и `MtWorker` открывает своё,
-пишет им в базу проекта и обязан его закрыть. Проверить это, кроме как здесь,
-негде.
+The module had not been covered at all until now, and it is more dangerous than
+its neighbours: the rule of threads in this application is **one connection per
+thread**, and `MtWorker` opens its own, writes into the project database with it
+and is obliged to close it. There is nowhere but here to check that.
 
-Сеть тут не открывается ни разу: провайдер подменяется заглушкой той же формы,
-что в `test_mt_dialog.py`.
+The network is not opened here even once: the provider is substituted by a stub of
+the same shape as in `test_mt_dialog.py`.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ EN = 'l_english:\n a:0 "Hello"\n b:0 "World"\n'
 
 
 class Shouty:
-    """Заглушка провайдера — форма та же, что у настоящих."""
+    """A stub of a provider — the shape is the same as the real ones have."""
 
     name = "shouty"
     label = "Shouty"
@@ -47,7 +47,7 @@ class Shouty:
 
 @pytest.fixture
 def live(tmp_path, make_tree):
-    """Настоящий файл проекта: воркер открывает его сам, по пути."""
+    """A real project file: the worker opens it itself, by the path."""
     from pdxloc.core.scanner import scan_project
 
     en = make_tree({"m_l_english.yml": EN}, "en")
@@ -66,7 +66,7 @@ def live(tmp_path, make_tree):
 
 @pytest.fixture
 def worker_of(live, monkeypatch, qtbot):
-    """Собрать воркера с подменённым провайдером и прогнать до конца."""
+    """Assemble a worker with a substituted provider and drive it to the end."""
     _conn, path, rows = live
 
     def run(*, fail: bool = False):
@@ -78,10 +78,10 @@ def worker_of(live, monkeypatch, qtbot):
         thread = mt_worker.start(worker, None)
         worker.finished.connect(thread.quit)
         worker.failed.connect(thread.quit)
-        # Ждём именно `finished`, даже когда провайдер отказывает: отказ пачки
-        # для прогона не фатален, `mt_run` записывает его в отчёт и идёт
-        # дальше. `failed` остаётся для того, что вылетело из прогона целиком —
-        # например, не открылся файл проекта.
+        # We wait for exactly `finished`, even when the provider refuses: a refusal
+        # of a batch is not fatal to the run, `mt_run` writes it into the report
+        # and goes on. `failed` is left for what flew out of the run whole — for
+        # example, the project file did not open.
         with qtbot.waitSignal(worker.finished, timeout=5000) as blocker:
             thread.start()
         qtbot.waitUntil(lambda: thread.isFinished(), timeout=5000)
@@ -90,26 +90,28 @@ def worker_of(live, monkeypatch, qtbot):
     return run
 
 
-# --- контракт сигналов -----------------------------------------------------
+# --- the contract of signals -----------------------------------------------
 
 
 def test_cancellation_is_a_field_of_the_report_not_a_signal() -> None:
-    """У этого воркера `cancelled` нет — и это решение, а не забывчивость.
+    """This worker has no `cancelled` — and that is a decision, not forgetfulness.
 
-    У соседей (`ScanWorker`, `_BuildWorker`) отмена терминальна и приходит
-    вместо `finished`. Здесь строки, успевшие перевестись, уже в базе, и сводку
-    по ним человек обязан увидеть — значит отмена не состояние прогона, а
-    свойство результата.
+    For its neighbours (`ScanWorker`, `_BuildWorker`) a cancellation is terminal
+    and comes instead of `finished`. Here the rows that managed to get translated
+    are already in the database, and a human is obliged to see the summary over
+    them — so a cancellation is not a state of the run but a property of the
+    result.
     """
     assert not hasattr(mt_worker.MtWorker, "cancelled")
     assert "cancelled" in mt_run.MtReport.__dataclass_fields__
 
 
 def test_neighbours_do_have_the_terminal_signal() -> None:
-    """Сторож обратной стороны: у кого отмена терминальна, сигнал остаётся.
+    """A watchman of the other side: where a cancellation is terminal, the signal stays.
 
-    Иначе «убрали лишнее» однажды прочитают как «сигнал тут не нужен вообще» и
-    снимут его у сканера, где он единственный способ узнать об отмене.
+    Otherwise «we removed what was superfluous» will one day be read as «the signal
+    is not needed here at all» and taken off the scanner, where it is the only way
+    to learn about a cancellation.
     """
     from pdxloc.gui.scan_dialog import ScanWorker
     from pdxloc.gui.tm_build_tab import _BuildWorker
@@ -119,12 +121,12 @@ def test_neighbours_do_have_the_terminal_signal() -> None:
 
 
 def test_the_summary_says_a_run_was_interrupted() -> None:
-    """Раз сигнала нет, факт отмены обязан быть виден в сводке."""
+    """Since there is no signal, the fact of a cancellation is obliged to show in the summary."""
     report = mt_run.MtReport(rows_sent=5, rows_translated=2, cancelled=True)
     assert "Ctrl+Z" in report.summary()
 
 
-# --- работа в потоке -------------------------------------------------------
+# --- the work in a thread --------------------------------------------------
 
 
 def test_the_worker_writes_with_its_own_connection(live, worker_of) -> None:
@@ -134,7 +136,7 @@ def test_the_worker_writes_with_its_own_connection(live, worker_of) -> None:
     assert report.rows_translated == len(rows)
     assert not report.cancelled
 
-    # соединение фикстуры в записи не участвовало — перечитываем им
+    # the connection of the fixture took no part in the writing — we reread with it
     written = conn.execute(
         "SELECT ru_text, status FROM units WHERE ru_text IS NOT NULL").fetchall()
     assert len(written) == len(rows)
@@ -143,10 +145,11 @@ def test_the_worker_writes_with_its_own_connection(live, worker_of) -> None:
 
 
 def test_a_failing_service_lands_in_the_report_not_in_a_crash(live, worker_of) -> None:
-    """Отказ сервиса — строка отчёта, а не падение потока.
+    """A refusal of the service is a line of the report, not a crash of the thread.
 
-    Прогон идёт пачками, и упавшая пачка не повод бросать остальные: то, что не
-    перевелось, перечислено в `failures`, а человек видит это в сводке.
+    The run goes in batches, and a fallen batch is no reason to abandon the rest:
+    what did not get translated is listed in `failures`, and a human sees that in
+    the summary.
     """
     conn, _path, rows = live
     report = worker_of(fail=True)
@@ -156,22 +159,22 @@ def test_a_failing_service_lands_in_the_report_not_in_a_crash(live, worker_of) -
     assert report.failures, "провал обязан быть назван поимённо"
     assert "Rows not translated" in report.summary()
 
-    # в базу при этом не ушло ничего
+    # and nothing went into the database at that
     left = conn.execute(
         "SELECT COUNT(*) FROM units WHERE ru_text IS NOT NULL").fetchone()[0]
     assert left == 0
 
 
 def test_the_project_file_is_released(live, worker_of) -> None:
-    """Соединение воркера обязано закрыться — иначе файл проекта не отпустить.
+    """The connection of the worker is obliged to close — otherwise the project file is not let go.
 
-    На Windows это не абстракция: незакрытый дескриптор не даст ни удалить
-    проект, ни переименовать его.
+    On Windows that is no abstraction: an unclosed handle will let one neither
+    delete the project nor rename it.
     """
     conn, path, _rows = live
     worker_of()
 
     conn.close()
     moved = path.with_suffix(".moved")
-    path.replace(moved)             # упало бы на живом дескрипторе
+    path.replace(moved)             # would have fallen over on a live handle
     assert moved.is_file()
