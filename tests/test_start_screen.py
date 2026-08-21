@@ -1,8 +1,9 @@
-"""Экран проектов: возврат к списку, удаление, показ в проводнике.
+"""The projects screen: the return to the list, deleting, revealing in the explorer.
 
-Повод: файл проекта нельзя было удалить, «пока просто смотришь список». Причина
-— приложение при запуске само открывает последний проект, а «Проекты» только
-переключали экран, не отпуская соединение. В режиме WAL это держит файл.
+The reason: a project file could not be deleted «while you are merely looking at
+the list». The cause — at start-up the application opens the last project itself,
+while «Projects» only switched the screen without letting the connection go. In
+WAL mode that holds the file.
 """
 from __future__ import annotations
 
@@ -54,7 +55,7 @@ def window(tmp_path, make_tree, qtbot, monkeypatch):
     return win, path, stored
 
 
-# --- возврат к списку отпускает файл ------------------------------------
+# --- the return to the list lets the file go ----------------------------
 
 
 def test_returning_to_the_list_closes_the_project(window) -> None:
@@ -69,23 +70,23 @@ def test_returning_to_the_list_closes_the_project(window) -> None:
 
 
 def test_file_is_free_after_returning_to_the_list(window) -> None:
-    """Тот самый сценарий: открыли, вернулись к списку, удаляем."""
+    """That very scenario: opened, returned to the list, deleting."""
     win, path, _ = window
     win.open_project(path)
     win.show_start()
-    project.delete_project_file(path)          # не должно поднять OSError
+    project.delete_project_file(path)          # must not raise OSError
     assert not path.exists()
 
 
-# --- удаление -----------------------------------------------------------
+# --- deleting -----------------------------------------------------------
 
 
 def press(monkeypatch, role) -> list:
-    """Ответить на модальное окно нажатием кнопки с такой ролью.
+    """Answer a modal window by pressing the button with such a role.
 
-    По роли, а не по подписи: подписи переводятся, и тест, ищущий кнопку по
-    тексту, молча перестал бы что-либо нажимать, оставшись зелёным ровно до
-    первой смены языка.
+    By role and not by label: labels are translated, and a test that looks for a
+    button by text would silently stop pressing anything, staying green right up
+    to the first change of language.
     """
     seen = []
 
@@ -114,7 +115,7 @@ def test_delete_removes_file_and_forgets_project(window, monkeypatch) -> None:
 
 
 def test_delete_closes_the_project_first(window, monkeypatch) -> None:
-    """Открытый проект удаляется только после закрытия соединения."""
+    """An open project is deleted only after the connection is closed."""
     win, path, _ = window
     win.open_project(path)
     press(monkeypatch, QMessageBox.DestructiveRole)
@@ -134,7 +135,7 @@ def test_cancel_keeps_everything(window, monkeypatch) -> None:
 
 
 def test_cancel_is_the_default_button(window, monkeypatch) -> None:
-    """Опасное действие не должно срабатывать по Enter."""
+    """A dangerous action must not fire on Enter."""
     win, path, _ = window
     seen = press(monkeypatch, QMessageBox.RejectRole)
     win.start_screen.deleteRequested.emit(str(path))
@@ -143,7 +144,7 @@ def test_cancel_is_the_default_button(window, monkeypatch) -> None:
 
 
 def test_deleting_the_last_project_clears_the_autoopen(window, monkeypatch) -> None:
-    """Иначе приложение при следующем запуске полезет за удалённым файлом."""
+    """Otherwise at the next start the application goes after a deleted file."""
     win, path, stored = window
     stored["last"] = path
     press(monkeypatch, QMessageBox.DestructiveRole)
@@ -151,16 +152,16 @@ def test_deleting_the_last_project_clears_the_autoopen(window, monkeypatch) -> N
     assert stored["last"] is None
 
 
-# --- пропавший файл проекта ---------------------------------------------
+# --- a project file gone missing ----------------------------------------
 
 
 def test_a_missing_project_stays_in_the_list_but_is_marked(window) -> None:
-    """Файл удалили мимо приложения — запись остаётся, но видно, что её нет.
+    """The file was deleted past the application — the record stays, but its absence shows.
 
-    Молча выбрасывать нельзя: проект мог лежать на флешке или сетевой папке, а
-    вместе с записью пропали бы имя и прогресс. Поэтому строка гаснет и вместо
-    процента показывает «файл не найден», а убрать её — отдельное решение
-    человека (`Delete`).
+    Throwing it out silently will not do: the project may have lain on a flash
+    drive or a network folder, and the name and the progress would go with the
+    record. That is why the row goes dim and shows «file not found» instead of a
+    percentage, while taking it away is a decision of the human's own (`Delete`).
     """
     win, path, _ = window
     path.unlink()
@@ -171,17 +172,17 @@ def test_a_missing_project_stays_in_the_list_but_is_marked(window) -> None:
     entry = next(i for i in items if i.data(Qt.UserRole) == str(path))
 
     assert "Мой мод" in entry.text()
-    assert "1/2" not in entry.text()            # процент подменён пометкой
+    assert "1/2" not in entry.text()            # the percentage is replaced by the mark
     assert entry.foreground().color() == theme.qcolor("text.disabled")
 
 
 def test_a_missing_project_refuses_to_open(window, monkeypatch) -> None:
-    """Открыть пропавший файл нельзя — иначе SQLite заведёт пустую базу на его месте."""
+    """A file gone missing must not be opened — otherwise SQLite sets up an empty database in its place."""
     win, path, _ = window
     path.unlink()
     win.start_screen.reload()
     warned: list = []
-    # предупреждение модальное: без заглушки тест встал бы на exec() насмерть
+    # the warning is modal: without a stub the test would stand dead on exec()
     monkeypatch.setattr(QMessageBox, "warning",
                         staticmethod(lambda *a, **k: warned.append(a)))
     opened: list = []
@@ -197,11 +198,11 @@ def test_a_missing_project_refuses_to_open(window, monkeypatch) -> None:
     assert warned, "молчать в ответ на нажатие нельзя — человек не поймёт, что случилось"
 
 
-# --- проводник ----------------------------------------------------------
+# --- the explorer -------------------------------------------------------
 
 
 def test_reveal_passes_a_single_string(tmp_path, monkeypatch) -> None:
-    """Список аргументов ломает /select, — Python вставит пробел после запятой."""
+    """A list of arguments breaks /select, — Python inserts a space after the comma."""
     calls = []
     monkeypatch.setattr("pdxloc.gui.shell.subprocess.Popen", calls.append)
     target = tmp_path / "проект.pdxproj"
@@ -217,7 +218,7 @@ def test_reveal_passes_a_single_string(tmp_path, monkeypatch) -> None:
 
 
 def test_reveal_falls_back_to_the_folder(tmp_path, monkeypatch) -> None:
-    """Нажали кнопку — что-то обязано открыться, даже если файла уже нет."""
+    """The button was pressed — something is obliged to open, even if the file is already gone."""
     calls = []
     monkeypatch.setattr("pdxloc.gui.shell.subprocess.Popen", calls.append)
     shell.reveal(tmp_path / "нет.pdxproj")

@@ -1,8 +1,8 @@
-"""Каждый диалог должен хотя бы открываться.
+"""Every dialog must at least open.
 
-Отдельный тест появился после того, как забытый импорт QPushButton уронил
-диалог создания базы прямо в конструкторе: обычные тесты этого не ловили,
-потому что до создания диалогов не доходили.
+A test of its own appeared after a forgotten QPushButton import brought the
+database-creation dialog down right in the constructor: the ordinary tests did
+not catch that, because they never got as far as creating the dialogs.
 """
 from __future__ import annotations
 
@@ -35,12 +35,12 @@ def test_tm_import_dialog_opens(qtbot):
 
     tab = TmBuildTab()
     qtbot.addWidget(tab)
-    # кнопка прерывания появляется только во время работы
+    # the interrupt button appears only while the work is going on
     assert not tab.cancel_btn.isVisibleTo(tab)
 
 
 def test_tm_import_autodetects_typed_path(tmp_path, qtbot):
-    """Путь можно вписать руками, а не только выбрать в проводнике."""
+    """The path can be typed by hand, not only chosen in the explorer."""
     from pdxloc.gui.tm_build_tab import TmBuildTab
 
     loc = tmp_path / "Game" / "game" / "localization"
@@ -98,13 +98,13 @@ def test_export_dialog_opens(live_project, qtbot):
 
 
 def test_export_dialog_defaults_to_ru_root(live_project, qtbot, tmp_path):
-    """Без прошлой записи цель — дерево перевода, и об этом честно сказано."""
+    """Without a past write the target is the translation tree, and that is said honestly."""
     from pdxloc.gui.export_dialog import ExportDialog
 
     dlg = ExportDialog(live_project, 1)
     qtbot.addWidget(dlg)
     assert dlg.path_edit.text() == str(tmp_path / "ru")
-    assert dlg.warning.text()      # предупреждение о перезаписи источника импорта
+    assert dlg.warning.text()      # a warning about overwriting the import source
 
 
 def test_export_dialog_remembers_output_folder(live_project, qtbot, tmp_path):
@@ -117,11 +117,11 @@ def test_export_dialog_remembers_output_folder(live_project, qtbot, tmp_path):
     dlg = ExportDialog(live_project, 1)
     qtbot.addWidget(dlg)
     assert dlg.path_edit.text() == str(mod)
-    assert not dlg.warning.text()   # это не папка импорта — предупреждать не о чем
+    assert not dlg.warning.text()   # this is not the import folder — there is nothing to warn about
 
 
 def test_import_dialog_previews(live_project, qtbot, tmp_path):
-    """Окно импорта сразу показывает, что именно изменится."""
+    """The import window shows at once what exactly will change."""
     from pdxloc.gui.import_dialog import ImportDialog
 
     other = tmp_path / "other"
@@ -132,15 +132,16 @@ def test_import_dialog_previews(live_project, qtbot, tmp_path):
     dlg = ImportDialog(live_project, 1)
     qtbot.addWidget(dlg)
     dlg.path_edit.setText(str(other))
-    dlg._reread()                              # смена папки — единственное чтение диска
+    dlg._reread()                              # a change of folder is the only read of the disk
 
     text = dlg.report_box.toPlainText()
-    assert "Rows taken: 1" in text          # a уже переведено, b — новое
+    assert "Rows taken: 1" in text          # a is translated already, b is new
     assert "b: (empty) → Мир" in text
     assert dlg.ok_button.isEnabled()
 
-    # Галка меняет правила приёма, а не файлы на диске: пересчёт идёт по уже
-    # разобранному дереву. Раньше каждое переключение обходило весь мод заново.
+    # The tick changes the rules of acceptance and not the files on the disk: the
+    # recount goes over the already parsed tree. Every switch used to walk the
+    # whole mod anew.
     from pdxloc.core import paradox_yaml
 
     reads: list = []
@@ -149,13 +150,13 @@ def test_import_dialog_previews(live_project, qtbot, tmp_path):
     monkeypatch.setattr(paradox_yaml, "parse_file",
                         lambda p: (reads.append(p), real(p))[1])
     try:
-        dlg.overwrite.setChecked(True)         # предпросмотр пересчитывается сам
+        dlg.overwrite.setChecked(True)         # the preview recounts itself
         assert "Rows taken: 2" in dlg.report_box.toPlainText()
         assert reads == [], "диск читали заново ради галки"
     finally:
         monkeypatch.undo()
 
-    # ничего ещё не записано: предпросмотр только считает
+    # nothing is written yet: the preview only counts
     assert live_project.execute(
         "SELECT ru_text FROM units WHERE key = 'b'").fetchone()[0] is None
 
@@ -170,7 +171,7 @@ def test_concordance_dialog_finds_fragment(live_project, qtbot):
     dlg = ConcordanceDialog(live_project, "hello")
     qtbot.addWidget(dlg)
 
-    # в памяти проекта уже лежит «Hello → Привет» из сканирования, плюс наша пара
+    # the memory of the project already holds «Hello → Привет» from the scan, plus our pair
     found = {dlg.table.item(i, COL_RU).text() for i in range(dlg.table.rowCount())}
     assert "Привет тебе" in found
     assert "Found:" in dlg.count_label.text()
@@ -182,7 +183,7 @@ def test_concordance_dialog_finds_fragment(live_project, qtbot):
 
 
 def test_suggestions_show_similarity_percent(live_project, qtbot):
-    """Похожая строка видна в общем списке и подписана процентом."""
+    """A similar row shows in the common list and is labelled with a percentage."""
     from pdxloc.core import tm
     from pdxloc.gui.detail_pane import DetailPane
 
@@ -201,12 +202,12 @@ def test_suggestions_show_similarity_percent(live_project, qtbot):
 
 
 def test_nbsp_survives_the_editor(live_project, qtbot):
-    """Неразрывный пробел не должен подменяться обычным.
+    """A non-breaking space must not be replaced by an ordinary one.
 
-    В русской типографике он стоит осмысленно (перед тире, в «5 000»), и в
-    ванильной локализации CK3 таких строк полно. Qt в toPlainText() меняет его
-    на обычный: строка, которую даже не открывали для правки, считалась
-    изменённой и перезаписывалась при уходе с неё.
+    In Russian typography it stands with a meaning (before a dash, in «5 000»),
+    and in the vanilla CK3 localisation such rows abound. Qt in toPlainText()
+    changes it for an ordinary one: a row that had not even been opened for
+    editing counted as changed and was overwritten on leaving it.
     """
     from pdxloc.gui.detail_pane import DetailPane
 
@@ -219,8 +220,8 @@ def test_nbsp_survives_the_editor(live_project, qtbot):
     qtbot.addWidget(pane)
     pane.load_unit(unit_id)
 
-    assert pane.ru_edit.toPlainText() != text          # Qt действительно подменяет
-    assert "saved" in pane.save_state.text()           # но правок-то не было
+    assert pane.ru_edit.toPlainText() != text          # Qt really does replace it
+    assert "saved" in pane.save_state.text()           # but there were no edits
     pane._autosave()
     assert live_project.execute(
         "SELECT ru_text FROM units WHERE id = ?", (unit_id,)).fetchone()[0] == text
@@ -271,8 +272,8 @@ def test_main_window_opens(qtbot, monkeypatch, tmp_path):
     monkeypatch.setattr(settings, "last_project_path", lambda: None)
     monkeypatch.setattr(settings, "projects_dir", lambda: tmp_path / "Projects")
     monkeypatch.setattr(settings, "bdd_dir", lambda: tmp_path / "Bdd")
-    # иначе окно попытается перенести настоящую базу прежней версии
-    # и покажет модальное сообщение, которое в тестах некому закрыть
+    # otherwise the window will try to move the real database of the former version
+    # and show a modal message that in the tests there is nobody to close
 
     from pdxloc.gui.main_window import MainWindow
 

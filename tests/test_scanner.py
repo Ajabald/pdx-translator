@@ -1,4 +1,4 @@
-"""Тесты дифф-автомата сканера: по одному на каждый переход."""
+"""Tests of the diff machine of the scanner: one per transition."""
 from __future__ import annotations
 
 
@@ -25,7 +25,7 @@ RU = 'l_russian:\n greet:0 "Привет"\n bye:0 "Goodbye" # !!! ТРЕБУЕТ
 
 
 def test_path_mapping_middle_suffix():
-    """Метка языка бывает и в середине имени: agot_modifiers_l_english_BLA.yml."""
+    """The language mark happens to be mid-name too: agot_modifiers_l_english_BLA.yml."""
     assert map_relpath("modifiers/agot_modifiers_l_english_BLA.yml",
                        "english", "russian") == \
         "modifiers/agot_modifiers_l_russian_BLA.yml"
@@ -40,17 +40,17 @@ def test_initial_import(db, make_tree):
     assert stats.new == 2
     assert get_unit(db, "greet")["status"] == Status.TRANSLATED.value
     assert get_unit(db, "greet")["ru_text"] == "Привет"
-    # маркер старых скриптов + ru==en -> не переведено
+    # the marker of the old scripts + ru==en -> not translated
     assert get_unit(db, "bye")["status"] == Status.UNTRANSLATED.value
     assert get_unit(db, "bye")["ru_text"] is None
 
 
 def test_empty_original_with_a_real_translation_stays_translated(db, make_tree):
-    """Пустой оригинал уходит в игнор, но не поверх живого перевода.
+    """An empty original goes to the ignored, but not over a live translation.
 
-    Автоигнор не должен забирать строку, в которую человек уже что-то вписал:
-    пустое значение в оригинале — повод не мучить переводчика, а не повод
-    выбросить его работу.
+    The auto-ignore must not take a row into which a human has already written
+    something: an empty value in the original is a reason not to torment the
+    translator, not a reason to throw their work away.
     """
     en = make_tree({"mod_l_english.yml": 'l_english:\n k:0 ""\n other:0 "Text"\n'}, "en")
     ru = make_tree(
@@ -61,7 +61,7 @@ def test_empty_original_with_a_real_translation_stays_translated(db, make_tree):
 
 
 def test_empty_original_without_a_translation_is_ignored_at_once(db, make_tree):
-    """Первый же скан кладёт заглушку в «игнорировано», а не в непереведённые."""
+    """The very first scan puts a stub into «ignored» and not among the untranslated."""
     en = make_tree({"mod_l_english.yml": 'l_english:\n k:0 ""\n other:0 "Text"\n'}, "en")
     stats = scan_project(db, make_project(db, en, make_tree({}, "ru")))
     assert stats.auto_ignored == 1
@@ -70,7 +70,7 @@ def test_empty_original_without_a_translation_is_ignored_at_once(db, make_tree):
 
 
 def test_original_that_went_empty_keeps_the_ignore(db, make_tree, tmp_path):
-    """Текст в оригинале пропал — строка остаётся игнорируемой, а не «устаревшей»."""
+    """The text in the original is gone — the row stays ignored, not «stale»."""
     en = make_tree({"mod_l_english.yml": 'l_english:\n k:0 "[GetName]"\n'}, "en")
     pid = make_project(db, en, make_tree({}, "ru"))
     scan_project(db, pid)
@@ -102,7 +102,7 @@ def test_en_modified_translated_becomes_stale(db, make_tree):
     assert u["status"] == Status.STALE.value
     assert u["prev_en_text"] == "Hello"
     assert u["en_text"] == "Hello there"
-    assert u["ru_text"] == "Привет"          # перевод сохранён
+    assert u["ru_text"] == "Привет"          # the translation is kept
     assert stats.stale == 1
 
 
@@ -117,7 +117,7 @@ def test_en_modified_again_keeps_prev(db, make_tree):
     scan_project(db, pid)
     u = get_unit(db, "greet")
     assert u["status"] == Status.STALE.value
-    assert u["prev_en_text"] == "Hello"      # НЕ перезаписан на v2
+    assert u["prev_en_text"] == "Hello"      # NOT overwritten with v2
     assert u["en_text"] == "Hello v3"
 
 
@@ -148,11 +148,11 @@ def test_key_deleted_and_restored(db, make_tree):
     assert stats.restored == 1
     u = get_unit(db, "greet")
     assert u["is_deleted"] == 0
-    assert u["ru_text"] == "Привет"          # перевод пережил удаление
+    assert u["ru_text"] == "Привет"          # the translation survived the deletion
 
 
 def test_key_without_source_goes_to_archive(db, make_tree):
-    """Ключ есть в переводе, но не в оригинале: перевод в архив, строки нет."""
+    """The key is in the translation but not in the original: the translation to the archive, no row."""
     en = make_tree({"mod_l_english.yml": EN}, "en")
     ru = make_tree(
         {"mod_l_russian.yml": RU.rstrip() + '\n old_key:0 "Старьё"\n'}, "ru")
@@ -177,13 +177,13 @@ def test_translation_file_without_source_archived(db, make_tree):
     assert stats.orphan_ru_files == ["extra_l_russian.yml"]
     assert db.execute(
         "SELECT ru_text FROM legacy_translations WHERE key='lonely'").fetchone()[0] == "Одинокий"
-    # файла без пары в проекте не заводим
+    # a file without a pair we do not set up in the project
     assert db.execute(
         "SELECT COUNT(*) FROM files WHERE rel_path = 'extra_l_russian.yml'").fetchone()[0] == 0
 
 
 def test_deleted_key_translation_archived(db, make_tree):
-    """Ключ пропал из оригинала при обновлении мода — перевод сохраняется."""
+    """The key vanished from the original at an update of the mod — the translation is kept."""
     en = make_tree({"mod_l_english.yml": EN}, "en")
     ru = make_tree({"mod_l_russian.yml": RU}, "ru")
     pid = make_project(db, en, ru)
@@ -209,7 +209,7 @@ def test_updated_junk_files_ignored(db, make_tree):
 
 
 def test_tm_auto_fill_same_text(db, make_tree):
-    # два ключа с одинаковым EN: один переведён -> второй заполняется из TM как auto
+    # two keys with the same EN: one is translated -> the second is filled from the TM as auto
     en = make_tree({"mod_l_english.yml":
                     'l_english:\n a:0 "Same text"\n b:0 "Same text"\n'}, "en")
     ru = make_tree({"mod_l_russian.yml": 'l_russian:\n a:0 "Одинаковый"\n'}, "ru")
@@ -222,12 +222,13 @@ def test_tm_auto_fill_same_text(db, make_tree):
 
 
 def test_tm_fills_ambiguous_with_the_same_winner_as_f7(db, make_tree):
-    """Расхождение вариантов больше не глушит подстановку.
+    """A divergence of variants no longer silences the substitution.
 
-    Раньше при двух разных переводах одного оригинала автозаполнение молчало,
-    хотя F7 в той же ситуации уверенно подставляет лучший вариант. Базы
-    расходятся в переводе одной строки постоянно, и молчание стоило процентов
-    заполнения на ровном месте. Теперь оба пути выбирают одного победителя.
+    With two different translations of one original the auto-fill used to keep
+    quiet, while F7 in the same situation substitutes the best variant with
+    confidence. The databases diverge in the translation of one row constantly,
+    and the silence cost percentage points of filling for nothing. Now both paths
+    pick one and the same winner.
     """
     from pdxloc.core import tm
 
@@ -242,7 +243,7 @@ def test_tm_fills_ambiguous_with_the_same_winner_as_f7(db, make_tree):
 
     assert stats.auto_filled == 1
     unit = get_unit(db, "c")
-    assert unit["status"] == Status.AUTO.value      # «подставлено, проверь»
+    assert unit["status"] == Status.AUTO.value      # «substituted, check it»
     assert unit["ru_text"] == tm.lookup(db, "Same")[0].ru_text
 
 
@@ -252,7 +253,7 @@ def test_en_modified_auto_reset(db, make_tree):
     pid = make_project(db, en, ru)
     scan_project(db, pid)
     assert get_unit(db, "b")["status"] == Status.AUTO.value
-    # EN ключа b изменился -> auto сброшен, нового совпадения в TM нет
+    # the EN of key b changed -> auto is reset, and there is no new match in the TM
     make_tree({"mod_l_english.yml": 'l_english:\n a:0 "Same"\n b:0 "Different now"\n'}, "en")
     scan_project(db, pid)
     u = get_unit(db, "b")
@@ -265,7 +266,7 @@ def test_ru_conflict_db_wins(db, make_tree):
     ru = make_tree({"mod_l_russian.yml": RU}, "ru")
     pid = make_project(db, en, ru)
     scan_project(db, pid)
-    # на диске перевод поменяли, в БД уже есть свой -> БД главнее
+    # on the disk the translation was changed, in the DB there is one of our own -> the DB rules
     make_tree({"mod_l_russian.yml": 'l_russian:\n greet:0 "Другой перевод"\n'}, "ru")
     stats = scan_project(db, pid)
     assert stats.ru_conflicts == 1
@@ -287,7 +288,7 @@ def test_untranslated_ru_appears_on_disk(db, make_tree):
     ru = make_tree({"mod_l_russian.yml": RU}, "ru")
     pid = make_project(db, en, ru)
     scan_project(db, pid)
-    # пользователь перевёл bye прямо в файле
+    # the user translated bye right in the file
     make_tree({"mod_l_russian.yml":
                'l_russian:\n greet:0 "Привет"\n bye:0 "Пока"\n'}, "ru")
     scan_project(db, pid)

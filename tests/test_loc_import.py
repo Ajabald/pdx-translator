@@ -1,4 +1,4 @@
-"""Загрузка перевода из готового дерева локализации отдельной командой."""
+"""Loading a translation from a ready localisation tree by a command of its own."""
 from __future__ import annotations
 
 import sqlite3
@@ -26,7 +26,7 @@ def setup(db, make_tree):
 
 
 def test_fills_empty_translations(db, make_tree, tmp_path):
-    """Перевод чужого мода принимается в пустые строки."""
+    """The translation of somebody else's mod is accepted into empty rows."""
     pid = setup(db, make_tree)
     other = make_tree({"m_l_russian.yml":
                        'l_russian:\n a:0 "Здравствуй"\n b:0 "Мир"\n'}, "other")
@@ -34,8 +34,8 @@ def test_fills_empty_translations(db, make_tree, tmp_path):
     report = import_translations(db, pid, other)
 
     assert report.files_found == 1
-    assert report.imported == 1               # b — принят
-    assert report.skipped_existing == 1       # a — перевод уже есть
+    assert report.imported == 1               # b — accepted
+    assert report.skipped_existing == 1       # a — a translation is there already
     assert get_unit(db, "b")["ru_text"] == "Мир"
     assert get_unit(db, "b")["status"] == Status.TRANSLATED.value
     assert get_unit(db, "a")["ru_text"] == "Привет"
@@ -59,7 +59,7 @@ def test_dry_run_changes_nothing(db, make_tree):
 
     assert report.imported == 1
     assert report.samples == [("b", "", "Мир")]
-    assert get_unit(db, "b")["ru_text"] is None      # предпросмотр ничего не пишет
+    assert get_unit(db, "b")["ru_text"] is None      # the preview writes nothing
 
 
 def test_skips_equal_to_source_and_markers(db, make_tree):
@@ -72,15 +72,15 @@ def test_skips_equal_to_source_and_markers(db, make_tree):
 
     assert report.skipped_equal == 1 and report.skipped_marked == 1
     assert report.imported == 0
-    # с выключенным правилом копия оригинала всё же принимается — иногда это
-    # законный перевод (имена собственные, числа)
+    # with the rule switched off a copy of the original is accepted after all —
+    # sometimes it is a lawful translation (proper names, numbers)
     report2 = import_translations(db, pid, other, ImportOptions(skip_equal_to_source=False))
     assert report2.imported == 1
     assert get_unit(db, "b")["ru_text"] == "World"
 
 
 def test_unknown_keys_counted(db, make_tree):
-    """Указали папку не от этого мода — это должно быть видно, а не молча ноль."""
+    """A folder not from this mod was named — that has to show, not a silent zero."""
     pid = setup(db, make_tree)
     other = make_tree({"m_l_russian.yml":
                        'l_russian:\n zzz:0 "Что-то"\n b:0 "Мир"\n'}, "other")
@@ -92,7 +92,7 @@ def test_unknown_keys_counted(db, make_tree):
 
 
 def test_import_is_undoable_as_one_batch(db, make_tree):
-    """Пачка снимается одним Ctrl+Z — иначе массовую операцию не откатить."""
+    """The batch is taken off by one Ctrl+Z — otherwise a bulk operation cannot be undone."""
     pid = setup(db, make_tree)
     other = make_tree({"m_l_russian.yml":
                        'l_russian:\n a:0 "Здравствуй"\n b:0 "Мир"\n'}, "other")
@@ -116,11 +116,11 @@ def test_missing_folder_reported(db, make_tree, tmp_path):
         import_translations(db, pid, tmp_path / "нет-такой")
 
 
-# --- три шага по отдельности --------------------------------------------
+# --- the three steps separately -----------------------------------------
 
 
 def plan_for(db, pid, folder, options=None):
-    """Разобрать дерево и посчитать план — как это делает окно импорта."""
+    """Parse the tree and count the plan — the way the import window does it."""
     langs = project.languages(db, pid)
     rel_paths = [r["rel_path"] for r in db.execute(
         "SELECT rel_path FROM files WHERE project_id = ? AND is_deleted = 0", (pid,))]
@@ -129,7 +129,7 @@ def plan_for(db, pid, folder, options=None):
 
 
 def test_the_plan_touches_nothing(db, make_tree):
-    """Предпросмотр обязан быть безвредным: его считают на каждую галку."""
+    """The preview is obliged to be harmless: it is counted for every tick."""
     pid = setup(db, make_tree)
     other = make_tree({"m_l_russian.yml":
                        'l_russian:\n a:0 "Здравствуй"\n b:0 "Мир"\n'}, "other")
@@ -138,15 +138,15 @@ def test_the_plan_touches_nothing(db, make_tree):
 
     assert plan.report.imported == 2
     assert [c.key for c in plan.changes] == ["a", "b"]
-    assert get_unit(db, "a")["ru_text"] == "Привет"      # база не тронута
+    assert get_unit(db, "a")["ru_text"] == "Привет"      # the database is untouched
     assert get_unit(db, "b")["ru_text"] is None
 
 
 def test_the_tree_is_read_once_and_reused_for_every_rule_set(db, make_tree, monkeypatch):
-    """Правила приёма не меняют файлы на диске — перечитывать их незачем.
+    """The rules of acceptance do not change the files on the disk — no point rereading them.
 
-    Раньше каждое переключение галки в окне заново разбирало всё дерево, а на
-    большом моде это секунды.
+    Every switch of a tick in the window used to parse the whole tree anew, and on
+    a big mod that is seconds.
     """
     pid = setup(db, make_tree)
     other = make_tree({"m_l_russian.yml":
@@ -159,20 +159,20 @@ def test_the_tree_is_read_once_and_reused_for_every_rule_set(db, make_tree, monk
     tree, _ = plan_for(db, pid, other)
     assert len(reads) == 1
 
-    # два разных набора правил по одному и тому же разобранному дереву
+    # two different rule sets over one and the same parsed tree
     careful = loc_import.build_plan(db, pid, tree, ImportOptions())
     bold = loc_import.build_plan(db, pid, tree, ImportOptions(overwrite=True))
 
-    assert careful.report.imported == 1        # только пустая строка
-    assert bold.report.imported == 2           # и та, где перевод уже был
+    assert careful.report.imported == 1        # only the empty row
+    assert bold.report.imported == 2           # and the one that already had a translation
     assert len(reads) == 1, "диск читали заново ради галки"
 
 
 def test_a_failure_midway_leaves_the_project_untouched(db, make_tree, monkeypatch):
-    """Либо вся пачка, либо ничего.
+    """Either the whole batch or nothing.
 
-    Прежний путь коммитил каждую строку отдельно: обрыв на середине оставлял
-    половину принятой, и понять, какую именно, было нечем.
+    The former path committed every row separately: a break midway left half of it
+    accepted, and there was nothing to tell which half.
     """
     pid = setup(db, make_tree)
     other = make_tree({"m_l_russian.yml":
@@ -182,8 +182,8 @@ def test_a_failure_midway_leaves_the_project_untouched(db, make_tree, monkeypatc
     def die(*args, **kwargs):
         raise sqlite3.OperationalError("диск кончился на середине")
 
-    # Падаем на последнем шаге — уже после того, как строки обновлены и история
-    # записана: именно эти две записи и обязан снять откат.
+    # We fall on the last step — already after the rows are updated and the history
+    # is written: it is exactly those two records the rollback is obliged to take off.
     monkeypatch.setattr(loc_import.tm, "upsert_many", die)
     with pytest.raises(sqlite3.OperationalError):
         loc_import.apply_plan(db, plan, batch_id=unit_ops.new_batch_id())
@@ -194,7 +194,7 @@ def test_a_failure_midway_leaves_the_project_untouched(db, make_tree, monkeypatc
 
 
 def test_reading_can_be_cancelled(db, make_tree):
-    """Отмена во время чтения — до записи, поэтому проект остаётся как был."""
+    """A cancellation during the reading comes before the writing, so the project stays as it was."""
     pid = setup(db, make_tree)
     other = make_tree({"m_l_russian.yml":
                        'l_russian:\n a:0 "Здравствуй"\n'}, "other")
