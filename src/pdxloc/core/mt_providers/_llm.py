@@ -165,8 +165,8 @@ def translate_with_fallback(ask, texts: list[str]) -> list[str | None]:
     missing = [i for i in range(len(texts)) if i not in answers]
 
     if missing and len(texts) > 1:
-        # Второй заход целиком: чаще всего модель просто оборвала ответ, и
-        # повтор обходится дешевле, чем полсотни запросов по одному.
+        # A second attempt at the whole batch: most often the model simply truncated
+        # the answer, and a retry costs less than fifty requests one at a time.
         for index, value in _attempt(ask, texts, len(texts)).items():
             answers.setdefault(index, value)
         missing = [i for i in range(len(texts)) if i not in answers]

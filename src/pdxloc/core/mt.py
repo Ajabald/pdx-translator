@@ -163,19 +163,13 @@ def translate_texts(
     return result
 
 
-# --- ключи доступа ---
-#
-# Ключи лежат не в `gui/prefs.py`, и это не мелочь. `prefs.get` отдал бы
-# защищённую строку вместо ключа, а `prefs.notifier` рассылал бы сигнал
-# «настройка изменилась» на каждое нажатие клавиши в поле ввода. Ключей к тому
-# же по одному на провайдера, а `prefs.DEFAULTS` требует знать имя на импорте.
-# Поэтому — рядом с `bdd_dir` и списком недавних проектов, через `settings`.
+# --- access keys ---
 
 _KEY_PREFIX = "mt/key/"
 
 
 def api_key(provider: str) -> str:
-    """Ключ провайдера в открытом виде — только чтобы отдать его в запрос."""
+    """The provider key in the clear, only to be handed to a request."""
     from pdxloc import settings
     from pdxloc.core import secrets
 
@@ -198,7 +192,7 @@ def forget_api_key(provider: str) -> None:
 
 
 def key_is_protected(provider: str) -> bool:
-    """Защищён ли ключ системой. «Параметры» обязаны показывать правду."""
+    """Whether the system protects the key. «Preferences» must show the truth."""
     from pdxloc import settings
     from pdxloc.core import secrets
 

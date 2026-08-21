@@ -192,11 +192,11 @@ class ProjectDialog(QDialog):
         return text
 
     def _update_hint(self) -> None:
-        """Подсказка и подсказки в полях путей идут за выбранными языками.
+        """The hint and the path placeholders follow the chosen languages.
 
-        Плейсхолдер — тот же совет, что и текст ниже, только короче; если он
-        останется стоять на english→russian, пока подсказка говорит про polish,
-        поле само себе противоречит.
+        A placeholder is the same advice as the text below, only shorter; leave it
+        standing at english→russian while the hint talks about polish, and the
+        field contradicts itself.
         """
         src = self.src_lang.currentText().strip() or "english"
         tgt = self.tgt_lang.currentText().strip() or "russian"
@@ -218,11 +218,11 @@ class ProjectDialog(QDialog):
                 / (safe_name(name) + settings.PROJECT_EXT)))
 
     def _suggest_target(self) -> None:
-        """Подставить соседнюю папку языка перевода.
+        """Fill in the neighbouring folder of the translation language.
 
-        У CK3 деревья языков лежат рядом: …\\localization\\english и
-        …\\localization\\russian. Папки перевода при новом проекте обычно ещё
-        нет, поэтому предлагаем путь, а не ищем существующий каталог.
+        In CK3 the language trees lie side by side: …\\localization\\english and
+        …\\localization\\russian. For a new project the translation folder usually
+        does not exist yet, so we propose a path rather than look for a directory.
         """
         src = self.src_edit.text().strip()
         if not src or self.tgt_edit.text().strip():
