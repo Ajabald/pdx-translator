@@ -1,4 +1,4 @@
-"""Экран редактора: дерево файлов | фильтры + таблица + детальная панель."""
+"""The editor screen: the file tree, the filters, the table and the detail panel."""
 from __future__ import annotations
 
 import sqlite3
@@ -30,7 +30,7 @@ CTX = "Editor"
 
 
 class FilterBar(QWidget):
-    """Панель фильтров — витрина ViewState, своего состояния не держит."""
+    """The filter bar is a shop window onto ViewState and holds no state of its own."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -43,7 +43,7 @@ class FilterBar(QWidget):
         layout.addWidget(self.status_label)
         self.status_combo = QComboBox()
         self.status_combo.addItem("", None)
-        # порядок общий с чипами статус-бара и пунктами меню «Фильтры»
+        # the order is shared with the status-bar chips and the «Filters» menu entries
         for s in STATUS_ORDER:
             self.status_combo.addItem("", s.value)
         layout.addWidget(self.status_combo)
@@ -63,13 +63,13 @@ class FilterBar(QWidget):
         self.status_combo.currentIndexChanged.connect(self._push_status)
         self.deleted_check.toggled.connect(self._push_deleted)
         self.issues_check.toggled.connect(self._push_issues)
-        # поиск — с дебаунсом, чтобы не дёргать SQL на каждый символ
+        # the search is debounced, so SQL is not poked on every character
         self._debounce = QTimer(self, singleShot=True, interval=250)
         self._debounce.timeout.connect(self._push_search)
         self.search_edit.textChanged.connect(lambda _: self._debounce.start())
 
     def retranslate(self) -> None:
-        """Подписи фильтров. Значения пунктов не трогаем — по ним идёт выбор."""
+        """The filter labels. The item values are left alone: the selection goes by them."""
         self.status_label.setText(translate("Editor", "Status:"))
         self.status_combo.setItemText(0, translate("Editor", "All"))
         for i, s in enumerate(STATUS_ORDER, start=1):
@@ -87,7 +87,7 @@ class FilterBar(QWidget):
         self.sync()
 
     def sync(self) -> None:
-        """Показать состояние, кто бы его ни поменял — чип, меню, заголовок."""
+        """Show the state, whoever changed it — a chip, a menu or a header."""
         if self._state is None:
             return
         self._syncing = True
@@ -132,7 +132,7 @@ class EditorScreen(QWidget):
         self.conn = conn
         self.project_id: int | None = None
         self.actions: act_spec.ActionRegistry | None = None
-        self._syncing = False    # защита от петли «виджет → действие → виджет»
+        self._syncing = False    # a guard against the «widget → action → widget» loop
         self.state = ViewState(self)
 
         layout = QVBoxLayout(self)
@@ -186,28 +186,30 @@ class EditorScreen(QWidget):
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
 
-    # --- публичное ---
+    # --- public ---
 
     def set_session(self, conn: sqlite3.Connection) -> None:
-        """Переключиться на другой файл проекта без пересоздания виджетов."""
+        """Switch to another project file without rebuilding the widgets."""
         self.conn = conn
         self.model.conn = conn
         self.detail.conn = conn
         self.detail.clear()
-        # глоссарий живёт в файле проекта — у нового проекта он свой
+        # the glossary lives in the project file, so a new project has its own
         self.detail.reload_glossary()
         self.project_id = None
 
     def close_session(self) -> None:
-        """Отпустить проект: соединение закрывается, держаться за него нельзя.
+        """Let the project go: the connection closes and must not be held on to.
 
-        Без этого панель редактора при следующей перерисовке (например, при
-        смене темы) лезла в закрытую базу и роняла окно.
+        Without this the editor panel reached into a closed database on its next
+        repaint — on a change of theme, for instance — and brought the window
+        down.
         """
         self.project_id = None
         self.detail.clear()
-        # термины закрытого проекта не должны подсвечиваться в следующем:
-        # соединения уже нет, и reload_glossary честно оставит пустой словарь
+        # the terms of a closed project must not be highlighted in the next one: the
+        # connection is already gone, and reload_glossary honestly leaves an empty
+        # dictionary
         self.detail.reload_glossary()
         self.model.clear()
         self.file_tree.populate([])
@@ -219,23 +221,23 @@ class EditorScreen(QWidget):
         self._reload()
 
     def refresh_issues(self) -> None:
-        """Перечитать замечания — например, после пометок «не ошибка» в отчёте."""
+        """Re-read the issues, for instance after «not an error» marks in the report."""
         if self.project_id is not None:
             self._reload()
 
     def retranslate(self) -> None:
-        """Экран живёт всю сессию — подписи в нём меняем на месте."""
+        """The screen lives for the whole session, so its labels are replaced in place."""
         self.filter_bar.retranslate()
         self.model.retranslate()
         self.detail.retranslate()
         self.file_tree.retranslate()
 
     def current_pair(self) -> tuple[str, str] | None:
-        """Оригинал и перевод выбранной строки — для «Проверить на паре».
+        """The original and the translation of the selected row, for «Check on a pair».
 
-        Берём из уже загруженной модели, а не из базы: окно правил открывают
-        как раз затем, чтобы посмотреть на строку, которая сейчас перед
-        глазами, а не на её состояние на диске.
+        Taken from the already loaded model rather than from the database: the
+        rules window is opened precisely to look at the row currently in front of
+        you, not at its state on disk.
         """
         if self.detail.unit_id is None:
             return None
@@ -246,12 +248,13 @@ class EditorScreen(QWidget):
         return (row["en_text"] or "", row["ru_text"] or "") if row else None
 
     def refresh_current(self) -> None:
-        """Перечитать текущую строку — например, после смены набора баз."""
+        """Re-read the current row, for instance after the set of databases changed."""
         if self.detail.unit_id is not None:
             self.detail.load_unit(self.detail.unit_id)
 
     def focus_search(self) -> None:
-        """Курсор в поле поиска — то же, что Ctrl+F, но из меню и панели."""
+        """Put the cursor in the search box: the same as Ctrl+F, from the menu and the
+        toolbar."""
         self.filter_bar.search_edit.setFocus()
         self.filter_bar.search_edit.selectAll()
 
@@ -264,25 +267,26 @@ class EditorScreen(QWidget):
     def jump_to_unit(self, unit_id: int) -> None:
         row = self.model.row_of_unit(unit_id)
         if row is None:
-            self.reset_filters()      # сбросить фильтры и попробовать снова
+            self.reset_filters()      # clear the filters and try again
             row = self.model.row_of_unit(unit_id)
         if row is not None:
             self._select_row(row)
 
     def set_status_filter(self, status_value: str | None) -> None:
-        """Поставить фильтр по статусу — из чипа, меню или сводки скана."""
+        """Set a status filter, from a chip, a menu or the scan summary."""
         self.state.set_status(status_value)
 
-    # --- фильтры/загрузка ---
+    # --- filters and loading ---
 
     def _on_header_clicked(self, column: int) -> None:
-        """Клик по заголовку сортирует — кроме колонок-кнопок ✓ ✗ C И.
+        """A click on a header sorts — except on the button columns ✓ ✗ C I.
 
-        Они не данные, а органы управления: «значение» ячейки там — производная
-        от статуса, то есть строго худшая версия соседней колонки «Статус». А
-        главное, при простановке ✓ подряд промах на 26 пикселей вверх
-        перетасовал бы строки прямо под курсором, и следующий клик попал бы не
-        по той строке. Цена ошибки — испорченные статусы.
+        Those are controls rather than data: the «value» of such a cell is derived
+        from the status, that is, a strictly worse version of the neighbouring
+        «Status» column. And more to the point, while ticking ✓ down a list, a
+        miss of 26 pixels upwards would reshuffle the rows right under the cursor
+        and the next click would land on the wrong one. The price of that mistake
+        is corrupted statuses.
         """
         if column >= COL_QS_FIRST:
             return
@@ -431,16 +435,16 @@ class EditorScreen(QWidget):
             self.state.set_show_deleted(checked)
 
     def reset_filters(self) -> None:
-        """Снять фильтры по статусу, файлу и поиску (порядок сортировки остаётся)."""
+        """Clear the status, file and search filters; the sort order stays."""
         self.file_tree.clear_selection()
         self.state.reset_filters()
 
     def _sync_filter_actions(self) -> None:
-        """Пункты меню повторяют состояние, кто бы его ни менял.
+        """The menu entries mirror the state, whoever changed it.
 
-        Без этого галка «Только с замечаниями» врала всякий раз, когда фильтр
-        ставили чекбоксом, заголовком колонки или кнопкой «Показать» в сводке
-        сканирования.
+        Without this the «Only with issues» tick lied every time the filter was
+        set through the checkbox, a column header or the «Show» button in the scan
+        summary.
         """
         if self.actions is None:
             return
@@ -452,16 +456,15 @@ class EditorScreen(QWidget):
             self._syncing = False
 
     def context_menu(self) -> QMenu | None:
-        """Собрать контекстное меню таблицы (показ — отдельно, чтобы проверять)."""
+        """Build the table context menu; showing it is separate, so it can be tested."""
         if self.actions is None:
             return None
         menu = QMenu(self.table)
         n = len(self.table.selected_unit_ids())
         if n > 1:
-            # Охват массовой операции показываем заголовком меню. Раньше счётчик
-            # дописывался в текст самих действий и снимался по захардкоженному
-            # списку строк — стоило переименовать пункт, и он оставался с
-            # хвостом «(12 строк)» навсегда.
+            # The reach of a bulk operation is shown as the menu title. The counter used to
+            # be appended to the text of the actions themselves and stripped by a hard-coded
+            # list of strings — rename an entry and it kept the «(12 rows)» tail forever.
             head = menu.addAction(
                 fill(translate("Editor", "Rows selected: %1"), n))
             head.setEnabled(False)
@@ -524,8 +527,8 @@ class EditorScreen(QWidget):
                            "Apply this translation to %1 rows with the same "
                            "English text?"), n))
         if answer == QMessageBox.Yes:
-            # пачкой, а не поштучно: правка задевает сотни строк, и снимать её
-            # надо одним Ctrl+Z
+            # as a batch rather than one by one: the edit touches hundreds of rows, and
+            # undoing it must take one Ctrl+Z
             batch = unit_ops.new_batch_id()
             targets = unit_ops.apply_to_same_en(self.conn, uid, batch_id=batch)
             self._after_change(targets)
@@ -537,7 +540,7 @@ class EditorScreen(QWidget):
             self._after_change([uid])
 
     def _machine_translate(self) -> None:
-        """Перевести текущую строку сервисом. Результат — «Машинный»."""
+        """Translate the current row through a service. The result is «Machine»."""
         from pdxloc.gui import mt_worker, prefs
 
         uid = self._current_unit_id()
@@ -569,8 +572,8 @@ class EditorScreen(QWidget):
         self._mt_thread.start()
 
     def _on_machine_translated(self, unit_id: int, text: str, lost: list) -> None:
-        # Пишем здесь, а не в потоке: соединение принадлежит этому объекту, и
-        # тащить его между потоками нельзя.
+        # We write here rather than on the thread: the connection belongs to this object
+        # and must not be dragged between threads.
         batch = unit_ops.new_batch_id()
         unit_ops.save_machine_text(self.conn, unit_id, text, batch_id=batch)
         self.model.refresh_row(unit_id)
@@ -615,10 +618,11 @@ class EditorScreen(QWidget):
         self._after_change(ids)
 
     def _show_concordance(self) -> None:
-        """Поиск по памяти для выделенного куска оригинала.
+        """A memory search for the selected piece of the original.
 
-        Выделение в поле оригинала важнее строки целиком: искать обычно нужно
-        одно имя или оборот, а не всю фразу.
+        A selection in the original field outweighs the whole row: what usually
+        needs looking up is one name or one turn of phrase, not the entire
+        sentence.
         """
         from pdxloc.gui.concordance_dialog import ConcordanceDialog
 
@@ -640,7 +644,7 @@ class EditorScreen(QWidget):
             "SELECT en_root FROM projects WHERE id = ?", (self.project_id,)).fetchone()
         shell.reveal(Path(proj["en_root"]) / r["rel_path"])
 
-    # --- навигация ---
+    # --- navigation ---
 
     def _save_and_next(self) -> None:
         self.detail.save()
@@ -649,8 +653,8 @@ class EditorScreen(QWidget):
     def _goto_next_untranslated(self) -> None:
         index = self.table.selectionModel().currentIndex()
         current = index.row() if index.isValid() else -1
-        # машинный перевод — тоже незаконченная работа: без него строки,
-        # заполненные автоматом, были бы недостижимы главной клавишей обхода
+        # machine translation is unfinished work as well: without it the rows filled in
+        # by the machine would be unreachable by the main traversal key
         nxt = self.model.next_row_with_status(
             current, {Status.UNTRANSLATED.value, Status.MACHINE.value,
                       Status.AUTO.value, Status.STALE.value})
