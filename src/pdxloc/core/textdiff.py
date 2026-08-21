@@ -113,7 +113,7 @@ def word_diff(old: str, new: str) -> list[tuple[str, str]]:
             result.append(("insert", join(new_tokens, b0, b1)))
         elif op == "delete":
             result.append(("delete", join(old_tokens, a0, a1)))
-        else:   # replace — показываем и удалённое, и добавленное
+        else:   # replace: show both what went and what came
             result.append(("delete", join(old_tokens, a0, a1)))
             result.append(("insert", join(new_tokens, b0, b1)))
     return result

@@ -1,21 +1,22 @@
-"""Обмен настройкой проверок: файл `.pdxqa`.
+"""Sharing the check settings: the `.pdxqa` file.
 
-Зачем файл, когда настройка и так лежит в двух местах. Оба места — не то:
-глобальный слой привязан к машине, проектный уезжает только вместе с проектом.
-А делятся именно настройкой: команда договаривается, что считать ошибкой, один
-человек это настраивает, остальные принимают. Тот же приём у Xbench (`.xbckl`) и
-у Okapi CheckMate.
+Why a file, when the settings already live in two places. Because neither place
+will do: the global layer is tied to the machine, the project one travels only
+with the project. And it is the settings people share — a team agrees on what
+counts as an error, one person configures it, the rest take it. Xbench does the
+same with `.xbckl`, and so does Okapi CheckMate.
 
-**Файл самодостаточен.** Внутри — пресет по имени, дельта относительно
-встроенных значений и свои правила целиком. Не относительно слоя, лежащего ниже
-у автора: у принимающего этого слоя нет, и набор собрался бы другой. Это
-единственное место, где дельта считается не от соседнего слоя.
+**The file stands alone.** Inside it are the preset by name, the delta against
+the built-in values, and the custom rules in full. Not the delta against the
+layer below on the author's machine: the recipient has no such layer, and the set
+would come out different. This is the one place where a delta is computed against
+something other than the neighbouring layer.
 
-Читаем оборонительно. Чужой файл — данные, а не команда: незнакомые правила,
-параметры, виды и серьёзности пропускаются, о числе пропущенного сообщается
-человеку. Молчаливый пропуск здесь недопустим ровно потому, что он допустим
-внутри оверлея: там дело в разнице версий, а тут пользователь ждёт, что приехало
-всё, и должен узнать, если это не так.
+Reading is defensive. Somebody else's file is data, not a command: unknown rules,
+parameters, kinds and severities are skipped, and the number skipped is reported
+to the person. A silent skip is unacceptable here for exactly the reason it is
+acceptable inside an overlay: there it is a difference of versions, while here
+the user expects everything to have arrived and must be told when it did not.
 """
 from __future__ import annotations
 
@@ -34,39 +35,42 @@ SUFFIX = ".pdxqa"
 
 
 class ExchangeError(Exception):
-    """Файл не прочитать — показывается пользователю как есть."""
+    """The file cannot be read; the message is shown to the user as it is."""
 
 
 @dataclass(frozen=True, slots=True)
 class Bundle:
-    """Что приехало из файла.
+    """What arrived from the file.
 
-    Набор из файла **заменяет** настройку слоя целиком, а не смешивается с ней.
-    Умное слияние («возьмём только то, чего файл касался») выглядит вежливее, но
-    предсказать его результат нельзя: пресет из файла меняет основание всем
-    правилам сразу, и половина набора оказалась бы от одного источника, половина
-    от другого. Что именно приедет, показывается до применения.
+    The set from a file **replaces** the layer's settings whole rather than
+    mixing with them. A clever merge — «take only what the file touched» — looks
+    politer, but its result cannot be predicted: the preset in the file changes
+    the base of every rule at once, and half the set would come from one source
+    and half from the other. What exactly will arrive is shown before it is
+    applied.
     """
 
     preset: str
     overlay: dict
-    changed: tuple[str, ...] = ()       # встроенные правила с правками
-    added: tuple[str, ...] = ()         # свои правила
-    skipped: tuple[str, ...] = ()       # что не понято
+    changed: tuple[str, ...] = ()       # built-in rules that were edited
+    added: tuple[str, ...] = ()         # the user's own rules
+    skipped: tuple[str, ...] = ()       # what was not understood
 
     def ruleset(self, locale: str = "") -> RuleSet:
-        """Набор из файла. Язык перевода — тот же, что у остальных слоёв."""
+        """The set from the file. The translation language is the one the other layers
+        use."""
         return qa_rules.resolve(self.overlay, locale=locale)
 
 
 def dump(preset: str, rules: RuleSet, *, app_version: str = "",
          locale: str = "") -> dict:
-    """Содержимое файла для набора `rules` с пресетом `preset`.
+    """The contents of a file for the set `rules` under the preset `preset`.
 
-    `locale` — язык перевода, на котором набор собирали. Он нужен ровно затем,
-    чтобы не уехать в файл: языковые правила гасятся основанием, и без него
-    француз записал бы принимающему «выключить правила русской грамматики»
-    просто потому, что у него самого они молчали.
+    `locale` is the translation language the set was assembled under. It is there
+    precisely so that it does not travel into the file: language rules are
+    silenced by the base, and without it a French user would write «switch the
+    Russian grammar rules off» into the recipient's settings simply because they
+    were silent on their own machine.
     """
     overlay = qa_rules.make_overlay(preset, rules, locale=locale)
     return {

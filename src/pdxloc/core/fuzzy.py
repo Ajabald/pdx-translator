@@ -32,35 +32,36 @@ MIN_SCORE = 0.6
 # first refinement.
 WORD = re.compile(r"[^\W\d_]{2,}", re.UNICODE)
 
-# Служебные слова есть в каждой второй строке базы: кандидатов по ним приходят
-# десятки тысяч, и их ранжирование съедало почти всё время запроса. Замер на
-# ванильной базе (244 тыс. записей) плюс база мода: 68 мс со стоп-словами
-# против 16 мс без них — при том же проценте найденных подсказок.
+# Stop words appear in every other row of a database: tens of thousands of
+# candidates come back on them, and ranking those ate almost the whole query.
+# Measured on the vanilla database (244 000 entries) plus a mod database: 68 ms
+# with stop words against 16 ms without, at the same share of suggestions
+# found.
 STOP_WORDS = frozenset([
-    # артикли, союзы, предлоги
+    # articles, conjunctions, prepositions
     "a", "an", "the", "and", "or", "but", "if", "of", "to", "in", "on", "at",
     "by", "for", "from", "with", "without", "as", "so", "than", "then",
-    # глаголы-связки и вспомогательные
+    # copulas and auxiliaries
     "is", "are", "was", "were", "be", "been", "being", "do", "does", "did",
     "done", "have", "has", "had", "will", "would", "shall", "should", "can",
     "could", "may", "might", "must",
-    # местоимения
+    # pronouns
     "it", "its", "this", "that", "these", "those", "there", "here", "he",
     "she", "they", "we", "you", "your", "his", "her", "their", "our", "my",
     "me", "him", "them", "us",
-    # отрицания и количественные
+    # negations and quantifiers
     "not", "no", "too", "very", "just", "also", "all", "any", "some", "such",
     "own", "same", "each", "every", "other", "more", "most", "much", "many",
 ])
 
 
 def _tokens(text: str) -> list[str]:
-    """Слова запроса без разметки CK3: теги совпадают у всех строк подряд."""
+    """The query words without CK3 markup: the tags match in every row alike."""
     return WORD.findall(markup.strip_markup(text).lower())
 
 
 def _match_expr(tokens: list[str]) -> str:
-    """Запрос к FTS5. Кавычки — чтобы слова вроде OR не считались операторами."""
+    """The FTS5 query. The quotes keep words like OR from becoming operators."""
     words = [w for w in tokens if w not in STOP_WORDS] or tokens
     return " OR ".join(f'"{w}"' for w in dict.fromkeys(words[:20]))
 
@@ -70,7 +71,7 @@ def _normalized(text: str) -> str:
 
 
 def _score(matcher: SequenceMatcher, candidate: str) -> float:
-    """Сходство с отсечками: полный ratio() считается только для похожих."""
+    """Similarity with cut-offs: the full ratio() is computed for close pairs only."""
     matcher.set_seq1(candidate)
     if matcher.real_quick_ratio() < MIN_SCORE or matcher.quick_ratio() < MIN_SCORE:
         return 0.0
@@ -84,11 +85,11 @@ def lookup_similar(
     limit: int = 8,
     min_score: float = MIN_SCORE,
 ) -> list[TmHit]:
-    """Похожие строки из памяти проекта и подключённых баз.
+    """Similar rows from the project memory and from the attached databases.
 
-    Точное совпадение получает 1.0 и идёт первым; дальше — по убыванию
-    сходства. Один перевод показывается один раз, даже если он есть в
-    нескольких базах.
+    An exact match scores 1.0 and comes first; the rest follow by descending
+    similarity. One translation is shown once even when several databases hold
+    it.
     """
     from pdxloc import project as project_mod
 
@@ -100,13 +101,14 @@ def lookup_similar(
     matcher.set_seq2(query)
     expr = _match_expr(tokens)
 
-    rows: list[tuple[sqlite3.Row, str | None, int, int]] = []   # запись, база, prio, offset
+    rows: list[tuple[sqlite3.Row, str | None, int, int]] = []   # entry, database, prio, offset
     own_fts = db_module.OWN_TM_FTS
-    db_module.ensure_own_tm_index(conn)     # строится по первому запросу похожих
+    db_module.ensure_own_tm_index(conn)     # built on the first similarity query
     try:
         own = conn.execute(
-            # ORDER BY rank — это bm25: берём кандидатов, где совпали редкие
-            # слова, а не первые попавшиеся. Иначе лимит отсекал лучшую запись
+            # ORDER BY rank is bm25: we take the candidates where the rare words matched
+            # rather than the first that came along. Otherwise the limit cut off the best
+            # entry
             f"""SELECT e.id, e.en_text, e.ru_text, e.source, e.key, e.updated_at
                 FROM temp.{own_fts} f
                 JOIN main.tm_entries e ON e.id = f.rowid
@@ -116,7 +118,7 @@ def lookup_similar(
             (expr, CANDIDATES_PER_BASE)).fetchall()
         rows += [(r, None, 0, 0) for r in own]
     except sqlite3.Error:
-        pass        # индекса памяти проекта нет — ищем только по базам
+        pass        # the project memory has no index: search the databases only
 
     for base in project_mod.attached_tm_bases(conn):
         if not base.has_fts:

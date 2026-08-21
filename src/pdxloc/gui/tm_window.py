@@ -1,11 +1,11 @@
-"""Окно памяти переводов — единственная точка входа (F9).
+"""The translation memory window — a single way in (F9).
 
-Раньше это были три отдельных окна: «Память переводов», «Базы памяти
-переводов» и «Создать базу переводов из папок», плюс выгрузка проекта, которая
-вообще открывала только файловый диалог. Все четыре занимаются одним и тем же
-и постоянно отсылали друг к другу («отключить базу можно в меню
-Инструменты → …»). Теперь это вкладки, а состояние активной вкладки живёт в
-общей нижней полосе — счётчик уехал от кнопок, к которым не относился.
+There used to be three separate windows: «Translation memory», «Translation
+memory databases» and «Create a database from folders», plus the project export
+which opened nothing but a file dialog. All four are about the same thing and
+kept referring to one another («a database can be switched off under Tools → …»).
+Now they are tabs, and the state of the active tab lives in a shared strip along
+the bottom — the counter moved away from buttons it had nothing to do with.
 """
 from __future__ import annotations
 
@@ -23,13 +23,13 @@ from pdxloc.gui.tm_sources_tab import TmSourcesTab
 
 
 class TmWindow(QDialog):
-    """Вкладки памяти переводов. Проект нужен не всем — без него остаётся сборка.
+    """The translation memory tabs. Not all of them need a project.
 
-    Мастер первого запуска зовёт это окно **до** того, как заведён хоть один
-    проект: первую базу памяти собирают раньше первого перевода. Раньше окно
-    этого не переживало — `languages(None)` падал прямо в слоте кнопки, а у
-    собранного приложения консоли нет (`console=False` в спеке), поэтому
-    трейсбек уходил в никуда и кнопка выглядела мёртвой.
+    The first-run wizard opens this window **before** a single project exists:
+    the first memory database is built ahead of the first translation. The window
+    used not to survive that — `languages(None)` fell over right inside the
+    button's slot, and a built application has no console (`console=False` in the
+    spec), so the traceback went nowhere and the button looked dead.
     """
 
     def __init__(self, conn: sqlite3.Connection | None, parent=None):
@@ -40,8 +40,9 @@ class TmWindow(QDialog):
 
         from pdxloc import project as project_mod
 
-        # Без проекта языки взять неоткуда — берём те же умолчания, что и сама
-        # вкладка сборки: папки на ней всё равно указываются руками.
+        # Without a project there is nowhere to take the languages from, so we take the
+        # same defaults as the build tab itself: its folders are typed in by hand
+        # anyway.
         src_lang, tgt_lang = "english", "russian"
         if conn is not None:
             langs = project_mod.languages(conn)
@@ -49,9 +50,9 @@ class TmWindow(QDialog):
 
         layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
-        # «Записи» — собственная память проекта, «Базы» — подключённые к нему.
-        # Без проекта обе показывали бы пустоту, объяснить которую нечем, —
-        # поэтому их просто нет, а не «есть, но выключены».
+        # «Entries» is the project's own memory, «Databases» are the ones attached to
+        # it. Without a project both would show an emptiness there is no way to
+        # explain, so they are simply not there rather than «present but disabled».
         self.entries = TmEntriesTab(conn) if conn is not None else None
         self.sources = TmSourcesTab(conn) if conn is not None else None
         self.build = TmBuildTab(src_lang=src_lang, tgt_lang=tgt_lang, conn=conn)
@@ -74,25 +75,25 @@ class TmWindow(QDialog):
         for tab in self._tabs():
             tab.statusChanged.connect(self._on_tab_status)
         self.tabs.currentChanged.connect(lambda _: self._show_status())
-        # собранная база должна сразу появиться в списке подключаемых
+        # a freshly built database must appear in the attachable list at once
         if self.sources is not None:
             self.build.databasesChanged.connect(self.sources.reload)
         self._show_status()
 
     def show_build_tab(self) -> None:
-        """Открыться сразу на сборке базы — из мастера и из напоминания."""
+        """Open straight on the build tab, from the wizard and from the reminder."""
         self.tabs.setCurrentWidget(self.build)
 
     def _tabs(self):
-        """Только заведённые вкладки: без проекта их одна.
+        """Only the tabs that exist: without a project there is one.
 
-        Через этот же список ходят подписка на `statusChanged` и гашение
-        таймеров, поэтому отсутствующую вкладку достаточно не вернуть отсюда.
+        The `statusChanged` subscription and the timer shutdown both walk this
+        same list, so a missing tab need only be left out here.
         """
         return tuple(tab for tab in (self.entries, self.sources, self.build)
                      if tab is not None)
 
-    # --- нижняя полоса ---
+    # --- the bottom strip ---
 
     def _on_tab_status(self, text: str) -> None:
         if self.sender() is self.tabs.currentWidget():
@@ -101,23 +102,24 @@ class TmWindow(QDialog):
     def _show_status(self) -> None:
         self.status_label.setText(self.tabs.currentWidget().status_text())
 
-    # --- закрытие ---
+    # --- closing ---
 
     def _stop_timers(self) -> None:
-        """Отложенные запросы не должны пережить окно.
+        """Pending queries must not outlive the window.
 
-        Соединение проекта к тому времени бывает уже закрыто, и таймер падал на
-        мёртвой базе. Раз вкладок несколько, гасим централизованно.
+        By then the project connection is sometimes already closed, and the timer
+        fell over on a dead database. With several tabs about, they are put out
+        centrally.
         """
         for tab in self._tabs():
             tab.shutdown()
 
     def _confirm_close_while_building(self) -> bool:
-        """Не закрываться молча посреди сборки базы.
+        """Do not close in silence in the middle of a build.
 
-        В отдельном окне от этого спасала модальность: уйти было некуда. Во
-        вкладках пользователь легко переключится на «Записи» и нажмёт
-        «Закрыть», не вспомнив, что сборка ещё идёт.
+        In a window of its own modality saved us from this: there was nowhere to
+        go. Among tabs a user easily switches to «Entries» and presses «Close»
+        without remembering that a build is still running.
         """
         if not self.build.is_busy():
             return True
