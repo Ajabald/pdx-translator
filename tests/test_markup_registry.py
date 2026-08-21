@@ -1,9 +1,10 @@
-"""Реестр разметки Paradox: состав, порядок и то, что перенос ничего не сдвинул.
+"""The Paradox markup registry: the composition, the order, and that the move shifted nothing.
 
-`core/markup.py` заведён затем, чтобы описание токенов было в одном месте, а не
-расползалось по пяти модулям (подсветка, машинный перевод, классификация
-правок, поиск похожих, авто-игнор). Здесь проверяется, что каждый из пятерых
-получает ровно то, что получал раньше, — и что цвета и порядок не разъехались.
+`core/markup.py` was set up so that the description of the tokens would be in one
+place instead of crawling over five modules (highlighting, machine translation,
+the classification of edits, the search for similar rows, the auto-ignore). Here
+we check that each of the five gets exactly what it got before — and that the
+colours and the order have not come apart.
 """
 from __future__ import annotations
 
@@ -18,11 +19,11 @@ SAMPLE = ('Cost: $VALUE|=+0$ @gold! £prestige£, see [men_at_arms|E] '
           'and #bold this#!\\nnext line')
 
 
-# --- состав и порядок ---------------------------------------------------
+# --- the composition and the order --------------------------------------
 
 
 def test_every_colour_exists_in_both_palettes() -> None:
-    """Иначе тёмная тема упадёт на первом же поле с разметкой."""
+    """Otherwise the dark theme falls over on the first field with markup."""
     for token in markup.TOKENS:
         if token.color is None:
             continue
@@ -31,16 +32,17 @@ def test_every_colour_exists_in_both_palettes() -> None:
 
 
 def test_closing_tag_is_shielded_before_opening_ones() -> None:
-    """Иначе «#!» уедет в переводчик голым и вернётся сломанным."""
+    """Otherwise «#!» travels to the translator bare and comes back broken."""
     order = [t.id for t in markup.shield_tokens()]
     assert order.index("fmt_close") < order.index("fmt_open")
 
 
 def test_parameterised_tag_is_shielded_before_the_plain_one() -> None:
-    """Иначе хвост после двоеточия уедет переводчику как текст.
+    """Otherwise the tail after the colon travels to the translator as text.
 
-    `#TOOLTIP:hint_key` — это ключ тултипа, а не проза: переведи его, и тултип
-    в игре перестанет находиться. 331 такая строка в ванили и живом моде.
+    `#TOOLTIP:hint_key` is the key of a tooltip and not prose: translate it, and
+    the tooltip in the game stops being found. 331 such rows in vanilla and in a
+    live mod.
     """
     order = [t.id for t in markup.shield_tokens()]
     assert order.index("fmt_param") < order.index("fmt_open")
@@ -63,24 +65,24 @@ def test_tooltip_argument_leaves_the_script_call_to_the_bracket() -> None:
 
 
 def test_colour_with_a_script_call_is_deliberately_uncovered() -> None:
-    """`#color:{[ToTextFormatColor(…)]}` — четыре строки на все корпуса.
+    """`#color:{[ToTextFormatColor(…)]}` — four rows over all the corpora.
 
-    Регулярка, которая проглотила бы их целиком, отобрала бы диапазон у
-    `bracket`, и `shield_tags` (по диапазонам) разошёлся бы с `strip_markup`
-    (последовательная замена). Записано тестом, чтобы это не выглядело
-    недосмотром.
+    A regex that swallowed them whole would take the range away from `bracket`,
+    and `shield_tags` (which goes by ranges) would diverge from `strip_markup`
+    (which goes by sequential replacement). Written down as a test so that it
+    does not look like an oversight.
     """
     assert not markup.pattern("fmt_param").search("#color:{[ToTextFormatColor(x)]}")
 
 
 def test_at_icon_is_shielded_after_brackets() -> None:
-    """Иначе иконка внутри скриптового вызова крадёт диапазон всей скобки.
+    """Otherwise an icon inside a scripted call steals the range of the whole bracket.
 
-    `shield_tags` берёт непересекающиеся диапазоны в порядке токенов и
-    отбрасывает всякий позднейший, который с чем-то пересёкся. Забери иконка
-    `@gold!` внутри `[Select_CString(x,'@gold!','')]` — скобка была бы
-    отброшена целиком, и весь вызов уехал бы в переводчик сырым. Таких строк
-    12 в ванили и 18 в живом моде.
+    `shield_tags` takes non-overlapping ranges in the order of the tokens and
+    throws away every later one that overlapped with something. Let the `@gold!`
+    icon inside `[Select_CString(x,'@gold!','')]` take its own — and the bracket
+    would be thrown away whole, and the entire call would travel to the
+    translator raw. There are 12 such rows in vanilla and 18 in a live mod.
     """
     order = [t.id for t in markup.shield_tokens()]
     assert order.index("bracket") < order.index("icon_at")
@@ -88,7 +90,7 @@ def test_at_icon_is_shielded_after_brackets() -> None:
 
 
 def test_icon_inside_a_script_call_does_not_steal_the_bracket() -> None:
-    """Тот же порядок, но проверенный поведением, а не индексами."""
+    """The same order, but checked by behaviour instead of by indices."""
     text = "Pay [Select_CString(x,'@gold!','')] now"
     shielded, mapping = mt.shield_tags(text)
     assert "[Select_CString(x,'@gold!','')]" in mapping.values()
@@ -97,10 +99,11 @@ def test_icon_inside_a_script_call_does_not_steal_the_bracket() -> None:
 
 
 def test_tokens_of_other_games_are_marked_as_such() -> None:
-    """`£…£` и `§Y…§!` — разметка HOI4/EU4/Stellaris, `@name!` — наша.
+    """`£…£` and `§Y…§!` are the markup of HOI4/EU4/Stellaris, `@name!` is ours.
 
-    Ни один из чужих токенов не встретился на 289 940 строках баз CK3, поэтому
-    искать их всегда — бесплатно; поле `game` остаётся паспортом токена.
+    Not one of the foreign tokens turned up in the 289,940 rows of the CK3
+    databases, so looking for them always is free; the `game` field stays the
+    passport of a token.
     """
     foreign = {"icon_pound", "icon_var", "color_open", "color_close",
                "color_script", "grammar_tags", "grammar_variant"}
@@ -109,13 +112,13 @@ def test_tokens_of_other_games_are_marked_as_such() -> None:
 
 
 def test_colour_close_is_shielded_before_the_opening_one() -> None:
-    """То же правило, что у `#!`: закрывающий ищется первым."""
+    """The same rule as for `#!`: the closing one is looked for first."""
     order = [t.id for t in markup.shield_tokens()]
     assert order.index("color_close") < order.index("color_open")
 
 
 def test_hoi4_colour_never_reaches_the_translator() -> None:
-    """`§YKing§!` уезжал в переводчик сырым — цвет возвращался переставленным."""
+    """`§YKing§!` used to travel to the translator raw — the colour came back moved."""
     text = "The §YKing§! has re-established control over §Y[SWE.GetFlag]§! politics."
     shielded, mapping = mt.shield_tags(text)
     assert "§" not in shielded
@@ -123,23 +126,23 @@ def test_hoi4_colour_never_reaches_the_translator() -> None:
 
 
 def test_pound_icon_takes_its_size_flag() -> None:
-    """`|8` — размер иконки, а не текст: 21 строка ванильной HOI4."""
+    """`|8` is the size of an icon and not text: 21 rows of vanilla HOI4."""
     assert markup.strip_markup("£operative_mission_icons_small|8£ Propaganda") == "Propaganda"
-    assert markup.strip_markup("£command_power Cost") == "Cost"      # без пары
+    assert markup.strip_markup("£command_power Cost") == "Cost"      # without a pair
 
 
 def test_colour_and_icon_named_by_a_call_are_taken_whole() -> None:
-    """`§[GetColour]` и `£$ICON$£`: голый символ съедал бы букву соседнего слова.
+    """`§[GetColour]` and `£$ICON$£`: a bare symbol would eat a letter of the neighbouring word.
 
-    У обоих внутри другой токен, и порядок решает, кто заберёт кусок первым.
-    Цвет из вызова ищется ДО скобки (иначе от него остаётся `§`, и она уносит
-    первую букву следующего слова: `§[GetColour]red` давал `ed`), а простой
-    `§Y` — ПОСЛЕ, иначе цвет внутри `[Select_CString(…)]` украл бы диапазон у
-    всего вызова.
+    Both hold another token inside, and the order decides who takes the piece
+    first. The colour out of a call is looked for BEFORE the bracket (otherwise a
+    `§` is left of it, and that carries off the first letter of the next word:
+    `§[GetColour]red` gave `ed`), while a plain `§Y` — AFTER, otherwise a colour
+    inside `[Select_CString(…)]` would steal the range of the whole call.
     """
     assert markup.strip_markup("Now §[GetColour]red§!") == "Now red"
     assert markup.strip_markup("£$ICON$£ bonus") == "bonus"
-    # цвет внутри скриптового вызова остаётся частью вызова
+    # a colour inside a scripted call stays part of the call
     call = "[Select_CString(x,'§Ytext§!','')]"
     shielded, mapping = mt.shield_tags(call)
     assert call in mapping.values()
@@ -147,10 +150,11 @@ def test_colour_and_icon_named_by_a_call_are_taken_whole() -> None:
 
 
 def test_a_pair_of_icons_does_not_merge_with_the_next_variable() -> None:
-    """`£command_power£$COST|H0$` — иконка с парой, затем переменная.
+    """`£command_power£$COST|H0$` — an icon with a pair, then a variable.
 
-    Разбери вторую £ как начало «иконки из переменной», и пара распалась бы
-    надвое: `icon_pound` ищется раньше `icon_var` ровно поэтому.
+    Parse the second £ as the start of an "icon out of a variable", and the pair
+    would fall in two: `icon_pound` is looked for before `icon_var` for exactly
+    that reason.
     """
     text = "£command_power£$COST|H0$"
     shielded, mapping = mt.shield_tags(text)
@@ -168,7 +172,7 @@ def test_every_token_has_an_order() -> None:
     assert len(set(orders)) == len(orders), "одинаковый order делает порядок случайным"
 
 
-# --- поведение сохранено ------------------------------------------------
+# --- the behaviour is preserved -----------------------------------------
 
 
 FROZEN_STRIP = (
@@ -189,11 +193,11 @@ FROZEN_STRIP = (
 @pytest.mark.parametrize("text,expected", FROZEN_STRIP)
 def test_strip_markup_unchanged(text: str, expected: str) -> None:
     assert markup.strip_markup(text) == expected
-    assert qa.strip_markup(text) == expected      # старое имя всё ещё работает
+    assert qa.strip_markup(text) == expected      # the old name still works
 
 
 def test_qa_aliases_point_at_the_registry() -> None:
-    """Тесты и старый код ходят по именам RE_* — они обязаны остаться теми же."""
+    """The tests and the old code go by the RE_* names — those are obliged to stay the same."""
     assert qa.RE_BRACKET is markup.pattern("bracket")
     assert qa.RE_DOLLAR is markup.pattern("dollar")
     assert qa.RE_ICON is markup.pattern("icon_pound")
@@ -206,13 +210,13 @@ def test_qa_aliases_point_at_the_registry() -> None:
 def test_shield_round_trip_keeps_every_token() -> None:
     shielded, mapping = mt.shield_tags(SAMPLE)
     assert mt.unshield(shielded, mapping) == SAMPLE
-    # ни один кусок разметки не должен остаться в тексте, уходящем в перевод
+    # not one piece of markup must be left in the text that goes off to be translated
     for token in markup.shield_tokens():
         assert not token.pattern.search(shielded), token.id
 
 
 def test_markup_only_still_recognised() -> None:
-    """Питает авто-игнор при сканировании — сдвиг здесь молча меняет статусы."""
+    """It feeds the auto-ignore at a scan — a shift here changes statuses silently."""
     assert unit_ops.is_markup_only("[GetPlayer.GetDynasty.GetName]")
     assert unit_ops.is_markup_only("$VALUE$")
     assert unit_ops.is_markup_only("[A] [B]\\n$C$")
@@ -224,7 +228,7 @@ def test_markup_only_still_recognised() -> None:
 
 
 def test_change_classification_still_sees_markup() -> None:
-    """Влияет на статус «Устарело» — правка разметки обязана остаться смысловой."""
+    """It affects the «Stale» status — an edit of markup is obliged to stay a meaningful one."""
     assert textdiff.classify_change(
         "Hello [GetA]", "Hello [GetB]") == textdiff.MEANINGFUL
     assert textdiff.classify_change(
@@ -239,7 +243,7 @@ def test_highlight_rules_cover_the_visible_tokens() -> None:
                         "fmt_open", "fmt_param", "fmt_close", "escape",
                         "color_open", "color_close", "color_script",
                         "grammar_tags", "grammar_variant"}
-    # оформление выделяется жирным, ссылки — нет
+    # the formatting is set in bold, the references are not
     by_pattern = {p: bold for p, _, bold in rules}
     assert by_pattern[markup.pattern("fmt_open")] is True
     assert by_pattern[markup.pattern("fmt_param")] is True
@@ -247,21 +251,22 @@ def test_highlight_rules_cover_the_visible_tokens() -> None:
 
 
 def test_stellaris_grammar_is_shielded_and_stripped() -> None:
-    """`&!fem` и `|||gen:` — грамматика Stellaris, а не текст.
+    """`&!fem` and `|||gen:` are Stellaris grammar, not text.
 
-    Игра выбирает по тегам вариант имени, и в переводчик это уезжать не должно:
-    в русском дереве 6 327 строк с вариантами и 2 278 с тегами.
+    The game picks a variant of a name by the tags, and that must not travel to
+    the translator: the Russian tree holds 6,327 rows with variants and 2,278
+    with tags.
     """
     text = "энергия&!fem|||gen:энергии"
     shielded, mapping = mt.shield_tags(text)
     assert "&!" not in shielded and "|||" not in shielded
     assert mt.unshield(shielded, mapping) == text
-    # варианты разделяются пробелом, иначе слова слипаются в одно
+    # the variants are parted by a space, otherwise the words stick into one
     assert markup.strip_markup(text) == "энергия энергии"
 
 
 def test_a_variant_inside_a_script_call_stays_part_of_the_call() -> None:
-    """`[leader.GetAXX::вернулся|||fem:вернулась]` — один вызов, не три куска."""
+    """`[leader.GetAXX::вернулся|||fem:вернулась]` — one call, not three pieces."""
     call = "[leader.GetAXX::вернулся|||fem:вернулась]"
     shielded, mapping = mt.shield_tags(call)
     assert call in mapping.values()
@@ -269,5 +274,5 @@ def test_a_variant_inside_a_script_call_stays_part_of_the_call() -> None:
 
 
 def test_tag_forwarding_control_is_a_tag_too() -> None:
-    """`&!0` гасит передачу тегов подимени — тоже разметка, не текст."""
+    """`&!0` stops the forwarding of tags to a subname — markup as well, not text."""
     assert markup.strip_markup("Coalition of $1$&!0") == "Coalition of"
