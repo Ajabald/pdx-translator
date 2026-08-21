@@ -1,6 +1,6 @@
-"""Подключение к SQLite и схема БД.
+"""The SQLite connection and the database schema.
 
-Правило потоков: одно соединение на поток (ScanWorker открывает своё).
+The threading rule: one connection per thread — ScanWorker opens its own.
 """
 from __future__ import annotations
 
@@ -11,15 +11,15 @@ from pdxloc.core.i18n import QT_TRANSLATE_NOOP, fill, translate
 
 SCHEMA_VERSION = 10
 
-# Как подписана собственная память проекта в колонке «Источник». Значение
-# рождается прямо в SQL (TM_VIEW_BASE ниже) и переводится в момент показа —
-# поэтому здесь только пометка для сборщика строк.
+# How the project's own memory is labelled in the «Source» column. The value is
+# born inside SQL (TM_VIEW_BASE below) and translated at display time — so all
+# that stands here is a mark for the string collector.
 OWN_ORIGIN = QT_TRANSLATE_NOOP("DetailPane", "Project")
 
 ALL_STATUSES = ("'untranslated','machine','auto','translated','reviewed',"
                 "'stale','ignored','custom'")
-# Списки статусов прошлых версий — нужны миграциям, которые пересобирают
-# таблицу units и обязаны принять данные ровно в том виде, в каком они лежали.
+# Status lists of past versions — needed by the migrations that rebuild the
+# units table and must take the data in exactly the shape it lay in.
 _STATUSES_V2 = ALL_STATUSES + ",'orphaned'"
 
 DDL = f"""
@@ -189,12 +189,12 @@ CREATE TABLE IF NOT EXISTS settings (
 
 
 def register_functions(conn: sqlite3.Connection) -> None:
-    """Функции уровня соединения. Обязательно на КАЖДОМ соединении, включая
-    соединение фонового сканера — иначе запросы поиска упадут.
+    """Connection-level functions. Mandatory on EVERY connection, the background
+    scanner's included, or the search queries fall over.
 
-    pylower: приведение к нижнему регистру по правилам Unicode. Встроенные
-    lower()/upper() и COLLATE NOCASE в SQLite работают только с ASCII, поэтому
-    поиск по кириллице без этой функции регистрозависим.
+    pylower: lower-casing by the Unicode rules. SQLite's built-in lower()/upper()
+    and COLLATE NOCASE work with ASCII only, so without this function a search in
+    Cyrillic is case-sensitive.
     """
     conn.create_function(
         "pylower", 1, lambda s: s.casefold() if s is not None else None,
@@ -203,7 +203,7 @@ def register_functions(conn: sqlite3.Connection) -> None:
 
 
 def get_connection(db_path: str | Path) -> sqlite3.Connection:
-    """Открыть соединение (создав каталог при необходимости) и применить схему."""
+    """Open a connection, creating the directory if needed, and apply the schema."""
     path = Path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(path))
@@ -221,20 +221,20 @@ TM_VIEW_BASE = (
 
 
 def ensure_tm_view(conn: sqlite3.Connection) -> None:
-    """Представление tm_all — единая точка поиска по памяти переводов.
+    """The tm_all view — the single point of search over the translation memory.
 
-    Без подключённых баз это просто память самого проекта; project.py
-    пересоздаёт его, добавляя подключённые .pdxtm.
+    With no databases attached it is simply the project's own memory; project.py
+    rebuilds it, adding the attached .pdxtm files.
     """
     conn.execute("DROP VIEW IF EXISTS tm_all")
     conn.execute("CREATE TEMP VIEW tm_all AS " + TM_VIEW_BASE)
 
 
 def fts5_available() -> bool:
-    """Есть ли FTS5 в этой сборке SQLite.
+    """Whether this SQLite build has FTS5.
 
-    В стандартных сборках Python он есть, но приложение не должно падать на
-    экзотической: без FTS5 просто не будет поиска похожих строк.
+    The standard Python builds do, but the application must not fall over on an
+    exotic one: without FTS5 there simply is no similar-rows search.
     """
     global _FTS5
     if _FTS5 is None:
@@ -255,12 +255,12 @@ OWN_TM_FTS = "own_tm_fts"
 
 
 def ensure_own_tm_index(conn: sqlite3.Connection) -> None:
-    """Построить индекс похожих строк, если в этом соединении его ещё нет.
+    """Build the similar-rows index if this connection does not have one yet.
 
-    Строится по первому запросу похожих строк, а не при открытии проекта:
-    памяти в проекте бывает много (106 268 записей у ванильной HOI4 — 0,2 с на
-    индекс), а нужна она ровно тогда, когда переводчик встал на строку и
-    смотрит подсказки. Открытие проекта этого ждать не должно.
+    It is built on the first similarity query rather than when the project opens:
+    a project's memory can be large — 106 268 entries in vanilla HOI4, 0.2 s for
+    the index — while it is needed exactly when a translator has landed on a row
+    and is looking at the suggestions. Opening a project must not wait for that.
     """
     if conn.execute("SELECT 1 FROM temp.sqlite_master WHERE type = 'table' "
                     "AND name = ?", (OWN_TM_FTS,)).fetchone():
@@ -269,12 +269,12 @@ def ensure_own_tm_index(conn: sqlite3.Connection) -> None:
 
 
 def index_own_tm(conn: sqlite3.Connection) -> None:
-    """Индекс похожих строк для памяти самого проекта.
+    """The similar-rows index for the project's own memory.
 
-    Она маленькая и постоянно меняется, поэтому индекс временный — живёт в
-    соединении, как и представление tm_all, и не требует миграции схемы.
-    Триггеры держат его в согласии с таблицей: без них свежие переводы не
-    находились бы среди похожих до перезапуска.
+    That memory is small and changes constantly, so the index is a temporary one:
+    it lives in the connection, as the tm_all view does, and needs no schema
+    migration. Triggers keep it in step with the table — without them fresh
+    translations would not turn up among the similar ones until a restart.
     """
     if not fts5_available():
         return
@@ -287,9 +287,9 @@ def index_own_tm(conn: sqlite3.Connection) -> None:
         conn.execute(
             f"INSERT INTO temp.{OWN_TM_FTS}(rowid, en_text) "
             "SELECT id, en_text FROM main.tm_entries")
-        # внутри тела триггера имена таблиц пишутся без префикса схемы — SQLite
-        # запрещает квалифицированные имена в INSERT/UPDATE/DELETE триггера;
-        # у временного триггера они и так разрешаются сперва в temp
+        # inside a trigger body the table names are written without a schema prefix —
+        # SQLite forbids qualified names in a trigger's INSERT/UPDATE/DELETE; for a
+        # temporary trigger they resolve in temp first anyway
         conn.executescript(f"""
             DROP TRIGGER IF EXISTS own_tm_ai;
             DROP TRIGGER IF EXISTS own_tm_ad;
@@ -304,7 +304,8 @@ def index_own_tm(conn: sqlite3.Connection) -> None:
         """)
         conn.commit()
     except sqlite3.Error:
-        # индекс — ускоритель, а не условие работы: без него ищем только по базам
+        # the index is a speed-up, not a condition of working: without it we search the
+        # databases only
         pass
 
 
@@ -320,13 +321,13 @@ def init_schema(conn: sqlite3.Connection) -> None:
         conn.commit()
     else:
         migrate(conn, int(row[0]))
-    # только после миграций: представление ссылается на таблицы, которые
-    # миграция пересоздаёт, и мешало бы их удалению
+    # only after the migrations: the view references tables the migration rebuilds,
+    # and it would get in the way of dropping them
     ensure_tm_view(conn)
 
 
 def migrate(conn: sqlite3.Connection, from_version: int) -> None:
-    """Миграции схемы, последовательно до текущей версии."""
+    """Schema migrations, applied in order up to the current version."""
     version = from_version
     if version > SCHEMA_VERSION:
         raise RuntimeError(
@@ -378,7 +379,8 @@ def _db_file_path(conn: sqlite3.Connection) -> Path | None:
 
 
 def _backup_db_file(conn: sqlite3.Connection, suffix: str) -> None:
-    """Копия файла БД рядом перед необратимой миграцией (для :memory: — пропуск)."""
+    """A copy of the database file before an irreversible migration; :memory: is
+    skipped."""
     import shutil
 
     path = _db_file_path(conn)
@@ -391,9 +393,9 @@ def _backup_db_file(conn: sqlite3.Connection, suffix: str) -> None:
 
 
 def _migrate_1_to_2(conn: sqlite3.Connection) -> None:
-    """v1 -> v2: расширение CHECK по units.status (ignored, custom).
+    """v1 -> v2: widening the CHECK on units.status (ignored, custom).
 
-    SQLite не умеет ALTER CHECK — пересобираем таблицу.
+    SQLite cannot ALTER a CHECK, so the table is rebuilt.
     """
     _backup_db_file(conn, ".v1.bak")
 
@@ -445,16 +447,17 @@ def _migrate_1_to_2(conn: sqlite3.Connection) -> None:
 
 
 def _migrate_2_to_3(conn: sqlite3.Connection) -> None:
-    """v2 -> v3: удаление статуса «осиротевший» с сохранением переводов.
+    """v2 -> v3: dropping the «orphaned» status while keeping the translations.
 
-    Переводы ключей, которых больше нет в оригинале, переезжают в
-    legacy_translations (их нельзя держать в units: без исходного текста они
-    ломают статистику и не попадают в память переводов). Заодно:
-    files теряет is_orphan_ru и получает trailing, tm_entries теряет привязку
-    к проекту (файл проекта сам себе провенанс), projects получает языки.
+    Translations of keys the original no longer has move into
+    legacy_translations — they must not stay in units: with no source text they
+    break the statistics and never reach the translation memory. Along the way:
+    files loses is_orphan_ru and gains trailing, tm_entries loses its tie to a
+    project (a project file is its own provenance), and projects gains the
+    languages.
     """
     _backup_db_file(conn, ".v2.bak")
-    conn.execute("DROP VIEW IF EXISTS tm_all")   # мешает пересборке таблиц
+    conn.execute("DROP VIEW IF EXISTS tm_all")   # gets in the way of rebuilding the tables
 
     before_units = conn.execute("SELECT COUNT(*) FROM units").fetchone()[0]
     before_orphans = conn.execute(
@@ -498,12 +501,12 @@ def _migrate_2_to_3(conn: sqlite3.Connection) -> None:
         conn.execute(
             "INSERT INTO files_new (id, project_id, rel_path, is_deleted) "
             "SELECT id, project_id, rel_path, is_deleted FROM files WHERE is_orphan_ru = 0")
-        # юниты осиротевших файлов уже удалены выше вместе со статусом
+        # units of orphaned files were deleted above, with the status
         conn.execute("DELETE FROM units WHERE file_id NOT IN (SELECT id FROM files_new)")
         conn.execute("DROP TABLE files")
         conn.execute("ALTER TABLE files_new RENAME TO files")
 
-        # units: CHECK без 'orphaned'
+        # units: a CHECK without 'orphaned'
         conn.execute(f"""
             CREATE TABLE units_new (
                 id             INTEGER PRIMARY KEY,
@@ -535,7 +538,7 @@ def _migrate_2_to_3(conn: sqlite3.Connection) -> None:
         conn.execute("CREATE INDEX idx_units_status ON units(status) WHERE is_deleted = 0")
         conn.execute("CREATE INDEX idx_units_hash   ON units(en_hash)")
 
-        # tm_entries: -project_id, UNIQUE по паре текстов
+        # tm_entries: no project_id, UNIQUE on the pair of texts
         conn.execute("""
             CREATE TABLE tm_new (
                 id         INTEGER PRIMARY KEY,
@@ -556,7 +559,7 @@ def _migrate_2_to_3(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE tm_new RENAME TO tm_entries")
         conn.execute("CREATE INDEX idx_tm_hash ON tm_entries(en_hash)")
 
-        # projects: языки; project_meta
+        # projects: the languages; project_meta
         cols_proj = {r[1] for r in conn.execute("PRAGMA table_info(projects)")}
         if "src_lang" not in cols_proj:
             conn.execute("ALTER TABLE projects ADD COLUMN src_lang TEXT NOT NULL DEFAULT 'english'")
@@ -566,7 +569,7 @@ def _migrate_2_to_3(conn: sqlite3.Connection) -> None:
 
         conn.execute("UPDATE schema_meta SET value = '3' WHERE key = 'schema_version'")
 
-        # Ничего не потеряли: было = стало + заархивированное
+        # Nothing was lost: before = after plus what was archived
         after_units = conn.execute("SELECT COUNT(*) FROM units").fetchone()[0]
         after_tm = conn.execute("SELECT COUNT(*) FROM tm_entries").fetchone()[0]
         if after_units + before_orphans != before_units:
@@ -599,11 +602,11 @@ def _migrate_2_to_3(conn: sqlite3.Connection) -> None:
 
 
 def _migrate_3_to_4(conn: sqlite3.Connection) -> None:
-    """v3 -> v4: история редакций оригинала и переводов.
+    """v3 -> v4: the history of revisions of the original and of translations.
 
-    Только добавление таблиц и колонок — units не пересобирается, поэтому
-    переводы физически не перемещаются. Первая редакция оригинала для каждой
-    строки заносится задним числом, чтобы история не начиналась с пустоты.
+    Tables and columns are only added — units is not rebuilt, so the translations
+    are not physically moved. The first revision of the original for every row is
+    entered retrospectively, so the history does not begin with emptiness.
     """
     _backup_db_file(conn, ".v3.bak")
 
@@ -648,12 +651,12 @@ def _migrate_3_to_4(conn: sqlite3.Connection) -> None:
                 PRIMARY KEY (unit_id, code)
             )""")
 
-        # текущая редакция оригинала становится первой записью истории
+        # the current revision of the original becomes the first history record
         conn.execute("""
             INSERT INTO source_history (unit_id, en_text, en_hash, en_version, seen_at)
             SELECT id, en_text, en_hash, en_version, COALESCE(updated_at, created_at)
             FROM units WHERE en_text IS NOT NULL AND en_hash IS NOT NULL""")
-        # известная прошлая редакция устаревших строк — тоже, но раньше по времени
+        # the known previous revision of outdated rows becomes one too, dated earlier
         conn.execute("""
             INSERT INTO source_history (unit_id, en_text, en_hash, en_version, seen_at)
             SELECT id, prev_en_text, '', en_version, created_at
@@ -683,12 +686,12 @@ def _migrate_3_to_4(conn: sqlite3.Connection) -> None:
 def _migrate_4_to_5(conn: sqlite3.Connection) -> None:
     """v4 -> v5: язык текста отдельно от папки игры.
 
-    Две новые колонки и больше ничего: `units` не пересобирается, копия файла
-    перед миграцией не нужна. Значения оставляем **пустыми** намеренно —
-    пустая локаль означает «совпадает с папкой языка» (см. `core/languages.py`),
-    и все существующие проекты продолжают работать, ничего не заметив.
-    Проставить их сейчас значило бы зафиксировать догадку там, где верный
-    ответ и так выводится.
+    Two new columns and nothing else: `units` is not rebuilt and no copy of the
+    file is needed before the migration. The values are left **empty** on purpose
+    — an empty locale means «the same as the language folder» (see
+    `core/languages.py`), and every existing project carries on without noticing.
+    Filling them in now would freeze a guess where the right answer follows
+    anyway.
     """
     conn.execute("BEGIN")
     try:
@@ -707,11 +710,12 @@ def _migrate_4_to_5(conn: sqlite3.Connection) -> None:
 
 
 def _migrate_6_to_7(conn: sqlite3.Connection) -> None:
-    """v6 -> v7: игра проекта.
+    """v6 -> v7: the game of a project.
 
-    Одна колонка, как и в v4→v5: `units` не трогается, копия файла не нужна.
-    Значение по умолчанию — `ck3`, и это не догадка: до этой версии приложение
-    звалось CK3 Translator и других игр не знало вовсе.
+    One column, as in v4→v5: `units` is untouched and no copy of the file is
+    needed. The default value is `ck3`, and that is not a guess: until this
+    version the application was called CK3 Translator and knew no other games at
+    all.
     """
     conn.execute("BEGIN")
     try:
@@ -727,13 +731,14 @@ def _migrate_6_to_7(conn: sqlite3.Connection) -> None:
 
 
 def _migrate_7_to_8(conn: sqlite3.Connection) -> None:
-    """v7 -> v8: замечания проверки хранятся вместе со строкой.
+    """v7 -> v8: the check issues are stored together with the row.
 
-    Две колонки, как в v4→v5: `units` не пересобирается, копия файла не нужна.
-    Значения остаются пустыми — это и значит «ещё не проверено»: первый же
-    показ таблицы посчитает замечания и запишет их. Заполнять здесь нельзя,
-    даже если бы хотелось: набор правил живёт в настройке приложения и в файле
-    проекта, а миграция идёт до того, как их прочитали.
+    Two columns, as in v4→v5: `units` is not rebuilt and no copy of the file is
+    needed. The values stay empty, and that is precisely what «not checked yet»
+    means: the first time the table is shown the issues are computed and written.
+    They must not be filled in here even if one wanted to: the rule set lives in
+    the application settings and in the project file, and the migration runs
+    before either has been read.
     """
     conn.execute("BEGIN")
     try:
@@ -750,16 +755,16 @@ def _migrate_7_to_8(conn: sqlite3.Connection) -> None:
 
 
 def _migrate_8_to_9(conn: sqlite3.Connection) -> None:
-    """v8 -> v9: глоссарий терминов.
+    """v8 -> v9: the glossary of terms.
 
-    Тело выглядит пустым, и это не недосмотр. `init_schema` прогоняет `DDL`
-    **до** миграций, а таблица там заведена через `CREATE TABLE IF NOT EXISTS`
-    — к этому месту она уже создана и в старом файле тоже. Ровно так же в своё
-    время появилась `legacy_translations` в v2→v3.
+    The body looks empty, and that is not an oversight. `init_schema` runs the
+    `DDL` **before** the migrations, and the table is declared there with
+    `CREATE TABLE IF NOT EXISTS` — by this point it exists in an old file too.
+    `legacy_translations` appeared the same way in v2→v3 in its day.
 
-    Данных не переносим: глоссарий начинается пустым по определению. Заполнить
-    его здесь было бы нечем — кандидаты считаются по памяти переводов, а базы
-    памяти подключаются позже, уже после открытия проекта.
+    No data is carried over: a glossary starts empty by definition. There would be
+    nothing to fill it with here — the candidates are counted over the translation
+    memory, and the memory databases are attached later, after the project opens.
     """
     conn.execute("BEGIN")
     try:
@@ -771,12 +776,13 @@ def _migrate_8_to_9(conn: sqlite3.Connection) -> None:
 
 
 def _migrate_9_to_10(conn: sqlite3.Connection) -> None:
-    """v9 -> v10: история помнит, чем строка устарела.
+    """v9 -> v10: the history remembers what a row went stale against.
 
-    Две колонки, как в v7→v8: `unit_history` не пересобирается, копия файла не
-    нужна. Значения у прежних записей остаются пустыми, и это честно — в тот
-    момент их никто не сохранял. Откат такой записи вернёт текст и статус, но
-    диффа не покажет: восстановить его задним числом неоткуда.
+    Two columns, as in v7→v8: `unit_history` is not rebuilt and no copy of the
+    file is needed. For older records the values stay empty, and that is honest —
+    nobody was saving them at the time. Undoing such a record gives back the text
+    and the status but shows no diff: there is nowhere to recover one from
+    retrospectively.
     """
     conn.execute("BEGIN")
     try:
@@ -793,16 +799,16 @@ def _migrate_9_to_10(conn: sqlite3.Connection) -> None:
 
 
 def _migrate_5_to_6(conn: sqlite3.Connection) -> None:
-    """v5 -> v6: статус «машинный перевод».
+    """v5 -> v6: the «machine translation» status.
 
-    Список статусов задан CHECK-ограничением, а его SQLite менять не умеет —
-    только пересборкой таблицы. Ограничение того стоит: именно оно ловит опечатку
-    в статусе на записи, а не через неделю на странном отчёте.
+    The list of statuses is a CHECK constraint, and SQLite cannot alter one — only
+    rebuild the table. The constraint is worth it: it is what catches a typo in a
+    status at write time rather than a week later in a strange report.
 
-    Данные не меняются ни на строку: расширяется только множество допустимых
-    значений. Пересобирается одна таблица, внешние ключи на неё смотрят из
-    `unit_history` и `source_history`, поэтому обмен делается при выключенном
-    `foreign_keys` и с проверкой целостности после.
+    Not a single row of data changes: only the set of permitted values widens. One
+    table is rebuilt, foreign keys point at it from `unit_history` and
+    `source_history`, so the swap is done with `foreign_keys` off and an integrity
+    check afterwards.
     """
     conn.execute("PRAGMA foreign_keys = OFF")
     conn.execute("BEGIN")
