@@ -1,4 +1,4 @@
-"""Смена папки оригинала: предпросмотр считает потери, перевод переживает переезд."""
+"""Changing the source folder: the preview counts the losses, the translation survives the move."""
 from __future__ import annotations
 
 import shutil
@@ -23,7 +23,7 @@ def setup(db, make_tree, spec=None):
 
 
 def test_preview_full_match(db, make_tree, tmp_path):
-    """Мод переехал целиком: набор файлов совпадает, терять нечего."""
+    """The mod moved whole: the set of files matches, there is nothing to lose."""
     pid, en = setup(db, make_tree)
     moved = tmp_path / "moved"
     shutil.copytree(en, moved)
@@ -37,7 +37,7 @@ def test_preview_full_match(db, make_tree, tmp_path):
 
 
 def test_preview_counts_what_will_be_lost(db, make_tree, tmp_path):
-    """Файла нет в новой папке — видно, сколько строк и переводов уедет."""
+    """The file is not in the new folder — it shows how many rows and translations will go."""
     pid, en = setup(db, make_tree, {"m_l_english.yml": EN, "extra_l_english.yml": EN2})
     moved = tmp_path / "partial"
     moved.mkdir()
@@ -47,12 +47,12 @@ def test_preview_counts_what_will_be_lost(db, make_tree, tmp_path):
     assert p.usable and p.risky
     assert p.missing == ["extra_l_english.yml"]
     assert p.units_missing == 1
-    assert p.translated_missing == 0        # extra не переводили
+    assert p.translated_missing == 0        # extra was not translated
     assert "Files not found: 1" in p.summary()
 
 
 def test_preview_counts_translated_separately(db, make_tree, tmp_path):
-    """Переводы в пропавшем файле считаются отдельной строкой — они уйдут в архив."""
+    """The translations in a vanished file are counted separately — they go into the archive."""
     pid, en = setup(db, make_tree, {"m_l_english.yml": EN, "extra_l_english.yml": EN2})
     moved = tmp_path / "only_extra"
     moved.mkdir()
@@ -65,7 +65,7 @@ def test_preview_counts_translated_separately(db, make_tree, tmp_path):
 
 
 def test_preview_finds_language_subfolder(db, make_tree, tmp_path):
-    """Показали папку мода целиком — берём ту, где лежат знакомые файлы."""
+    """The whole folder of the mod was shown — we take the one holding familiar files."""
     pid, en = setup(db, make_tree)
     mod = tmp_path / "mod"
     target = mod / "localization" / "english"
@@ -79,7 +79,7 @@ def test_preview_finds_language_subfolder(db, make_tree, tmp_path):
 
 
 def test_preview_picks_the_matching_language_folder(db, make_tree, tmp_path):
-    """У мода две папки английского — выигрывает та, где файлы базы."""
+    """The mod has two English folders — the one with the files of the database wins."""
     pid, en = setup(db, make_tree)
     mod = tmp_path / "agot"
     (mod / "localization" / "english").mkdir(parents=True)
@@ -112,7 +112,7 @@ def test_preview_reports_missing_folder(db, make_tree, tmp_path):
 
 
 def test_preview_warns_when_nothing_matches(db, make_tree, tmp_path):
-    """Папка чужого мода: файлы локализации есть, но ни один не знаком базе."""
+    """A folder of another mod: there are localisation files, but none is familiar to the database."""
     pid, _ = setup(db, make_tree)
     alien = tmp_path / "alien"
     alien.mkdir()
@@ -120,13 +120,13 @@ def test_preview_warns_when_nothing_matches(db, make_tree, tmp_path):
         f.write(EN2)
 
     p = relocate.preview_root_change(db, pid, alien)
-    assert p.usable                      # запретить нельзя: автор мог всё переименовать
+    assert p.usable                      # forbidding will not do: the author may have renamed everything
     assert not p.matched
     assert "whole translation goes to the archive" in p.summary()
 
 
 def test_translations_survive_relocation(db, make_tree, tmp_path):
-    """Главное: после переезда мода и рескана переводы на месте."""
+    """The main thing: after the move of the mod and a rescan the translations are in place."""
     pid, en = setup(db, make_tree)
     moved = tmp_path / "steam2" / "mod" / "english"
     shutil.copytree(en, moved)
@@ -144,7 +144,7 @@ def test_translations_survive_relocation(db, make_tree, tmp_path):
 
 
 def test_new_version_in_another_folder_becomes_stale(db, make_tree, tmp_path):
-    """Переезд и обновление разом: изменившаяся строка — «Устарело», перевод цел."""
+    """A move and an update at once: the changed row is «Stale», the translation is intact."""
     pid, en = setup(db, make_tree)
     moved = tmp_path / "v2"
     shutil.copytree(en, moved)

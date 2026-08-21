@@ -1,10 +1,10 @@
-"""Сборка базы из перевода-мода: он лежит отдельным модом со своим деревом.
+"""Building a database out of a translation mod: it lies as a separate mod with a tree of its own.
 
-Живой случай: русификатор AGOT (мод 2962803371) держит рядом две папки —
-`localization/russian` с переводом самого мода и `localization/replace/russian`
-с заменой ванильных строк. Пользователь указал их общий корень, и приложение
-ответило «ни один из 417 файлов оригинала не имеет пары», хотя парная папка
-лежала на уровень ниже.
+A live case: the AGOT Russian pack (mod 2962803371) keeps two folders next to each
+other — `localization/russian` with the translation of the mod itself and
+`localization/replace/russian` with the replacement of the vanilla rows. The user
+pointed at their common root, and the application answered «not one of the 417
+files of the original has a pair», while the paired folder lay one level down.
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ def _write(path, text):
 
 @pytest.fixture
 def mods(tmp_path):
-    """Два мода воркшопа: сам мод и отдельный русификатор."""
+    """Two workshop mods: the mod itself and a separate Russian pack."""
     mod = tmp_path / "2962333032"
     _write(mod / "localization" / "english" / "agot" / "mod_l_english.yml", EN)
 
@@ -47,7 +47,7 @@ def test_language_dirs_finds_both_trees(mods):
 
 
 def test_resolve_picks_tree_that_pairs(mods):
-    """Из двух папок языка берётся та, что действительно парная оригиналу."""
+    """Of the two language folders the one that really pairs with the original is taken."""
     mod, ru = mods
     src = mod / "localization" / "english"
 
@@ -65,7 +65,7 @@ def test_resolve_from_localization_root(mods):
 
 
 def test_resolve_keeps_correct_path(mods):
-    """Указана правильная папка — подменять нечего."""
+    """The right folder is given — there is nothing to substitute."""
     mod, ru = mods
     tgt = ru / "localization" / "russian"
     best, _ = tm_import.resolve_target_dir(
@@ -86,7 +86,7 @@ def test_resolve_reports_nothing_when_no_pairs(tmp_path):
 
 
 def test_dialog_substitutes_nested_folder(mods, qtbot):
-    """Окно само спускается в папку языка и говорит об этом в строке состояния."""
+    """The window goes down into the language folder itself and says so in the status line."""
     from pdxloc.gui.tm_build_tab import TmBuildTab
 
     mod, ru = mods
@@ -102,7 +102,7 @@ def test_dialog_substitutes_nested_folder(mods, qtbot):
 
 
 def test_build_from_mod_root(mods, tmp_path):
-    """Сборка базы по паре модов даёт пары перевода, а не пустой файл."""
+    """A build over a pair of mods gives pairs of translation, not an empty file."""
     mod, ru = mods
     out = tmp_path / "agot.pdxtm"
     src = mod / "localization" / "english"

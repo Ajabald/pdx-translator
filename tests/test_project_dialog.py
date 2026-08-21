@@ -1,4 +1,4 @@
-"""Окно «Новый проект»: предзаполнение путей и создание проекта."""
+"""The «New project» window: prefilling the paths and creating a project."""
 from __future__ import annotations
 
 import os
@@ -26,7 +26,7 @@ def dialog(tmp_path, monkeypatch, qtbot):
 
 
 def test_project_file_defaults_to_the_pen_of_its_game(dialog, tmp_path):
-    """Файл ложится в загон выбранной игры, но путь виден и правится."""
+    """The file lands in the pen of the chosen game, but the path is visible and editable."""
     assert str(tmp_path / "Projects") in dialog.file_edit.placeholderText()
 
     dialog.name_edit.setText("Мой мод")
@@ -44,7 +44,7 @@ def test_choosing_a_game_moves_the_suggestion_to_its_pen(dialog, tmp_path):
 
 
 def test_a_game_of_your_own_gets_a_pen_too(dialog, tmp_path):
-    """Формат общий — запрещать CK2 или Victoria 2 не за что."""
+    """The format is common — there is nothing to forbid CK2 or Victoria 2 for."""
     dialog.name_edit.setText("Мой мод")
     dialog.game_combo.setCurrentText("Victoria 2")
     assert dialog.game_id() == "victoria_2"
@@ -55,7 +55,7 @@ def test_a_game_of_your_own_gets_a_pen_too(dialog, tmp_path):
 def test_the_game_decides_which_language_folders_are_offered(dialog):
     dialog.game_combo.setCurrentText("Europa Universalis IV")
     offered = [dialog.tgt_lang.itemText(i) for i in range(dialog.tgt_lang.count())]
-    assert "russian" not in offered      # у EU4 её и правда нет
+    assert "russian" not in offered      # EU4 really does not have it
     dialog.game_combo.setCurrentText("Crusader Kings III")
     offered = [dialog.tgt_lang.itemText(i) for i in range(dialog.tgt_lang.count())]
     assert "russian" in offered
@@ -68,7 +68,7 @@ def test_name_with_forbidden_characters(dialog, tmp_path):
 
 
 def test_bare_file_name_goes_to_the_pen(dialog, tmp_path):
-    """Ввели просто имя — файл всё равно должен лечь в загон своей игры."""
+    """Just a name was entered — the file still has to land in the pen of its game."""
     dialog.name_edit.setText("Мод")
     dialog.file_edit.setText("другое-имя")
 
@@ -77,7 +77,7 @@ def test_bare_file_name_goes_to_the_pen(dialog, tmp_path):
 
 
 def test_target_folder_suggested_from_source(dialog, tmp_path):
-    """Указали …\\localization\\english — папка перевода предлагается сама."""
+    """…\\localization\\english was given — the translation folder is offered by itself."""
     src = tmp_path / "mod" / "localization" / "english"
     dialog.src_edit.setText(str(src))
     dialog._suggest_target()
@@ -94,10 +94,10 @@ def test_target_suggestion_follows_language(dialog, tmp_path):
 
 
 def test_placeholders_follow_the_chosen_languages(dialog):
-    """Серая подсказка в поле — тот же совет, что и текст ниже, только короче.
+    """The grey hint in the field is the same advice as the text below, only shorter.
 
-    Пока она стояла на english→russian, диалог сам себе противоречил: снизу
-    сказано про polish, а в поле предлагается russian.
+    While it stood at english→russian, the dialog contradicted itself: below it
+    spoke of polish, while in the field russian was offered.
     """
     assert dialog.tgt_edit.placeholderText().endswith("russian")
 
@@ -106,7 +106,7 @@ def test_placeholders_follow_the_chosen_languages(dialog):
 
     assert dialog.src_edit.placeholderText().endswith("french")
     assert dialog.tgt_edit.placeholderText().endswith("polish")
-    assert "l_french" in dialog.hint.text()      # и оригинал тоже, не только перевод
+    assert "l_french" in dialog.hint.text()      # and the original too, not only the translation
     assert "l_polish" in dialog.hint.text()
 
 
@@ -119,7 +119,7 @@ def test_target_not_overwritten(dialog, tmp_path):
 
 
 def test_browse_buttons_are_labelled(dialog):
-    """Кнопки проводника подписаны, как в остальных окнах, а не узкое «…»."""
+    """The explorer buttons are labelled, as in the other windows, and not a narrow «…»."""
     from PySide6.QtWidgets import QToolButton
 
     labels = {b.text() for b in dialog.findChildren(QToolButton)}
@@ -127,7 +127,7 @@ def test_browse_buttons_are_labelled(dialog):
 
 
 def test_creates_working_project(dialog, tmp_path, make_tree):
-    """Сквозная проверка: заполнили окно — получили рабочий файл проекта."""
+    """An end-to-end check: the window was filled in — a working project file came out."""
     from pdxloc.core.scanner import scan_project
 
     src = make_tree({"m_l_english.yml": EN}, "en")

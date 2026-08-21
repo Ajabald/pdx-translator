@@ -1,4 +1,4 @@
-"""Тесты v2-веток сканера: auto-ignore и рескан ignored/custom."""
+"""Tests of the v2 branches of the scanner: the auto-ignore and the rescan of ignored/custom."""
 from __future__ import annotations
 
 from pdxloc.core import tm
@@ -23,7 +23,7 @@ def test_new_markup_only_key_auto_ignored(db, make_tree):
 
 
 def test_existing_untranslated_tag_migrates_to_ignored(db, make_tree):
-    # строка уже в БД как untranslated (создана до v2) -> рескан переводит в ignored
+    # the row is in the DB as untranslated already (created before v2) -> a rescan moves it to ignored
     en = make_tree({"m_l_english.yml": f'l_english:\n tag_key:0 "{TAG}"\n'}, "en")
     ru = make_tree({}, "ru")
     pid = make_project(db, en, ru)
@@ -35,7 +35,7 @@ def test_existing_untranslated_tag_migrates_to_ignored(db, make_tree):
 
 
 def test_translated_tag_string_not_ignored(db, make_tree):
-    # если в RU есть перевод тега (напр. другой тег) — статус translated, не ignored
+    # if the RU holds a translation of the tag (another tag, say) — the status is translated, not ignored
     en = make_tree({"m_l_english.yml": f'l_english:\n tag_key:0 "{TAG}"\n'}, "en")
     ru = make_tree({"m_l_russian.yml": 'l_russian:\n tag_key:0 "[GetOther]"\n'}, "ru")
     pid = make_project(db, en, ru)
@@ -67,7 +67,7 @@ def test_ignored_becomes_untranslated_when_text_appears(db, make_tree):
 
 
 def test_manual_ignored_survives_rescan(db, make_tree):
-    # пользователь руками игнорировал обычную строку — рескан без изменений не трогает
+    # the user ignored an ordinary row by hand — a rescan without changes does not touch it
     en = make_tree({"m_l_english.yml": 'l_english:\n k:0 "Some text"\n'}, "en")
     ru = make_tree({}, "ru")
     pid = make_project(db, en, ru)
@@ -102,12 +102,12 @@ def test_custom_survives_unchanged_rescan(db, make_tree):
 
 
 def test_bulk_apply_can_be_undone(db, make_tree):
-    """Массовая подстановка из памяти обязана откатываться Ctrl+Z.
+    """A bulk substitution out of the memory is obliged to be undone by Ctrl+Z.
 
-    Трогает она только пустые строки, то есть «терять нечего», — но охват у
-    неё тысячи строк разом, и вернуть их к «не переведено» иначе нечем.
-    Отмена, которая молча не охватывает одну операцию из трёх, учит не
-    доверять отмене вообще.
+    It touches only empty rows, that is, «there is nothing to lose» — but its reach
+    is thousands of rows at once, and there is no other way to return them to «not
+    translated». An undo that silently does not cover one operation out of three
+    teaches one not to trust undo at all.
     """
     from pdxloc.core import unit_ops
 
@@ -130,7 +130,7 @@ def test_bulk_apply_can_be_undone(db, make_tree):
 
 
 def test_bulk_apply_writes_nothing_when_there_is_no_match(db, make_tree):
-    """Пустой отбор не должен заводить пачку: Ctrl+Z предложил бы пустоту."""
+    """An empty selection must not set up a batch: Ctrl+Z would offer an emptiness."""
     from pdxloc.core import unit_ops
 
     en = make_tree({"m_l_english.yml": 'l_english:\n a:0 "Unheard of"\n'}, "en")
@@ -143,14 +143,14 @@ def test_bulk_apply_writes_nothing_when_there_is_no_match(db, make_tree):
 
 
 def test_bulk_apply_skips_ignored(db, make_tree):
-    # два одинаковых EN: один переведён, второй ignored -> TM не заполняет ignored
+    # two identical ENs: one is translated, the second is ignored -> the TM does not fill the ignored one
     en = make_tree({"m_l_english.yml":
                     'l_english:\n a:0 "Same"\n b:0 "Same"\n'}, "en")
     ru = make_tree({"m_l_russian.yml": 'l_russian:\n a:0 "Одинаково"\n'}, "ru")
     pid = make_project(db, en, ru)
     scan_project(db, pid)
     set_status(db, [get_unit(db, "b")["id"]], Status.IGNORED)
-    # сброс auto, чтобы проверить повторный bulk_apply
+    # a reset of auto, to check a repeated bulk_apply
     db.execute("UPDATE units SET ru_text = NULL WHERE key='b' AND status='ignored'")
     db.commit()
     scan_project(db, pid)

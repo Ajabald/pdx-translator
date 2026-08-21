@@ -1,4 +1,4 @@
-"""Хранение глоссария: приём, отказ и память об отказе."""
+"""Storing the glossary: acceptance, refusal, and the memory of a refusal."""
 from __future__ import annotations
 
 import pytest
@@ -28,10 +28,10 @@ def test_candidates_are_saved_once(conn):
 
 
 def test_a_rejected_term_does_not_come_back(conn):
-    """Главное свойство таблицы: отказ переводчика — это данные.
+    """The main property of the table: a refusal of the translator is data.
 
-    Без него каждый следующий прогон возвращал бы тот же мусор, и курировать
-    список стало бы бессмысленно.
+    Without it every next run would bring the same rubbish back, and curating the
+    list would become pointless.
     """
     glossary.save_candidates(conn, [candidate()])
     entry = glossary.rows(conn)[0]
@@ -50,10 +50,10 @@ def test_an_approved_term_does_not_fall_back_to_candidate(conn):
 
 
 def test_a_different_spelling_is_still_the_same_term(conn):
-    """Корпус меняется, и написание термина вместе с ним.
+    """The corpus changes, and the spelling of a term along with it.
 
-    Отклонили `Maester → мейстер` — значит отклонили и `maester → Мейстер`.
-    Иначе переводчик увидит свой же отказ во второй раз.
+    `Maester → мейстер` was rejected — so `maester → Мейстер` was rejected too.
+    Otherwise the translator sees their own refusal a second time.
     """
     glossary.save_candidates(conn, [candidate()])
     glossary.set_status(conn, [glossary.rows(conn)[0].id], REJECTED)
@@ -66,7 +66,7 @@ def test_duplicates_inside_one_batch_are_collapsed(conn):
 
 
 def test_manual_terms_are_approved_on_arrival(conn):
-    """Ручной термин никто не предлагал — подтверждать его нечего."""
+    """Nobody proposed a hand-entered term — there is nothing to confirm about it."""
     glossary.upsert_manual(conn, "Winterfell", "Винтерфелл", note="имя собственное")
     entry = glossary.rows(conn)[0]
     assert entry.status == APPROVED
@@ -76,10 +76,10 @@ def test_manual_terms_are_approved_on_arrival(conn):
 
 
 def test_manual_upsert_revives_a_rejected_term(conn):
-    """Переводчик передумал — руками это должно быть можно.
+    """The translator changed their mind — by hand that has to be possible.
 
-    Память об отказе защищает от повторных предложений автомата, а не от
-    решения человека.
+    The memory of a refusal guards against repeated proposals of the automaton,
+    not against a decision of a human.
     """
     glossary.save_candidates(conn, [candidate()])
     glossary.set_status(conn, [glossary.rows(conn)[0].id], REJECTED)
@@ -101,7 +101,7 @@ def test_editing_and_deleting(conn):
     glossary.update_entry(conn, entry.id, ru_term="мейстеры", note="во множественном")
     edited = glossary.rows(conn)[0]
     assert edited.ru_term == "мейстеры" and edited.note == "во множественном"
-    assert edited.en_term == "Maester"          # не тронуто
+    assert edited.en_term == "Maester"          # untouched
 
     glossary.delete(conn, [entry.id])
     assert glossary.rows(conn) == []
@@ -120,7 +120,7 @@ def test_search_looks_at_both_sides_and_ignores_case(conn):
 
 
 def test_empty_calls_do_nothing(conn):
-    """Пустой список приходит из окна при пустом выделении — не повод падать."""
+    """An empty list comes from the window on an empty selection — no reason to fall over."""
     glossary.set_status(conn, [], APPROVED)
     glossary.delete(conn, [])
     assert glossary.save_candidates(conn, []) == 0

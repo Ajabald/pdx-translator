@@ -1,9 +1,9 @@
-"""Все цвета интерфейса живут в theme.py и нигде больше.
+"""Every colour of the interface lives in theme.py and nowhere else.
 
-Литерал цвета в модуле виджета — это цвет, который не поменяется вместе с
-темой. Так на тёмной теме уже становились нечитаемыми подписи-подсказки,
-дерево файлов и записи подключённых баз памяти. Проверка грепом дешевле, чем
-осмотр глазами каждого нового окна.
+A colour literal in the module of a widget is a colour that will not change
+together with the theme. That is how the hint labels, the file tree and the
+records of attached memory databases have already become unreadable on the dark
+theme. A check by grep is cheaper than looking over every new window by eye.
 """
 from __future__ import annotations
 
@@ -14,16 +14,16 @@ import pytest
 
 GUI = Path(__file__).resolve().parents[1] / "src" / "pdxloc" / "gui"
 
-# и #rgb, и #rrggbb, и #aarrggbb
+# both #rgb, and #rrggbb, and #aarrggbb
 HEX = re.compile(r"#[0-9a-fA-F]{3,8}\b")
-# В таблице стилей цвет бывает и словом («red»), а не только шестнадцатеричным
-# литералом. Ловим значение, записанное прямо в строку: если оно начинается с
-# «{», это подстановка из темы — такие пропускаем. Смотрим только внутри
-# строковых литералов, иначе под правило попадает аннотация `color: str`.
+# In a stylesheet a colour happens to be a word («red») too, not only a hexadecimal
+# literal. We catch a value written right into a string: if it starts with «{», it
+# is a substitution from the theme — such we skip. We look only inside string
+# literals, otherwise the annotation `color: str` falls under the rule.
 STRING = re.compile(r"""(['"])(?:\\.|(?!\1).)*\1""")
 CSS_COLOR = re.compile(r"\b(?:color|background)\s*:\s*(?!\{)[^;{}]*[a-zA-Z#]")
 
-# theme.py — единственное законное место; icons.py красит через theme.color()
+# theme.py is the only lawful place; icons.py paints through theme.color()
 ALLOWED = {"theme.py"}
 
 
@@ -45,7 +45,7 @@ def test_no_hardcoded_colour_literals(path: Path) -> None:
 
 @pytest.mark.parametrize("path", gui_modules(), ids=lambda p: p.name)
 def test_stylesheets_take_colour_from_theme(path: Path) -> None:
-    """setStyleSheet допустим, но цвет в нём — только подстановкой из темы."""
+    """setStyleSheet is allowed, but a colour in it comes only as a substitution from the theme."""
     hits = [
         f"{path.name}:{n}: {line.strip()}"
         for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
