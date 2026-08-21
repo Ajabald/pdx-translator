@@ -52,12 +52,13 @@ def current() -> str:
 
 
 def available() -> dict[str, str]:
-    """Языки, для которых перевод действительно есть.
+    """The languages a translation actually exists for.
 
-    Английский — всегда: это язык оригинала. Остальные показываем, только если
-    рядом лежит `.qm` **с непустым содержимым**. Наличия файла мало: `lrelease`
-    выдаёт его и на пустом `.ts`, и такой язык переключался бы вникуда — пункт,
-    который ничего не делает, хуже отсутствующего.
+    English is always there: it is the language of the original. The rest are
+    shown only when a `.qm` **with something in it** lies next door. The file
+    alone is not enough: `lrelease` produces one from an empty `.ts` too, and
+    such a language would switch to nowhere — an entry that does nothing is worse
+    than a missing one.
     """
     found = {SOURCE: LANGUAGES[SOURCE]}
     for code, label in LANGUAGES.items():
@@ -76,10 +77,11 @@ def available() -> dict[str, str]:
 
 
 def system_default() -> str:
-    """Язык системы, если он у нас есть. Иначе английский.
+    """The system language, if we have it. Otherwise English.
 
-    Сверяем и полный код (`zh_CN`), и его первую часть (`ru_RU` → `ru`):
-    Windows отдаёт локаль с регионом, а переводы у нас по языку.
+    Both the full code (`zh_CN`) and its first part (`ru_RU` → `ru`) are checked:
+    Windows reports a locale with a region, while our translations go by
+    language.
     """
     name = QLocale.system().name()          # 'ru_RU', 'zh_CN', 'en_US'
     have = available()
@@ -93,7 +95,7 @@ def system_default() -> str:
 
 
 def apply(app, code: str, *, save: bool = True) -> None:
-    """Переключить язык интерфейса и сообщить об этом подписчикам.
+    """Switch the interface language and tell the subscribers about it.
 
     Switching to the language already in force is not an event. A repaint costs
     a lot — the menu is rebuilt, the start screen re-read, the whole table model

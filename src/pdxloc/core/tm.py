@@ -1,7 +1,9 @@
-"""Память переводов (TM): exact-match по хешу EN-текста, общая между проектами.
+"""Translation memory: an exact match by the hash of the source text, shared
+between projects.
 
-source: 'user' — переводы пользователя; 'vanilla' (v2) — база из ванильной
-локализации CK3; 'import' — внешние импорты. Приоритет при выборке: user выше.
+source: 'user' for the user's own translations; 'vanilla' (v2) for a database
+built from the vanilla CK3 localisation; 'import' for outside imports. On
+selection the priority puts 'user' above the rest.
 """
 from __future__ import annotations
 
@@ -15,7 +17,7 @@ from pdxloc.core.statuses import Status
 
 
 def escape_like(text: str) -> str:
-    """Экранировать спецсимволы LIKE, чтобы искать их буквально (ESCAPE '\\')."""
+    """Escape the LIKE wildcards so they are searched for literally (ESCAPE '\\')."""
     return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
@@ -24,10 +26,13 @@ def en_hash(text: str) -> str:
 
 
 def lookup(conn: sqlite3.Connection, en_text: str, *, limit: int = 5) -> list[TmHit]:
-    """Варианты перевода для текста. Один вариант = одна строка результата;
-    источник и ключ берутся у записи, победившей по приоритету (оконные функции,
-    а не GROUP BY с «голыми» колонками — иначе SQLite вернёт произвольную запись
-    группы, и подпись источника может не соответствовать варианту)."""
+    """The translation variants for a text.
+
+    One variant is one result row; the source and the key are taken from the
+    entry that won on priority. Window functions rather than a GROUP BY with bare
+    columns: otherwise SQLite returns an arbitrary entry of the group, and the
+    source label may not belong to the variant shown.
+    """
     rows = conn.execute(
         """
         WITH hits AS (
@@ -64,7 +69,7 @@ def upsert(
     ru_text: str,
     *,
     source: str = "user",
-    project_id: int | None = None,   # не хранится: провенанс = сам файл проекта
+    project_id: int | None = None,   # not stored: the provenance is the project file itself
     key: str | None = None,
 ) -> None:
     if not ru_text or ru_text == en_text:
@@ -86,12 +91,12 @@ def upsert_many(
     *,
     source: str = "user",
 ) -> int:
-    """Пополнить память переводов пачкой. Возвращает число принятых пар.
+    """Add a batch to the translation memory. Returns the number of pairs taken.
 
-    Тот же запрос, что у `upsert`, но одним `executemany`: на импорте чужого
-    перевода пар бывают десятки тысяч, а у таблицы висит триггер обновления
-    поискового индекса — построчный вызов из Python обходится там дороже всего
-    остального вместе взятого.
+    The same query as in `upsert` but through a single `executemany`: importing
+    somebody else's translation brings tens of thousands of pairs, and the table
+    carries a trigger that updates the search index — a per-row call from Python
+    costs more there than everything else put together.
     """
     rows = [(en_hash(en), en, ru, source, key)
             for en, ru, key in items
@@ -103,7 +108,7 @@ def upsert_many(
 
 @dataclass
 class TmRecord:
-    """Запись памяти переводов для менеджера."""
+    """A translation memory entry, as the manager sees it."""
     id: int
     en_text: str
     ru_text: str
@@ -121,7 +126,7 @@ def browse(
     only_editable: bool = False,
     limit: int = 2000,
 ) -> list[TmRecord]:
-    """Записи памяти переводов (свои и из подключённых баз)."""
+    """Translation memory entries: our own and those from attached databases."""
     sql = ["SELECT id, en_text, ru_text, source, key, origin, editable, updated_at "
            "FROM tm_all WHERE 1 = 1"]
     params: list = []
@@ -146,8 +151,10 @@ def browse(
 
 
 def update_entry(conn: sqlite3.Connection, entry_id: int, ru_text: str) -> bool:
-    """Изменить перевод в памяти проекта. Подключённые базы только для чтения
-    (их записи приходят с отрицательными идентификаторами)."""
+    """Change a translation in the project memory.
+
+    Attached databases are read-only; their entries arrive with negative ids.
+    """
     if not ru_text.strip() or entry_id <= 0:
         return False
     try:
@@ -155,7 +162,7 @@ def update_entry(conn: sqlite3.Connection, entry_id: int, ru_text: str) -> bool:
             "UPDATE tm_entries SET ru_text = ?, updated_at = datetime('now') WHERE id = ?",
             (ru_text, entry_id))
     except sqlite3.IntegrityError:
-        # такой перевод для этого текста уже есть — исходную запись убираем
+        # this text already has that translation: drop the original entry
         conn.execute("DELETE FROM tm_entries WHERE id = ?", (entry_id,))
         conn.commit()
         return True
@@ -164,7 +171,8 @@ def update_entry(conn: sqlite3.Connection, entry_id: int, ru_text: str) -> bool:
 
 
 def delete_entries(conn: sqlite3.Connection, entry_ids: Iterable[int]) -> int:
-    """Удалить записи памяти проекта; записи подключённых баз пропускаются."""
+    """Delete entries of the project memory; entries of attached databases are
+    skipped."""
     ids = [i for i in entry_ids if i > 0]
     if not ids:
         return 0
@@ -181,20 +189,21 @@ def clear_own(conn: sqlite3.Connection) -> int:
 
 
 def counts(conn: sqlite3.Connection) -> tuple[int, int]:
-    """(своих записей, всего с подключёнными базами)."""
+    """(own entries, the total including attached databases)."""
     own = conn.execute("SELECT COUNT(*) FROM tm_entries").fetchone()[0]
     total = conn.execute("SELECT COUNT(*) FROM tm_all").fetchone()[0]
     return own, total
 
 
 def feed_from_project(conn: sqlite3.Connection, project_id: int) -> int:
-    """Залить в TM все переведённые/проверенные строки проекта.
+    """Pour every translated and reviewed row of the project into the memory.
 
-    Список статусов положительный, и `Status.MACHINE` в него не входит
-    намеренно, а не по недосмотру: память переводов — это то, чему доверяют
-    при подстановке в другие строки, и машинная догадка, попав туда, начала бы
-    расползаться по проекту от чужого имени. То же и у `Status.AUTO`: он и сам
-    подставлен из памяти, класть его обратно незачем.
+    The list of statuses is a positive one, and `Status.MACHINE` is left out
+    deliberately rather than by oversight: the translation memory is what gets
+    trusted when filling other rows, and a machine guess landing there would
+    start spreading through the project under somebody else's name. The same goes
+    for `Status.AUTO`: it was itself filled from the memory, and there is no
+    point putting it back.
     """
     rows = conn.execute(
         """
@@ -212,32 +221,35 @@ def feed_from_project(conn: sqlite3.Connection, project_id: int) -> int:
 
 def bulk_apply(conn: sqlite3.Connection, project_id: int,
                *, batch_id: str | None = None) -> int:
-    """Заполнить пустые непереведённые строки точными совпадениями из памяти.
+    """Fill empty untranslated rows with exact matches from the memory.
 
-    Победитель выбирается так же, как в `lookup`: по приоритету источника, при
-    равенстве — по свежести. Раньше здесь стояло условие «ровно один вариант на
-    все базы» плюс `MIN(t.ru_text)`, и это ломалось дважды. Базы расходятся в
-    переводе одной и той же строки постоянно («Fire and Blood» — три варианта),
-    и на таких строках подстановка молча ничего не делала, хотя F7 в той же
-    ситуации уверенно подставляет лучший вариант: ручная и автоматическая
-    подстановка расходились в поведении на ровном месте. А `MIN` — это выбор по
-    алфавиту, а не по источнику; он был безопасен только пока вариант всегда
-    один.
+    The winner is chosen the same way as in `lookup`: by the priority of the
+    source, and on a tie by recency. There used to be a condition here — «exactly
+    one variant across all databases» plus `MIN(t.ru_text)` — and it broke twice
+    over. Databases disagree about the translation of one and the same row all
+    the time («Fire and Blood» has three variants), and on such rows the fill
+    quietly did nothing, while F7 in the same situation confidently offers the
+    best variant: the manual and the automatic fill behaved differently for no
+    reason at all. And `MIN` picks by the alphabet rather than by the source; it
+    was safe only while there was always exactly one variant.
 
-    Риск невелик: статус остаётся «Авто», то есть «подставлено, проверь».
+    The risk is small: the status stays «Auto», which reads as «filled in, go and
+    check».
 
-    **Идёт через историю и откатывается Ctrl+Z.** Трогаются только пустые
-    строки, то есть терять как будто нечего, — но это не довод: отмена, которая
-    молча не охватывает одну операцию из трёх, учит не доверять отмене вообще.
-    А охват тут не маленький: на живом проекте подстановка заполняет тысячи
-    строк разом, и вернуть их к «не переведено» иначе нечем.
+    **It goes through the history and comes back with Ctrl+Z.** Only empty rows
+    are touched, so there seems to be nothing to lose — but that is not an
+    argument: an undo that quietly fails to cover one operation in three teaches
+    people not to trust undo at all. And the reach here is not small: on a live
+    project the fill covers thousands of rows at once, and there is no other way
+    to return them to «not translated».
 
-    Возвращает число заполненных строк.
+    Returns the number of rows filled.
     """
     from pdxloc.core import unit_ops
 
-    # Строки отбираются отдельным запросом, а не прямо в UPDATE: историю надо
-    # записать ДО правки, иначе запоминать будет уже нечего.
+    # The rows are selected by a query of their own rather than inside the UPDATE:
+    # the history has to be written BEFORE the edit, or there is nothing left to
+    # remember.
     ids = [r["id"] for r in conn.execute(
         """
         SELECT u.id
