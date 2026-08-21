@@ -1,32 +1,32 @@
-"""Глоссарий терминов: статистика предлагает, человек подтверждает.
+"""Term glossary: statistics propose, a human confirms.
 
-Похожие строки ищутся целиком (`core/fuzzy.py`), но подсказки уровня «в базе
-есть Targaryen → Таргариен» это не даёт: имя собственное живёт внутри сотни
-разных предложений, и ни одно из них не похоже на другое. Здесь оно достаётся
-статистикой совстречаемости по памяти переводов.
+Similar strings are matched whole (`core/fuzzy.py`), but that yields no hint of
+the kind "the database already holds Targaryen → Таргариен": a proper name lives
+inside a hundred different sentences, and no two of them are alike. Here it is
+dug out by co-occurrence statistics over the translation memory.
 
-**Автомат не пишет в перевод ничего и никогда.** Он складывает кандидатов в
-таблицу `glossary` со статусом `candidate`; принять или отклонить — работа
-переводчика. Принятые термины подсвечиваются в поле оригинала.
+**The automaton never writes anything into a translation.** It piles candidates
+into the `glossary` table with status `candidate`; accepting or rejecting them
+is the translator's work. Accepted terms are highlighted in the source field.
 
-Мера — коэффициент Дайса по документной частоте: слово считается один раз на
-пару строк, сколько бы раз в ней ни встретилось. Замер на живом корпусе
-(AGOT + русификатор, 51 651 пара) — 0,8 с, 4024 кандидата, из них 1287 с
-уверенностью ≥ 0.60: `Maester → мейстер` 0.65, `Winterfell → винтерфелл` 0.63,
-`Lannister → ланнистер` 0.56.
+The measure is the Dice coefficient over document frequency: a word counts once
+per pair of strings, however many times it occurs inside it. Measured on a live
+corpus (AGOT + the Russian translation, 51,651 pairs) — 0.8 s, 4024 candidates,
+1287 of them with confidence ≥ 0.60: `Maester → мейстер` 0.65,
+`Winterfell → винтерфелл` 0.63, `Lannister → ланнистер` 0.56.
 
-Три вещи, которые тот замер и вскрыл; каждая здесь решена явно:
+Three things that measurement laid bare; each is answered here explicitly:
 
-1. **Русские словоформы дробят счёт.** `таргариен` и `таргариенов` — одно
-   слово, но два ключа, и каждый набирает половину веса. Лечится группировкой
-   по основе (`_ru_stem`).
-2. **Многословный термин разваливается.** `Kingsguard` → «Королевская
-   гвардия»: ни «королевская», ни «гвардия» поодиночке не выигрывают. Лечится
-   счётом биграмм на русской стороне.
-3. **Шаблонный шум.** `Valyrian → эссос` набирает 0.63 просто потому, что обе
-   вещи упоминаются в одних и тех же описаниях. Лечится требованием отрыва от
-   второго кандидата: настоящий термин переводится одним словом, а шум идёт
-   плотной группой.
+1. **Russian word forms split the count.** `таргариен` and `таргариенов` are
+   one word but two keys, and each collects half the weight. Cured by grouping
+   on the stem (`_ru_stem`).
+2. **A multi-word term falls apart.** `Kingsguard` → «Королевская гвардия»:
+   neither «королевская» nor «гвардия» wins on its own. Cured by counting
+   bigrams on the Russian side.
+3. **Boilerplate noise.** `Valyrian → эссос` scores 0.63 simply because both
+   things are mentioned in the same descriptions. Cured by demanding a gap over
+   the runner-up: a real term is translated by one word, while noise arrives as
+   a dense group.
 """
 from __future__ import annotations
 
@@ -38,41 +38,42 @@ from dataclasses import dataclass
 from pdxloc.core import markup
 from pdxloc.core.fuzzy import STOP_WORDS, WORD
 
-# --- пороги отбора ---------------------------------------------------------
+# --- selection thresholds --------------------------------------------------
 #
-# Значения с того же замера. MIN_PAIRS отсекает случайную совстречаемость:
-# на двух парах Дайс легко даёт единицу, и список заполняется мусором быстрее,
-# чем переводчик успевает его листать.
+# Values from that same measurement. MIN_PAIRS cuts off accidental
+# co-occurrence: on two pairs Dice easily gives one, and the list fills with
+# rubbish faster than the translator can page through it.
 MIN_PAIRS = 3
 MIN_SCORE = 0.5
 
-# Во сколько раз лучший кандидат обязан обойти второго. Это ответ на шаблонный
-# шум: у `Maester` второй кандидат далеко позади, у `Valyrian` — вплотную,
-# потому что переводится не он, а весь абзац вокруг.
+# How many times over the runner-up the best candidate is obliged to score.
+# This is the answer to boilerplate noise: `Maester` leaves its runner-up far
+# behind, `Valyrian` is shadowed by one — because what gets translated is not
+# the word but the whole paragraph around it.
 GAP = 1.3
 
-# Основа короче этого не режется: у «граф» и «град» общее начало из трёх букв,
-# и стрижка до трёх слепила бы их в одно гнездо.
+# A stem shorter than this is not cut: «граф» and «град» share a three-letter
+# beginning, and trimming to three would glue them into one nest.
 MIN_STEM = 4
 
-# Русские окончания, отсортированные при применении от длинных к коротким.
-# Список — не морфология языка, а рабочий минимум под наш случай: имена
-# собственные и термины игр Paradox, то есть существительные и прилагательные.
-# Глагольных форм здесь намеренно нет — термином глагол не бывает, а
-# срезав «-ет», мы бы слепили несвязанные слова.
+# Russian endings, sorted longest-first when applied. The list is not the
+# morphology of the language but a working minimum for our case: proper names
+# and Paradox game terms, that is, nouns and adjectives. Verb forms are
+# deliberately absent — a verb is never a term, and by cutting «-ет» we would
+# glue unrelated words together.
 _RU_ENDINGS = (
-    # прилагательные
+    # adjectives
     "ыми", "ими", "ого", "его", "ому", "ему", "ая", "яя", "ое", "ее",
     "ые", "ие", "ый", "ий", "ой", "ым", "им", "ом", "ем", "их", "ых",
-    # существительные
+    # nouns
     "ами", "ями", "ах", "ях", "ов", "ев", "ей", "ам", "ям", "ию", "ия",
     "ии", "ье", "ья", "ью", "ей", "ов",
     "а", "я", "о", "е", "ы", "и", "у", "ю", "ь",
 )
 _RU_ENDINGS = tuple(sorted(set(_RU_ENDINGS), key=len, reverse=True))
 
-# Служебные слова русского. Роль та же, что у STOP_WORDS в fuzzy: без них
-# «и», «в», «на» совстречаются со всем подряд и лезут в каждое гнездо.
+# Russian function words. Same role as STOP_WORDS in fuzzy: without them «и»,
+# «в», «на» co-occur with everything and crawl into every nest.
 RU_STOP_WORDS = frozenset([
     "и", "а", "но", "или", "да", "же", "ли", "бы", "не", "ни",
     "в", "во", "на", "за", "по", "из", "от", "до", "к", "ко", "с", "со",
@@ -88,28 +89,28 @@ RU_STOP_WORDS = frozenset([
     "может", "можно", "нужно", "надо", "очень", "только", "более", "менее",
 ])
 
-# Английский термин из одной буквы или из цифр нам не нужен: WORD уже требует
-# двух букв подряд, здесь остаётся отсечь совсем короткое.
+# An English term of one letter or of digits is of no use to us: WORD already
+# demands two letters in a row, what is left here is to cut off the very short.
 MIN_TERM_LEN = 3
 
-# Какую долю вхождений гнезда обязана набрать словоформа, чтобы её вообще
-# рассматривали как показываемую. Защита от опечатки и обрезка: они короткие, а
-# короткое мы предпочитаем (см. `_display_form`).
+# What share of a nest's occurrences a word form is obliged to collect to be
+# considered for display at all. Protection against a typo and a truncation:
+# they are short, and short is what we prefer (see `_display_form`).
 MIN_FORM_SHARE = 0.15
 
-# Какую долю своих строк слово обязано отстоять с заглавной посреди фразы,
-# чтобы считаться именем собственным.
+# What share of its strings a word is obliged to hold capitalised mid-phrase
+# to count as a proper noun.
 #
-# Порог, а не факт, и вот почему. Признак «хоть раз встретилось» на живом
-# корпусе AGOT провалился на слове `Now`: **две** строки из 45 822 пишут его
-# в середине фразы (там, где перевод строки схлопнулся в пробел), и этих двух
-# хватало, чтобы слово попало в белый список навсегда — а следом за ним все
-# 804 его пары. У настоящего имени доля близка к единице (`Targaryen` — 0.98),
-# у случайного совпадения она исчезающе мала, и любой порог между ними
-# разводит их одинаково хорошо.
+# A threshold, not a fact, and here is why. The test "occurred at least once"
+# failed on the live AGOT corpus on the word `Now`: **two** strings out of
+# 45,822 write it in the middle of a phrase (there, where a line break
+# collapsed into a space), and those two were enough for the word to land on
+# the allow-list forever — and all 804 of its pairs behind it. For a real name
+# the share is close to one (`Targaryen` — 0.98), for a chance match it is
+# vanishingly small, and any threshold between them parts them equally well.
 MIN_PROPER_SHARE = 0.25
 
-# --- статусы ---------------------------------------------------------------
+# --- statuses --------------------------------------------------------------
 
 CANDIDATE = "candidate"
 APPROVED = "approved"
@@ -121,8 +122,9 @@ MANUAL = "manual"
 
 @dataclass(frozen=True, slots=True)
 class Candidate:
-    """Предложение статистики. `runner_up` — счёт второго кандидата на тот же
-    английский термин: по нему в окне видно, почему предложение прошло отбор."""
+    """A proposal from the statistics. `runner_up` is the score of the second
+    candidate for the same English term: by it the window shows why the
+    proposal passed selection."""
     en_term: str
     ru_term: str
     score: float
@@ -132,7 +134,7 @@ class Candidate:
 
 @dataclass(frozen=True, slots=True)
 class Entry:
-    """Строка глоссария как она лежит в базе."""
+    """A glossary row as it lies in the database."""
     id: int
     en_term: str
     ru_term: str
@@ -144,56 +146,58 @@ class Entry:
     updated_at: str | None
 
 
-# --- разбор текста ---------------------------------------------------------
+# --- parsing the text ------------------------------------------------------
 
 
 def _en_tokens(text: str) -> set[str]:
-    """Английские слова строки: без разметки, без служебных, без коротких."""
+    """The English words of a string: no markup, no stop words, nothing short."""
     words = WORD.findall(markup.strip_markup(text).lower())
     return {w for w in words
             if w not in STOP_WORDS and len(w) >= MIN_TERM_LEN}
 
 
-# Чем кончается то, что стоит перед словом, если слово открывает фразу. Точка,
-# двоеточие и перевод строки — очевидны; кавычки и тире добавлены потому, что в
-# локализации Paradox реплика сплошь и рядом начинается прямо с них.
+# What the text before a word ends with when the word opens a phrase. Full
+# stop, colon and line break are obvious; quotes and dashes are here because in
+# Paradox localisation a line of speech starts right with them all the time.
 #
-# Типографские кавычки здесь не для красоты: описания AGOT — это цитаты из книг,
-# и открываются они `“`, а не `"`. Пока их не было в списке, `“Though the…` и
-# `“After the Doom…` считались серединой фразы, то есть `Though` и `After`
-# проходили как имена собственные и держались в верху списка на пяти сотнях пар.
+# The typographic quotes are not here for beauty: AGOT descriptions are
+# quotations from the books, and they open with `“`, not `"`. While those were
+# missing from the list, `“Though the…` and `“After the Doom…` counted as
+# mid-phrase, that is, `Though` and `After` passed as proper nouns and held the
+# top of the list on five hundred pairs.
 _SENTENCE_END = ('.', '!', '?', ':', ';', '\n', '"', "'", '«', '»',
                  '“', '”', '‘', '’',      # “ ” ‘ ’
                  '—', '–', '-', '(', '[')
 
 
 def _proper_nouns(text: str) -> set[str]:
-    """Слова, написанные с заглавной **не в начале фразы**.
+    """Words written with a capital **not at the start of a phrase**.
 
-    Это и есть признак имени собственного, отделяющий `Targaryen` от `Now`.
-    Оба попадаются с заглавной, но `Now` — только там, где с заглавной пишется
-    что угодно, а `Targaryen` стоит с большой буквы посреди предложения.
+    That is the mark of a proper noun, the one separating `Targaryen` from
+    `Now`. Both turn up capitalised, but `Now` only there, where anything at
+    all is capitalised, while `Targaryen` stands with a capital mid-sentence.
 
-    Мера грубая и в обе стороны неточная: заголовок, набранный капслоком, сюда
-    не попадёт, а первое слово после сокращения попадёт зря. Но на живом
-    корпусе AGOT она убирает из верха списка `Now`, `Though`, `After`, `Even`
-    и `Perhaps`, не тронув ни одного настоящего имени, — а разбирать список
-    руками переводчику, и цена ошибки здесь не выше одной лишней строки.
+    The measure is crude and inexact in both directions: a heading set in caps
+    will not get in here, and the first word after an abbreviation will get in
+    for nothing. But on the live AGOT corpus it removes `Now`, `Though`,
+    `After`, `Even` and `Perhaps` from the top of the list without touching a
+    single real name — and it is the translator who sorts the list out by hand,
+    so the price of an error here is no higher than one extra row.
     """
     clean = markup.strip_markup(text)
     words = WORD.findall(clean)
     if not words:
         return set()
 
-    # Title Case не свидетельствует ни о чём. Названия черт, кнопки и заголовки
-    # событий Paradox пишет с заглавной **каждое** слово, и `Now` в «The Long
-    # Night Is Now» выглядит именем собственным ровно так же, как `Targaryen`.
+    # Title Case is evidence of nothing. Trait names, buttons and event titles
+    # Paradox writes with **every** word capitalised, and `Now` in "The Long
+    # Night Is Now" looks a proper noun exactly as much as `Targaryen` does.
     #
-    # Пороги подобраны так, чтобы не задеть обычное предложение: «House
-    # Targaryen rises» — три слова, два с заглавной, и это не Title Case, а имя
-    # рода посреди фразы. Требуем и длины от четырёх слов, и трёх четвертей
-    # заглавных: «The Long Night Is Now» даёт пять из пяти и отсекается, а
-    # короткая фраза с именем — нет.
+    # The thresholds are picked so as not to catch an ordinary sentence: "House
+    # Targaryen rises" is three words, two capitalised, and that is not Title
+    # Case but a house name mid-phrase. We demand both a length of four words
+    # and three quarters capitalised: "The Long Night Is Now" gives five out of
+    # five and is cut off, while a short phrase with a name is not.
     capitalised = sum(1 for w in words if w[:1].isupper())
     if len(words) >= 4 and capitalised >= len(words) * 0.75:
         return set()
@@ -204,22 +208,23 @@ def _proper_nouns(text: str) -> set[str]:
             continue
         before = clean[:m.start()].rstrip()
         if not before or before.endswith(_SENTENCE_END):
-            continue        # начало фразы — с заглавной здесь пишется что угодно
+            continue        # phrase start — anything at all is capitalised here
         found.add(m.group(0).lower())
     return found
 
 
 def _display_form(forms: Counter) -> str:
-    """Какую словоформу показать человеку.
+    """Which word form to show a human.
 
-    Гнездо `таргариен` собирает `таргариена`, `таргариенов`, `таргариену` — и
-    подставлять в перевод любую из них нельзя. Нужна начальная, а морфологии у
-    нас нет, поэтому берём **самую короткую из тех, что встречаются заметно**:
-    в русском именительный падеж почти всегда короче косвенных, а порог по доле
-    отсекает опечатку и обрезок, которые тоже бывают короткими.
+    The nest `таргариен` gathers `таргариена`, `таргариенов`, `таргариену` —
+    and none of them may be pasted into a translation. The base form is what is
+    needed, and morphology we have none, so we take **the shortest of those
+    that occur noticeably**: in Russian the nominative is almost always shorter
+    than the oblique cases, and the share threshold cuts off the typo and the
+    truncation, which also happen to be short.
 
-    Порог именно доля, а не число: гнездо бывает и из четырёх вхождений, и из
-    четырёхсот.
+    The threshold is a share and not a count on purpose: a nest may hold four
+    occurrences, or four hundred.
     """
     total = sum(forms.values())
     common = [w for w, n in forms.items() if n >= total * MIN_FORM_SHARE]
@@ -227,11 +232,11 @@ def _display_form(forms: Counter) -> str:
 
 
 def _ru_stem(word: str) -> str:
-    """Основа русского слова — срезом окончания из таблицы выше.
+    """The stem of a Russian word — by cutting an ending from the table above.
 
-    Не морфологический анализ и не претендует: задача здесь одна — чтобы
-    `таргариен`, `таргариена` и `таргариенов` попали в одно гнездо и сложили
-    свой вес, а не разделили его на три.
+    Not morphological analysis and makes no such claim: the one task here is
+    for `таргариен`, `таргариена` and `таргариенов` to land in one nest and add
+    up their weight instead of splitting it three ways.
     """
     for ending in _RU_ENDINGS:
         if word.endswith(ending) and len(word) - len(ending) >= MIN_STEM:
@@ -240,17 +245,17 @@ def _ru_stem(word: str) -> str:
 
 
 def _ru_words(text: str) -> list[str]:
-    """Русские слова строки в порядке следования — порядок нужен биграммам."""
+    """The Russian words of a string in order — the order is for bigrams."""
     return [w for w in WORD.findall(markup.strip_markup(text).lower())
             if w not in RU_STOP_WORDS and len(w) >= MIN_TERM_LEN]
 
 
 def _ru_keys(text: str) -> tuple[set[str], dict[str, str]]:
-    """Ключи русской стороны и как их показывать человеку.
+    """The keys of the Russian side and how to show them to a human.
 
-    Ключ — основа (или пара основ для биграммы), показываем же исходные слова:
-    «мейстеров» в списке терминов выглядело бы опечаткой, а `мейстер` —
-    это то, что переводчик и подтвердит.
+    The key is a stem (or a pair of stems for a bigram), what we show is the
+    original words: «мейстеров» in a list of terms would look like a typo,
+    whereas `мейстер` is what the translator will confirm.
     """
     words = _ru_words(text)
     stems = [_ru_stem(w) for w in words]
@@ -261,7 +266,7 @@ def _ru_keys(text: str) -> tuple[set[str], dict[str, str]]:
         keys.add(stem)
         surface.setdefault(stem, word)
 
-    # биграммы соседних слов — ответ на «Kingsguard → Королевская гвардия»
+    # bigrams of adjacent words — the answer to «Kingsguard → Королевская гвардия»
     for i in range(len(stems) - 1):
         key = f"{stems[i]} {stems[i + 1]}"
         keys.add(key)
@@ -270,7 +275,7 @@ def _ru_keys(text: str) -> tuple[set[str], dict[str, str]]:
     return keys, surface
 
 
-# --- извлечение ------------------------------------------------------------
+# --- extraction ------------------------------------------------------------
 
 
 def extract(
@@ -283,19 +288,20 @@ def extract(
     progress=None,
     cancelled=None,
 ) -> list[Candidate]:
-    """Кандидаты в термины по всей доступной памяти переводов.
+    """Term candidates over all the available translation memory.
 
-    Корпус — представление `tm_all`: память самого проекта плюс подключённые
-    базы (см. `db.ensure_tm_view` и `project.py`). Отдельно их не разделяем:
-    ванильная база и есть главный источник устоявшихся терминов.
+    The corpus is the `tm_all` view: the project's own memory plus the attached
+    databases (see `db.ensure_tm_view` and `project.py`). We do not separate
+    them: the vanilla database is itself the main source of settled terms.
 
-    `proper_only` оставляет только слова, встреченные с заглавной посреди
-    фразы. Замер на живом корпусе AGOT (45 822 пары): без него верх списка по
-    охвату занимают `Now → теперь`, `Though → хотя`, `After → после` — переводы
-    верные, но глоссарию мода они не нужны, а разбирать их переводчику руками.
+    `proper_only` keeps only words met capitalised mid-phrase. Measured on the
+    live AGOT corpus (45,822 pairs): without it the top of the list by coverage
+    is taken by `Now → теперь`, `Though → хотя`, `After → после` — correct
+    translations, but a mod glossary has no need of them, and sorting them out
+    is the translator's work by hand.
 
-    `progress(done, total)` и `cancelled()` — для прогона из окна: корпус
-    бывает в четверть миллиона записей.
+    `progress(done, total)` and `cancelled()` are for a run from the window:
+    a corpus happens to be a quarter of a million records.
     """
     rows = conn.execute("SELECT en_text, ru_text FROM tm_all").fetchall()
     total = len(rows)
@@ -350,11 +356,11 @@ def extract(
 
 
 def _remember_en_forms(forms: dict[str, Counter], text: str, keys: set[str]) -> None:
-    """Как английский термин пишется в живом тексте.
+    """How an English term is written in live text.
 
-    Считаем все написания, а выбирает потом `_display_form`. Английскому
-    склонения не мешают, но регистр разъезжается: `maester` в списке выглядел
-    бы небрежностью рядом с `Maester`.
+    We count every spelling, and `_display_form` picks later. English is not
+    troubled by declension, but the case drifts apart: `maester` in the list
+    would look like sloppiness next to `Maester`.
     """
     for word in WORD.findall(markup.strip_markup(text)):
         key = word.lower()
@@ -374,7 +380,7 @@ def _rank(
     min_score: float,
     gap: float,
 ) -> list[Candidate]:
-    """Дайс, отбор лучшего перевода на термин и отсев по отрыву."""
+    """Dice, the pick of the best translation per term, and the gap cut-off."""
     best: dict[str, list[tuple[float, str, int]]] = defaultdict(list)
     for (e, r), pairs in df_pair.items():
         if pairs < min_pairs:
@@ -388,16 +394,17 @@ def _rank(
 
     out: list[Candidate] = []
     for e, hits in best.items():
-        # При равном счёте побеждает более длинный перевод, и это не вкусовщина:
-        # у `Kingsguard` биграмма «королевская гвардия» и обе её половины
-        # набирают ровно по единице, потому что ходят строго вместе. Оставь
-        # порядок на усмотрение сортировки строк — и половина термина победила
-        # бы целое по алфавиту.
+        # On an equal score the longer translation wins, and that is not a
+        # matter of taste: for `Kingsguard` the bigram «королевская гвардия»
+        # and both its halves score exactly one, because they travel strictly
+        # together. Leave the order to the string sort — and half the term
+        # would beat the whole of it alphabetically.
         hits.sort(key=lambda h: (h[0], len(h[1].split()), h[1]), reverse=True)
         score, r, pairs = hits[0]
         runner_up = _runner_up(hits, r)
-        # Отрыв от второго — то, что отличает термин от шаблонного шума. Ноль
-        # означает «второго нет вовсе», и это лучший из возможных отрывов.
+        # The gap over the runner-up is what tells a term from boilerplate
+        # noise. Zero means "there is no runner-up at all", and that is the
+        # best gap there can be.
         if runner_up and score < gap * runner_up:
             continue
         out.append(Candidate(
@@ -412,11 +419,11 @@ def _rank(
 
 
 def _runner_up(hits: list[tuple[float, str, int]], winner: str) -> float:
-    """Счёт лучшего кандидата, не родственного победителю.
+    """The score of the best candidate not related to the winner.
 
-    Униграмма внутри победившей биграммы вторым кандидатом не считается: у
-    «королевская гвардия» второй по счёту — «гвардия», и без этой оговорки
-    биграмма проваливала бы отбор по отрыву от собственной половины.
+    A unigram inside the winning bigram does not count as the runner-up: for
+    «королевская гвардия» the second by score is «гвардия», and without this
+    proviso the bigram would fail the gap test against its own half.
     """
     parts = set(winner.split())
     for score, term, _pairs in hits[1:]:
@@ -426,7 +433,7 @@ def _runner_up(hits: list[tuple[float, str, int]], winner: str) -> float:
     return 0.0
 
 
-# --- хранение --------------------------------------------------------------
+# --- storage ---------------------------------------------------------------
 
 
 def _entry(row: sqlite3.Row) -> Entry:
@@ -439,7 +446,7 @@ def _entry(row: sqlite3.Row) -> Entry:
 
 def rows(conn: sqlite3.Connection, *, status: str | None = None,
          search: str = "") -> list[Entry]:
-    """Строки глоссария; `status=None` — все."""
+    """Glossary rows; `status=None` — all of them."""
     sql = ["SELECT * FROM glossary"]
     where, params = [], []
     if status is not None:
@@ -452,28 +459,30 @@ def rows(conn: sqlite3.Connection, *, status: str | None = None,
         params += [pattern, pattern]
     if where:
         sql.append("WHERE " + " AND ".join(where))
-    # кандидаты — по убыванию уверенности, принятые — по алфавиту: в первом
-    # списке работают сверху вниз, во втором ищут глазами
+    # candidates by descending confidence, accepted ones alphabetically: the
+    # first list is worked through top to bottom, the second is searched by eye
     sql.append("ORDER BY CASE status WHEN 'candidate' THEN -score ELSE 0 END, "
                "pylower(en_term)")
     return [_entry(r) for r in conn.execute(" ".join(sql), params)]
 
 
 def save_candidates(conn: sqlite3.Connection, found: list[Candidate]) -> int:
-    """Записать кандидатов, не трогая уже рассмотренные.
+    """Write the candidates down without touching the ones already reviewed.
 
-    Пропуск уже известных пар — это и есть память об отказе: принятый термин не
-    откатится в кандидаты, а отклонённый не вернётся из мёртвых на следующем
-    прогоне. Возвращает число действительно новых строк.
+    Skipping pairs already known is exactly what memory of a refusal is: an
+    accepted term will not roll back into candidates, and a rejected one will
+    not return from the dead on the next run. Returns the number of genuinely
+    new rows.
 
-    Сверяем **без учёта регистра**, и одного `ON CONFLICT` тут мало. Написание
-    английского термина выбирается по корпусу (`_remember_en_surface`), а
-    корпус между прогонами меняется: стоит появиться базе, где `Maester`
-    встречается только строчным, — и `UNIQUE(en_term, ru_term)` увидит новую
-    пару, а переводчик увидит свой же отклонённый термин во второй раз. Дешевле
-    прочитать уже известное и отсеять здесь, чем городить регистронезависимый
-    индекс: `lower()` в SQLite не знает кириллицы, а свою функцию в индекс
-    класть нельзя — файл перестанет открываться чем-либо, кроме нас.
+    We compare **case-insensitively**, and one `ON CONFLICT` is not enough
+    here. The spelling of the English term is chosen from the corpus
+    (`_remember_en_surface`), and the corpus changes between runs: let a
+    database turn up where `Maester` occurs only in lower case — and
+    `UNIQUE(en_term, ru_term)` sees a new pair, while the translator sees their
+    own rejected term a second time. Reading what is already known and sifting
+    it out here is cheaper than fencing in a case-insensitive index: `lower()`
+    in SQLite knows no Cyrillic, and our own function cannot be put into an
+    index — the file would stop opening in anything but us.
     """
     known = {(r["en_term"].casefold(), r["ru_term"].casefold())
              for r in conn.execute("SELECT en_term, ru_term FROM glossary")}
@@ -482,7 +491,7 @@ def save_candidates(conn: sqlite3.Connection, found: list[Candidate]) -> int:
         key = (c.en_term.casefold(), c.ru_term.casefold())
         if key in known:
             continue
-        known.add(key)                  # и от дублей внутри самой пачки
+        known.add(key)                  # and against duplicates inside the batch
         fresh.append((c.en_term, c.ru_term, c.score, c.pairs))
     conn.executemany(
         """INSERT INTO glossary (en_term, ru_term, status, score, pairs, origin)
@@ -504,7 +513,7 @@ def set_status(conn: sqlite3.Connection, ids: list[int], status: str) -> None:
 
 def upsert_manual(conn: sqlite3.Connection, en_term: str, ru_term: str,
                   *, note: str = "") -> None:
-    """Термин, заведённый руками, — сразу принятый: его никто не предлагал."""
+    """A term entered by hand is accepted at once: nobody proposed it."""
     conn.execute(
         """INSERT INTO glossary (en_term, ru_term, status, note, origin, updated_at)
            VALUES (?, ?, 'approved', ?, 'manual', datetime('now'))
@@ -540,27 +549,27 @@ def delete(conn: sqlite3.Connection, ids: list[int]) -> None:
 
 
 def counts(conn: sqlite3.Connection) -> dict[str, int]:
-    """Сколько строк в каждом статусе — для нижней полосы окна."""
+    """How many rows are in each status — for the bottom bar of the window."""
     found = {r["status"]: r["n"] for r in conn.execute(
         "SELECT status, COUNT(*) AS n FROM glossary GROUP BY status")}
     return {s: found.get(s, 0) for s in (CANDIDATE, APPROVED, REJECTED)}
 
 
-# --- подсветка -------------------------------------------------------------
+# --- highlighting ----------------------------------------------------------
 
 
 def approved_terms(conn: sqlite3.Connection) -> dict[str, str]:
-    """Принятые термины: английский в нижнем регистре → русский, как показывать."""
+    """Accepted terms: English in lower case → Russian, as it is to be shown."""
     return {r["en_term"].lower(): r["ru_term"] for r in conn.execute(
         "SELECT en_term, ru_term FROM glossary WHERE status = 'approved'")}
 
 
 def build_index(terms: dict[str, str]) -> re.Pattern | None:
-    """Скомпилированный поиск всех терминов разом.
+    """One compiled search for all the terms at once.
 
-    Длинные раньше коротких: иначе `Kings` внутри `Kingsguard` заберёт
-    совпадение первым, и подсветится половина термина. Пустой словарь даёт
-    None — регулярка из пустой альтернативы совпадает с чем угодно.
+    Long ones before short: otherwise `Kings` inside `Kingsguard` takes the
+    match first, and half a term is highlighted. An empty dictionary gives
+    None — a regex out of an empty alternation matches anything at all.
     """
     if not terms:
         return None
@@ -571,10 +580,11 @@ def build_index(terms: dict[str, str]) -> re.Pattern | None:
 
 def find_terms(text: str, index: re.Pattern | None,
                terms: dict[str, str]) -> list[tuple[int, int, str]]:
-    """Вхождения принятых терминов: (начало, конец, перевод).
+    """Occurrences of accepted terms: (start, end, translation).
 
-    Куски разметки пропускаются целиком — подчёркивать нутро `[GetTrait…]` или
-    имя иконки в `@gold!` незачем, там не проза.
+    Pieces of markup are skipped whole — there is no point underlining the
+    innards of `[GetTrait…]` or an icon name in `@gold!`, there is no prose
+    there.
     """
     if index is None or not text:
         return []
