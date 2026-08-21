@@ -1,16 +1,17 @@
-"""Модель и представление таблицы строк.
+"""The model and the view of the row table.
 
-Производительность: данные грузятся в память одним SQL-запросом (reload).
-Фильтрация — повторный SQL-запрос, не QSortFilterProxyModel: комбинированные
-фильтры (статус + файл + LIKE по трём полям) в SQL быстрее и проще.
-Из data() в БД не ходим никогда.
+Performance: the data is loaded into memory by a single SQL query (reload).
+Filtering is another SQL query rather than a QSortFilterProxyModel: combined
+filters — status plus file plus a LIKE over three fields — are both faster and
+simpler in SQL. data() never goes to the database.
 
-Сортировка, наоборот, целиком в памяти. В SQL её не сделать: колонки «!»
-(число замечаний) в базе нет вовсе — она считается `_recheck_all()` уже после
-выборки, и тот же `only_issues` фильтрует список пост-обработкой. SQL-путь
-потребовал бы второй, питоновской реализации ради одной этой колонки, а
-перестановка 5к строк в памяти занимает единицы миллисекунд против полной
-перезагрузки с пересчётом проверок.
+Sorting, by contrast, happens entirely in memory. It cannot be done in SQL: the
+«!» column, the number of issues, does not exist in the database at all — it is
+computed by `_recheck_all()` after the selection, and the same `only_issues`
+filters the list in post-processing. An SQL path would need a second,
+Python-side implementation for that one column, while reordering 5k rows in
+memory takes single-digit milliseconds against a full reload with the checks
+recomputed.
 """
 from __future__ import annotations
 
@@ -36,15 +37,16 @@ COLUMNS = (
     "EN", "RU",
     QT_TRANSLATE_NOOP("UnitsTable", "Status"),
     "Δ", "!", "✓", "✗",
-    QT_TRANSLATE_NOOP("UnitsTable", "C"),      # первая буква «кастомного»
-    QT_TRANSLATE_NOOP("UnitsTable", "I"),      # первая буква «игнорировать»
+    QT_TRANSLATE_NOOP("UnitsTable", "C"),      # the first letter of «custom»
+    QT_TRANSLATE_NOOP("UnitsTable", "I"),      # the first letter of «ignore»
 )
 COL_KEY, COL_FILE, COL_EN, COL_RU, COL_STATUS, COL_CHANGE, COL_ISSUES = range(7)
 COL_QS_FIRST = 7
 
-# quick-колонки: колонка -> (глиф, целевой статус, подсказка, имя цвета в палитре).
-# Буквенные глифы («C», «I») переводятся вместе с шапкой — те же строки в том
-# же контексте; иначе в русском интерфейсе в колонке осталась бы латиница.
+# the quick columns: column -> (glyph, target status, tooltip, colour name in
+# the palette). The letter glyphs («C», «I») are translated together with the
+# header — the same strings in the same context; otherwise the Russian interface
+# would keep Latin letters in the column.
 QUICK_COLS: dict[int, tuple[str, Status, str, str]] = {
     7: ("✓", Status.REVIEWED,
         QT_TRANSLATE_NOOP("UnitsTable", "Validate (F10)"), "quick.reviewed"),
@@ -56,7 +58,8 @@ QUICK_COLS: dict[int, tuple[str, Status, str, str]] = {
          QT_TRANSLATE_NOOP("UnitsTable", "Ignore (Ctrl+Shift+F10)"), "quick.ignored"),
 }
 
-# характер правки оригинала: глиф, подсказка, имя цвета в палитре
+# the nature of an edit to the original: glyph, tooltip, colour name in the
+# palette
 CHANGE_MARKS = {
     "cosmetic": ("·", QT_TRANSLATE_NOOP(
         "UnitsTable", "The original was edited cosmetically "
@@ -66,29 +69,29 @@ CHANGE_MARKS = {
         "change.meaningful"),
 }
 
-# Обрезка ячейки — модульная переменная, а не чтение настройки в _cell():
-# та вызывается на каждую отрисовку каждой ячейки. Обновляет её подписчик
-# _on_pref_changed.
+# The cell truncation is a module variable rather than a settings read inside
+# _cell(): that one is called on every paint of every cell. A subscriber
+# refreshes it
 MAX_CELL = prefs.get("editor/cell_limit")
 
-# общая с ядром — поиск устроен одинаково везде
+# shared with the core: the search works the same way everywhere
 escape_like = tm.escape_like
 
 
 def _worst_severity(codes: list[str]) -> str:
-    """Самая тяжёлая серьёзность среди замечаний строки — ею и красим «!».
+    """The heaviest severity among a row's issues; the «!» is coloured by it.
 
-    Серьёзность правила настраивается, поэтому спрашиваем набор, а не считаем
-    «есть ошибка / нет ошибки»: `inconsistent` в рекомендуемом наборе понижен
-    до сигнала, и красить его как предупреждение значило бы врать.
+    The severity of a rule is configurable, so we ask the rule set rather than
+    count «error or no error»: in the recommended set `inconsistent` is lowered to
+    a signal, and colouring it as a warning would be a lie.
     """
     rules = rules_state.ruleset()
     return min((rules.severity(c) for c in codes),
                key=lambda s: qa_rules.SEVERITY_RANK.get(s, 9),
                default=qa_rules.WARNING)
 
-# Подсказка к заголовку: что даёт клик. Без неё колонка шириной 26 пикселей
-# остаётся криптограммой.
+# A tooltip on the header: what a click does. Without it a column 26 pixels wide
+# stays a cryptogram.
 SORT_HINTS = {
     COL_KEY: QT_TRANSLATE_NOOP("UnitsTable", "Sort by key"),
     COL_FILE: QT_TRANSLATE_NOOP("UnitsTable", "Sort by file"),
@@ -105,10 +108,9 @@ SORT_HINTS = {
 SORT_CYCLE_HINT = QT_TRANSLATE_NOOP(
     "UnitsTable", "Click — ascending, again — descending, again — as it was")
 
-# Колонки с данными: всё, кроме колонок-кнопок ✓ ✗ C И. По этому списку
-# собираются оба подменю «Вида» — и «Сортировка», и «Колонки»: сортировать и
-# прятать имеет смысл ровно то, что показывает данные, а кнопку — ни то ни
-# другое.
+# The data columns: everything except the button columns ✓ ✗ C I. Both «View»
+# submenus are built from this list — «Sort» and «Columns» alike: sorting and
+# hiding make sense for exactly what shows data, and a button is neither.
 DATA_COLUMNS: tuple[tuple[int, str], ...] = (
     (COL_KEY, QT_TRANSLATE_NOOP("UnitsTable", "Key")),
     (COL_FILE, QT_TRANSLATE_NOOP("UnitsTable", "File")),
@@ -118,18 +120,19 @@ DATA_COLUMNS: tuple[tuple[int, str], ...] = (
     (COL_CHANGE, QT_TRANSLATE_NOOP("UnitsTable", "Change to original")),
     (COL_ISSUES, QT_TRANSLATE_NOOP("UnitsTable", "Issues")),
 )
-SORT_COLUMNS = DATA_COLUMNS     # прежнее имя: подменю сортировки звало его
+SORT_COLUMNS = DATA_COLUMNS     # the old name: the sort submenu called it
 
 _CHANGE_RANK = {"meaningful": 0, "cosmetic": 1}
 _NUM_RE = re.compile(r"(\d+)")
 
 
 def _text_key(value: str | None) -> tuple[int, tuple]:
-    """Ключ текста: пустое — в конец, числа сравниваются числами.
+    """A text key: empty goes last, and numbers compare as numbers.
 
-    Ключи локализации сплошь нумерованные (`agot_bla_2`, `agot_bla_10`), а
-    лексикографический порядок ставит 10 перед 2. Элементы кортежа одной формы
-    намеренно: иначе int и str поссорятся при сравнении соседних частей.
+    Localisation keys are numbered throughout (`agot_bla_2`, `agot_bla_10`), and
+    lexicographic order puts 10 before 2. The tuple elements are of a single shape
+    on purpose: otherwise int and str fall out when neighbouring parts are
+    compared.
     """
     if not value:
         return (1, ())
@@ -139,9 +142,9 @@ def _text_key(value: str | None) -> tuple[int, tuple]:
 
 @dataclass
 class UnitFilters:
-    status: str | None = None      # значение Status или None = все
-    file_rel: str | None = None    # точный rel_path файла
-    file_prefix: str | None = None # префикс папки (для дерева)
+    status: str | None = None      # a Status value, or None for all of them
+    file_rel: str | None = None    # the exact rel_path of a file
+    file_prefix: str | None = None # a folder prefix, for the tree
     search: str = ""
     show_deleted: bool = False
     only_issues: bool = False      # только строки с замечаниями проверки
@@ -171,15 +174,15 @@ class UnitsTableModel(QAbstractTableModel):
         theme.on_change(self._on_theme_changed)
 
     def _on_theme_changed(self) -> None:
-        """Цвета берутся в data(), поэтому достаточно попросить перерисовку."""
+        """The colours come from data(), so asking for a repaint is enough."""
         if self._rows:
             self.dataChanged.emit(
                 self.index(0, 0), self.index(len(self._rows) - 1, len(COLUMNS) - 1))
 
-    # --- загрузка ---
+    # --- loading ---
 
     def clear(self) -> None:
-        """Опустошить таблицу — при закрытии проекта соединение уже мертво."""
+        """Empty the table: by the time a project closes the connection is dead."""
         self.beginResetModel()
         self._rows = []
         self._row_by_id = {}
@@ -210,8 +213,8 @@ class UnitsTableModel(QAbstractTableModel):
             sql.append("AND f.rel_path LIKE ? || '/%'")
             params.append(filters.file_prefix)
         if filters.search:
-            # pylower — Unicode-регистр (встроенный LIKE регистронезависим только
-            # для ASCII); ESCAPE — чтобы % и _ в запросе искались буквально
+            # pylower gives Unicode case folding — the built-in LIKE is case-insensitive for
+            # ASCII only; ESCAPE makes % and _ in a query match literally
             sql.append(
                 "AND (pylower(u.key) LIKE ? ESCAPE '\\' "
                 "OR pylower(u.en_text) LIKE ? ESCAPE '\\' "
@@ -343,12 +346,12 @@ class UnitsTableModel(QAbstractTableModel):
         if column == COL_CHANGE:
             return lambda r: _CHANGE_RANK.get(r["change_kind"] or "", 2)
         if column == COL_ISSUES:
-            # больше замечаний выше; при равном числе выше те, где есть ошибки
+            # more issues first; on an equal count the rows holding errors come first
             return lambda r: tuple(-n for n in self._issue_rank.get(r["id"], (0, 0)))
         return lambda r: 0
 
     def refresh_row(self, unit_id: int) -> None:
-        """Обновить одну строку после сохранения (без полного reload)."""
+        """Refresh one row after a save, without a full reload."""
         i = self._row_by_id.get(unit_id)
         if i is None:
             return
@@ -390,10 +393,11 @@ class UnitsTableModel(QAbstractTableModel):
         return None
 
     def retranslate(self) -> None:
-        """Перечитать шапку на новом языке.
+        """Re-read the header in the new language.
 
-        Данные строк не трогаем: там текст мода, а не интерфейса. Статусы,
-        правда, интерфейсные — их перерисует общий dataChanged.
+        The row data is left alone: that is the text of the mod, not of the
+        interface. The statuses are interface text, though — the common
+        dataChanged repaints those.
         """
         self.headerDataChanged.emit(Qt.Horizontal, 0, len(COLUMNS) - 1)
         if self._rows:
@@ -444,8 +448,8 @@ class UnitsTableModel(QAbstractTableModel):
         if col >= COL_QS_FIRST:
             glyph, target, tip, color_key = QUICK_COLS[col]
             if role == Qt.DisplayRole:
-                # буквенные глифы переводятся вместе с шапкой: иначе в
-                # китайском интерфейсе в колонке осталась бы латиница
+                # the letter glyphs are translated together with the header: otherwise the
+                # Chinese interface would keep Latin letters in the column
                 return translate("UnitsTable", glyph)
             if role == Qt.TextAlignmentRole:
                 return Qt.AlignCenter
@@ -494,14 +498,14 @@ class UnitsTableModel(QAbstractTableModel):
     @staticmethod
     def _row_bg(r: sqlite3.Row) -> QColor | None:
         c = QColor(theme.status_color(r["status"]))
-        # удалённые строки приглушаем: на тёмной теме «темнее» нечитаемо,
-        # поэтому там наоборот подсветляем
+        # deleted rows are muted: on a dark theme «darker» is unreadable, so there we
+        # lighten them instead
         return (c.lighter(130) if theme.is_dark() else c.darker(115)) \
             if r["is_deleted"] else c
 
     @staticmethod
     def _quick_applicable(r: sqlite3.Row, target: Status) -> bool:
-        """Применима ли quick-кнопка к строке (иначе глиф приглушается)."""
+        """Whether a quick button applies to a row; if not, the glyph is muted."""
         status = r["status"]
         if r["is_deleted"] or r["en_text"] is None:
             return False
@@ -536,7 +540,7 @@ class UnitsTableModel(QAbstractTableModel):
         return True
 
     def raw_cell(self, row: int, col: int) -> str:
-        """Сырой (необрезанный) текст ячейки — для копирования."""
+        """The raw, untruncated text of a cell, for copying."""
         if not (0 <= row < len(self._rows)):
             return ""
         r = self._rows[row]
@@ -560,7 +564,7 @@ class UnitsTableModel(QAbstractTableModel):
     def row_data(self, row: int) -> sqlite3.Row | None:
         return self._rows[row] if 0 <= row < len(self._rows) else None
 
-    # --- утилиты для навигации ---
+    # --- navigation helpers ---
 
     def unit_id_at(self, row: int) -> int | None:
         return self._rows[row]["id"] if 0 <= row < len(self._rows) else None
@@ -605,9 +609,9 @@ class UnitsTableView(QTableView):
         self.setShowGrid(prefs.get("editor/show_grid"))
 
     def enable_header_sorting(self, on_click) -> None:
-        """Клик по заголовку сортирует; ✓ ✗ C И остаются кнопками.
+        """A click on a header sorts; ✓ ✗ C I stay buttons.
 
-        `setSortingEnabled` не включаем — см. модуль `gui/sorting.py`.
+        `setSortingEnabled` is deliberately left off — see `gui/sorting.py`.
         """
         header = self.horizontalHeader()
         header.setSectionsClickable(True)
@@ -643,21 +647,22 @@ class UnitsTableView(QTableView):
             self.setColumnWidth(col, 26)
         self.restore_column_widths()
 
-    # --- ширины колонок ---
+    # --- column widths ---
     #
-    # Сохраняются только те колонки, которые вообще можно потянуть, то есть
-    # `Interactive`. У `Stretch` ширина считается по окну, у `Fixed` она
-    # постоянна — записывать их значило бы однажды восстановить растянутую
-    # колонку фиксированной шириной прошлого окна.
+    # Only the columns that can actually be dragged are saved, that is, the
+    # `Interactive` ones. A `Stretch` width is computed from the window and a
+    # `Fixed` one is constant — recording those would one day restore a stretched
+    # column at the fixed width of a past window.
     #
-    # Ключ — английская подпись колонки, а не номер: тот же довод, что у
-    # скрытых колонок (`view/hidden_columns`). Вставь кто-нибудь колонку в
-    # середину, номера сдвинулись бы, и ширина уехала бы чужой колонке.
+    # The key is the English column label rather than its number, by the same
+    # argument as for the hidden columns (`view/hidden_columns`). Let somebody
+    # insert a column in the middle and the numbers would shift, sending a width
+    # to the wrong column.
     #
-    # `header.saveState()` не берём намеренно: он тянет за собой ещё и порядок
-    # секций с индикатором сортировки, а сортировкой в этом окне заведует
-    # `SortState` и восстанавливает её сам — два хозяина у одного индикатора
-    # разъезжаются молча.
+    # `header.saveState()` is deliberately not used: it drags along the section
+    # order together with the sort indicator, while sorting in this window is
+    # governed by `SortState` and restored by it — two owners of one indicator
+    # drift apart in silence.
 
     def _resizable_columns(self) -> list[tuple[int, str]]:
         header = self.horizontalHeader()
@@ -682,8 +687,8 @@ class UnitsTableView(QTableView):
                 saved[label] = int(value)
         for col, label in self._resizable_columns():
             width = saved.get(label)
-            # Ноль и отрицательное игнорируем: такая ширина прячет колонку
-            # насовсем, а прятать их — дело «Вид → Колонки», и там это обратимо.
+            # Zero and negative values are ignored: such a width hides a column for good,
+            # and hiding them is the business of «View → Columns», where it is reversible.
             if width and width > 0:
                 self.setColumnWidth(col, width)
 
