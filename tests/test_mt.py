@@ -1,4 +1,4 @@
-"""Тесты каркаса машинного перевода: защита разметки CK3."""
+"""Tests of the machine translation frame: guarding the CK3 markup."""
 from __future__ import annotations
 
 import pytest
@@ -35,7 +35,7 @@ def test_markup_is_hidden_from_translator():
 
 
 def test_at_icon_is_hidden_from_translator():
-    """Настоящая иконка CK3. До появления токена уезжала в переводчик голой."""
+    """A real CK3 icon. Before the token appeared it travelled to the translator bare."""
     text = "Gain @gold! and $VALUE$"
     shielded, mapping = mt.shield_tags(text)
     assert "@" not in shielded
@@ -51,7 +51,7 @@ def test_words_remain_translatable():
 def test_unshield_tolerates_spacing():
     text = "Value: $VALUE$"
     shielded, mapping = mt.shield_tags(text)
-    damaged = shielded.replace("⟦0⟧", "⟦ 0 ⟧")     # переводчик добавил пробелы
+    damaged = shielded.replace("⟦0⟧", "⟦ 0 ⟧")     # the translator added spaces
     assert mt.unshield(damaged, mapping) == text
 
 
@@ -87,7 +87,7 @@ def test_translate_reports_broken_markup():
     results = mt.translate_texts(
         BrokenProvider(), ["Gain $VALUE$ £gold£"], "english", "russian")
     _text, missing = results[0]
-    assert len(missing) == 2       # обе метки потеряны — строку надо проверить
+    assert len(missing) == 2       # both placeholders are lost — the row has to be checked
 
 
 def test_provider_must_return_same_count():

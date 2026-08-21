@@ -1,4 +1,4 @@
-"""Тесты панели подсказок памяти переводов в детальной панели."""
+"""Tests of the translation memory hints pane inside the detail pane."""
 from __future__ import annotations
 
 import os
@@ -54,7 +54,7 @@ def test_delete_entry_removes_suggestion(pane, db):
     tm.delete_entries(db, [hit.id])
     pane._reload_suggestions()
     assert pane.tm_list.count() == 0
-    # перевод самой строки не тронут
+    # the translation of the row itself is untouched
     assert db.execute("SELECT ru_text FROM units WHERE key='a'").fetchone()[0] == "Привет"
 
 
@@ -81,7 +81,7 @@ def test_attached_entry_is_not_editable(tmp_path, make_tree, monkeypatch, qtbot)
     hit = pane.tm_list.item(0).data(Qt.UserRole)
     assert hit.ru_text == "Привет" and hit.origin == "Ваниль CK3"
     assert not hit.editable and hit.id < 0
-    # правка и удаление недоступны и ничего не ломают
+    # editing and deleting are unavailable and break nothing
     pane.tm_list._delete(hit)
     pane.tm_list._edit(hit)
     assert tm.lookup(conn, "Hello")[0].ru_text == "Привет"

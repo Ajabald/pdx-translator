@@ -1,4 +1,4 @@
-"""Тесты единой статистики."""
+"""Tests of the single statistics."""
 from __future__ import annotations
 
 from pdxloc.core.stats import file_stats, format_status_bar, project_stats
@@ -17,7 +17,7 @@ def seed(db):
         (1, "k5", "stale", "р5"),
         (1, "k6", "ignored", None),
         (1, "k7", "custom", "р7"),
-        (1, "k8", "custom", None),      # custom без RU -> не done
+        (1, "k8", "custom", None),      # custom without RU -> not done
         (2, "m1", "translated", "р"),
         (2, "m2", "untranslated", None),
     ]
@@ -25,7 +25,7 @@ def seed(db):
         db.execute(
             "INSERT INTO units (file_id, key, en_text, ru_text, status) VALUES (?, ?, 'e', ?, ?)",
             (f, k, ru, st))
-    # удалённая строка не считается
+    # a deleted row does not count
     db.execute("INSERT INTO units (file_id, key, en_text, status, is_deleted) "
                "VALUES (1, 'dead', 'e', 'translated', 1)")
     db.commit()
@@ -34,9 +34,9 @@ def seed(db):
 def test_project_stats(db):
     seed(db)
     s = project_stats(db, 1)
-    # total: все живые кроме ignored (1) = 10 - 1 = 9
+    # total: every live one except ignored (1) = 10 - 1 = 9
     assert s.total == 9
-    # done: translated(2) + reviewed(1) + custom с RU (1) = 4
+    # done: translated(2) + reviewed(1) + custom with RU (1) = 4
     assert s.done == 4
     assert s.remaining == 5
     assert s.pct == round(100 * 4 / 9, 1)
@@ -46,7 +46,7 @@ def test_project_stats(db):
 def test_file_stats(db):
     seed(db)
     fs = {f.rel_path: f for f in file_stats(db, 1)}
-    assert fs["a_l_english.yml"].total == 7          # 8 живых строк файла - ignored
+    assert fs["a_l_english.yml"].total == 7          # 8 live rows of the file - ignored
     assert fs["a_l_english.yml"].done == 3           # translated+reviewed+custom(RU)
     assert fs["sub/b_l_english.yml"].total == 2
     assert fs["sub/b_l_english.yml"].done == 1

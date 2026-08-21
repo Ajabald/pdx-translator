@@ -1,8 +1,9 @@
-"""Вёрстка модальных окон.
+"""The layout of the modal windows.
 
-Длинная подпись без переноса растягивает окно на всю ширину экрана: окно
-«Загрузить перевод из мода» так открывалось шириной 1764 пикселя из-за одной
-поясняющей строки. Проверяем разом все окна, чтобы не ловить это глазами.
+A long label without wrapping stretches a window over the whole width of the
+screen: the «Load a translation from a mod» window used to open 1764 pixels wide
+because of one explanatory line. We check every window at once, so as not to catch
+this by eye.
 """
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ from pdxloc.core.scanner import scan_project  # noqa: E402
 EN = 'l_english:\n a:0 "Hello"\n b:0 "World"\n'
 RU = 'l_russian:\n a:0 "Привет"\n'
 
-# Подпись длиннее этого — уже абзац, ей нужен перенос.
+# A label longer than this is a paragraph already, it needs wrapping.
 LONG_LABEL = 60
 
 
@@ -76,21 +77,21 @@ def test_long_labels_wrap(conn, qtbot):
 
 
 def test_every_dialog_has_a_title(conn, qtbot):
-    """Окно без заголовка в панели задач выглядит как чужое."""
+    """A window without a title looks like somebody else's in the taskbar."""
     for name, dlg in all_dialogs(conn).items():
         qtbot.addWidget(dlg)
         assert dlg.windowTitle(), name
 
 
 def test_browse_buttons_are_consistent(conn, qtbot):
-    """Кнопка вызова проводника подписана одинаково во всех окнах."""
+    """The button that calls the explorer is labelled the same way in every window."""
     from PySide6.QtWidgets import QToolButton
 
     for name, dlg in all_dialogs(conn).items():
         qtbot.addWidget(dlg)
         for btn in dlg.findChildren(QToolButton):
-            # без подписи — служебные кнопки самого Qt (крестик очистки в поле
-            # поиска); с меню — выпадающие списки, а не вызов проводника
+            # without a label are the service buttons of Qt itself (the clear cross in a
+            # search field); with a menu are drop-down lists, not a call of the explorer
             if not btn.text() or btn.menu() is not None:
                 continue
             assert btn.text() == "Browse…", f"{name}: кнопка {btn.text()!r}"

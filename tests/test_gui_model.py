@@ -1,4 +1,4 @@
-"""GUI-тесты (pytest-qt, offscreen): модель таблицы + смоук конструирования окон."""
+"""GUI tests (pytest-qt, offscreen): the table model plus a smoke test of building the windows."""
 from __future__ import annotations
 
 import os
@@ -32,13 +32,13 @@ def test_model_load_and_roles(scanned, qtbot):
     model.reload(pid, UnitFilters())
     assert model.rowCount() == 2
     statuses = {model.data(model.index(i, COL_STATUS), Qt.DisplayRole) for i in range(2)}
-    # подписи берутся из statuses.label(): в тестах переводчик не установлен,
-    # поэтому виден язык оригинала
+    # the labels are taken from statuses.label(): in the tests no translator is
+    # installed, so the language of the original is what shows
     assert statuses == {statuses_mod.label(Status.TRANSLATED),
                         statuses_mod.label(Status.UNTRANSLATED)}
-    # цвет фона есть у любых строк
+    # a background colour is there for any rows
     assert model.data(model.index(0, COL_EN), Qt.BackgroundRole) is not None
-    # UserRole отдаёт unit_id
+    # UserRole hands back the unit_id
     uid = model.data(model.index(0, 0), Qt.UserRole)
     assert isinstance(uid, int)
     assert model.row_of_unit(uid) == 0
@@ -79,6 +79,6 @@ def test_detail_pane_save_flow(scanned, qtbot):
     row = conn.execute("SELECT * FROM units WHERE id = ?", (uid,)).fetchone()
     assert row["ru_text"] == "Пока"
     assert row["status"] == "translated"
-    # перевод попал в TM
+    # the translation got into the TM
     from pdxloc.core import tm
     assert tm.lookup(conn, "Goodbye")[0].ru_text == "Пока"

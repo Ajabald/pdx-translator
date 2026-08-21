@@ -1,8 +1,9 @@
-"""Скорость поиска похожих строк на настоящей базе.
+"""The speed of the search for similar rows on a real database.
 
-Синтетика ничего не говорит о времени: узкое место — полнотекстовый запрос по
-сотням тысяч записей. Берём ванильную базу CK3 из папки Bdd, копируем во
-временную папку (файл пользователя не трогаем) и меряем на ней.
+Synthetics say nothing about the time: the bottleneck is a full-text query over
+hundreds of thousands of records. We take the vanilla CK3 database out of the Bdd
+folder, copy it into a temporary folder (the user's file we do not touch) and
+measure on it.
 """
 from __future__ import annotations
 
@@ -16,13 +17,13 @@ from pdxloc.core import fuzzy, tm_import
 
 pytestmark = pytest.mark.realdata
 
-# Запрос идёт при каждом переходе на строку, поэтому бюджет — как у отрисовки.
-# Замер на ванильной базе (244 тыс. записей): ~16 мс, запас втрое.
+# The query goes at every move to a row, so the budget is that of a redraw.
+# Measured on the vanilla database (244 thousand records): ~16 ms, threefold room.
 BUDGET_MS = 50
 
 
 def _biggest_base():
-    # базы лежат в загонах своих игр, а старые — в корне Bdd
+    # the databases lie in the pens of their games, and the old ones in the root of Bdd
     bases = project.all_tm_databases()
     if not bases:
         return None
@@ -55,7 +56,7 @@ def test_similar_lookup_is_fast(indexed_base, tmp_path):
             "You are a member of the Kingsguard",
             "Grant the land to your loyal vassal",
         ]
-        for q in queries:                       # прогрев кэша страниц
+        for q in queries:                       # warming the page cache
             fuzzy.lookup_similar(conn, q)
 
         started = time.perf_counter()

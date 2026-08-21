@@ -1,4 +1,4 @@
-"""Тесты v3-M3: язык перевода из проекта, trailing, пропуск неизменных файлов."""
+"""Tests of v3-M3: the target language out of the project, trailing, skipping unchanged files."""
 from __future__ import annotations
 
 from pdxloc.core import paradox_yaml
@@ -22,11 +22,11 @@ def test_map_relpath_any_languages():
     assert map_relpath("a_l_english.yml", "english", "french") == "a_l_french.yml"
     assert map_relpath("dir/x_l_english_MOD.yml", "english", "simp_chinese") == \
         "dir/x_l_simp_chinese_MOD.yml"
-    # каталог языка тоже меняется: моды мастерской лежат как
-    # localization/<язык>/…, и корнем указывают саму localization
+    # the language directory changes as well: the workshop mods lie as
+    # localization/<language>/…, and the root points at localization itself
     assert map_relpath("english/x_l_english.yml", "english", "french") == \
         "french/x_l_french.yml"
-    # но только целым сегментом — english_notes не папка языка
+    # but only as a whole segment — english_notes is no language folder
     assert map_relpath("english_notes/x_l_english.yml", "english", "french") == \
         "english_notes/x_l_french.yml"
 
@@ -78,9 +78,9 @@ def test_unchanged_file_not_rewritten(db, make_tree, tmp_path):
 
     r2 = export_project(db, pid, ExportOptions(mode="translated_only"), out_root=out)
     assert r2.files_written == 0 and r2.files_unchanged == 1
-    assert target.stat().st_mtime_ns == mtime      # файл не тронут
+    assert target.stat().st_mtime_ns == mtime      # the file is untouched
 
-    # правка перевода -> файл снова пишется
+    # an edit of the translation -> the file is written again
     db.execute("UPDATE units SET ru_text = 'Здравствуй' WHERE key = 'a'")
     db.commit()
     r3 = export_project(db, pid, ExportOptions(mode="translated_only"), out_root=out)
@@ -88,11 +88,11 @@ def test_unchanged_file_not_rewritten(db, make_tree, tmp_path):
 
 
 def test_scan_uses_project_languages(db, make_tree):
-    """Дерево перевода ищется по языку проекта, а не по «russian»."""
+    """The translation tree is looked for by the language of the project, not by «russian»."""
     en = make_tree({"mod_l_english.yml": EN}, "en")
     fr = make_tree({
         "mod_l_french.yml": 'l_french:\n a:0 "Bonjour"\n',
-        "mod_l_russian.yml": 'l_russian:\n a:0 "Привет"\n',   # чужой язык — игнорируем
+        "mod_l_russian.yml": 'l_russian:\n a:0 "Привет"\n',   # a foreign language — we ignore it
     }, "fr")
     pid = make_french_project(db, en, fr)
     scan_project(db, pid)

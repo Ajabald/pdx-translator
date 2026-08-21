@@ -1,4 +1,4 @@
-"""Тесты управления памятью переводов (просмотр, правка, удаление)."""
+"""Tests of managing the translation memory (browsing, editing, deleting)."""
 from __future__ import annotations
 
 import os
@@ -22,7 +22,7 @@ def seed(db):
 def test_browse_and_search(db):
     seed(db)
     assert len(tm.browse(db)) == 3
-    found = tm.browse(db, search="привет")       # регистр не важен
+    found = tm.browse(db, search="привет")       # the case does not matter
     assert [r.ru_text for r in found] == ["Привет"]
     assert [r.en_text for r in tm.browse(db, search="ЗОЛОТО")] == ["Gold"]
     assert [r.key for r in tm.browse(db, search="k_world")] == ["k_world"]
@@ -38,12 +38,12 @@ def test_update_entry(db):
     record = tm.browse(db, search="Hello")[0]
     assert tm.update_entry(db, record.id, "Здравствуйте")
     assert [h.ru_text for h in tm.lookup(db, "Hello")] == ["Здравствуйте"]
-    # пустой текст не принимается
+    # an empty text is not accepted
     assert not tm.update_entry(db, record.id, "   ")
 
 
 def test_update_to_existing_duplicate_collapses(db):
-    """Правка в уже существующий вариант не должна ломать уникальность."""
+    """An edit into an already existing variant must not break the uniqueness."""
     tm.upsert(db, "Hello", "Привет")
     tm.upsert(db, "Hello", "Здравствуйте")
     db.commit()
@@ -90,9 +90,9 @@ def test_attached_entries_are_read_only(tmp_path, make_tree, monkeypatch):
 
     own_count, total = tm.counts(conn)
     assert own_count == 1 and total == 3
-    # фильтр «только мои»
+    # the «only mine» filter
     assert len(tm.browse(conn, only_editable=True)) == 1
-    # удаление не трогает подключённую базу
+    # deleting does not touch the attached database
     assert tm.delete_entries(conn, [r.id for r in attached]) == 0
     assert len(tm.browse(conn)) == 3
     conn.close()
@@ -107,12 +107,12 @@ def test_dialog_edit_and_delete(db, qtbot):
     qtbot.addWidget(tab)
     assert tab.model.rowCount() == 3
 
-    # правка через таблицу
+    # an edit through the table
     row = next(i for i in range(3) if tab.model.record(i).en_text == "Hello")
     assert tab.model.setData(tab.model.index(row, COL_RU), "Здравствуйте", Qt.EditRole)
     assert [h.ru_text for h in tm.lookup(db, "Hello")] == ["Здравствуйте"]
 
-    # поиск
+    # the search
     tab.search.setText("Мир")
     tab.reload()
     assert tab.model.rowCount() == 1
