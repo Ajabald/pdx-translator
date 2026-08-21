@@ -1,7 +1,8 @@
-"""Запись перевода в файлы мода.
+"""Writing the translation into the mod files.
 
-Папка вывода живёт в проекте отдельно от `ru_root`: та — источник импорта, и
-писать по умолчанию поверх неё значит затирать дерево, из которого читали.
+The output folder is kept in the project separately from `ru_root`: that one is
+the import source, and writing over it by default would overwrite the very tree
+the rows were read from.
 """
 from __future__ import annotations
 
@@ -70,9 +71,9 @@ class ExportDialog(QDialog):
         self.stale_check.setChecked(True)
         layout.addWidget(self.stale_check)
 
-        # Единственные ворота, за которыми машинный перевод выходит наружу.
-        # По умолчанию закрыты: то, что не читал никто, не должно попадать к
-        # игрокам просто потому, что человек не снял галку.
+        # The only gate machine translation leaves through. Closed by default:
+        # what nobody has read must not reach players merely because someone
+        # failed to clear a checkbox.
         machine = counts["machine"] or 0
         self.machine_check = QCheckBox(
             fill(translate("Export",
@@ -141,11 +142,11 @@ class ExportDialog(QDialog):
         layout.addWidget(self.buttons)
 
     def _on_machine_toggled(self, checked: bool) -> None:
-        """Предупреждение показываем сразу, а не модалкой перед записью.
+        """The warning is shown at once, not as a modal before writing.
 
-        Модалка там уже занята предупреждением о перезаписи файлов, и второе
-        подряд читают не глядя. Здесь же оно стоит рядом с самой галкой — в тот
-        момент, когда решение принимается.
+        The modal there is already taken by the overwrite warning, and a second
+        one in a row gets dismissed unread. Here it stands next to the checkbox
+        itself — at the moment the decision is made.
         """
         self.machine_warning.setVisible(checked)
 
@@ -156,7 +157,7 @@ class ExportDialog(QDialog):
             self.path_edit.setText(path)
 
     def _update_preview(self) -> None:
-        """Показать, как будет назван файл и что окажется в заголовке."""
+        """Show what the file will be named and what will stand in its header."""
         row = self.conn.execute(
             "SELECT rel_path FROM files WHERE project_id = ? AND is_deleted = 0 "
             "ORDER BY rel_path LIMIT 1", (self.project_id,)).fetchone()
@@ -181,12 +182,12 @@ class ExportDialog(QDialog):
         self.warning.setVisible(same)
 
     def _existing_targets(self, root: Path) -> list[str]:
-        """Какие файлы экспорта уже лежат в папке назначения.
+        """Which of the files we are about to write already exist there.
 
-        Проверяем ровно те пути, которые собираемся писать (их десятки), а не
-        обходим дерево рекурсивно: папкой назначения бывает мод в Documents или
-        каталог игры, и rglob по ним подвешивал окно на секунды — а на
-        недопечатанном пути вроде «C:\\» и вовсе на минуты.
+        We check exactly the paths we intend to write — dozens of them — instead
+        of walking the tree: the destination is often a mod in Documents or the
+        game folder itself, and an rglob over those hung the window for seconds,
+        or for minutes on a half-typed path like «C:\\».
         """
         map_relpath = self._format().map_relpath
         rows = self.conn.execute(
@@ -197,7 +198,7 @@ class ExportDialog(QDialog):
                 if (root / rel).is_file()]
 
     def _format(self):
-        """Формат локализации проекта — от него зависят имена файлов."""
+        """The localisation format of the project: the file names follow from it."""
         from pdxloc.core import loc_formats
         from pdxloc.project import get_loc_format
 

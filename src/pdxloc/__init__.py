@@ -1,4 +1,4 @@
-"""PDX Translator — рабочее место переводчика модов Paradox.
+"""PDX Translator — a workbench for translating Paradox mods.
 
 Copyright (C) 2026 Ajabald
 
@@ -15,18 +15,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Уведомление стоит здесь, а не в шапке каждого из 83 модулей: GPL советует
-второе, но считает достаточным «прикрепить к программе», а восемьдесят три
-одинаковых шапки в проекте на одного автора — шум, который перестают читать
-на третьем файле. Точка входа пакета видна и человеку, и сборщику.
+The notice sits here rather than atop each of the 83 modules. The GPL advises
+the latter but accepts «attach to the program», and eighty-three identical
+headers in a one-author project are noise people stop reading by the third file.
+The package entry point is visible to a human and to the builder alike.
 
-Интерфейсная часть повторяет уведомление в окне «О программе» — этого просит
-то же приложение к лицензии: «for a GUI interface, you would use an about box».
+The interface repeats the notice in the «About» window — the same appendix to the
+licence asks for exactly that: «for a GUI interface, you would use an about box».
 """
 
 __version__ = "0.1.2"
 
-# Для окна «О программе» и любого другого места, где эти строки понадобятся:
-# держать их в одном месте дешевле, чем сверять копии.
+# For the «About» window and anywhere else these lines are needed: keeping them
+# in one place is cheaper than keeping copies in step.
 COPYRIGHT = "Copyright (C) 2026 Ajabald"
 LICENCE = "GNU GPL v3 or later"

@@ -1,25 +1,25 @@
 """Claude API (Anthropic).
 
-Обращаемся напрямую по HTTP, а не официальным SDK, сознательно: единственная
-зависимость приложения — PySide6, и ради шести POST-запросов вторую не заводим.
-Для одного эндпоинта `/v1/messages` это оправдано.
+We speak plain HTTP rather than use the official SDK, and that is deliberate: the
+application has exactly one dependency, PySide6, and a second one is not worth
+six POST requests. For a single `/v1/messages` endpoint the trade is fair.
 
-Три вещи, которые легко сделать неправильно по памяти:
+Three things that are easy to get wrong from memory:
 
-* **`temperature` на Opus 5 не принимается вовсе** — параметров сэмплирования у
-  модели больше нет, и запрос с ними отвергается с кодом 400. Ровность ответа
-  задаётся промптом и низким усилием;
-* **структурированный вывод** (`output_config.format`) гарантирует форму ответа
-  на уровне сервиса. С ним разбор перестаёт быть местом, где всё ломается, а
-  деградация до запроса по строке остаётся редким путём;
-* **отказ приходит как успех.** Классификаторы безопасности отвечают HTTP 200 с
-  `stop_reason: "refusal"` и пустым содержимым — код, читающий `content[0]` не
-  глядя, на этом падает.
+* **`temperature` is not accepted by Opus 5 at all** — the model no longer takes
+  sampling parameters, and a request carrying them is rejected with a 400. The
+  evenness of the answer comes from the prompt and from low effort instead;
+* **structured output** (`output_config.format`) guarantees the shape of the
+  answer at the service level. With it, parsing stops being the place where
+  everything breaks, and falling back to one request per row stays a rare path;
+* **a refusal arrives as a success.** The safety classifiers answer HTTP 200 with
+  `stop_reason: "refusal"` and empty content — code that reads `content[0]`
+  without looking falls over right there.
 
-Усилие держим низким: перевод строки локализации — не та задача, ради которой
-стоит платить за размышления. Сами размышления при этом не выключаем: у Opus 5
-выключение чревато утечкой служебных тегов в ответ, а это прямо испортило бы
-перевод.
+Effort is kept low: translating a localisation row is not a task worth paying to
+think about. Thinking itself is not switched off, though: with Opus 5, switching
+it off risks service tags leaking into the answer, which would spoil the
+translation outright.
 """
 from __future__ import annotations
 
@@ -77,7 +77,7 @@ class ClaudeProvider:
                 },
                 timeout=self.config.timeout,
                 service=self.label,
-                # 529 — сервис перегружен: это «подожди», а не «ты не прав»
+                # 529 means the service is overloaded: that is «wait», not «you are wrong»
                 quota_codes=(429, 529),
                 opener=self.config.extra.get("opener"),
             )

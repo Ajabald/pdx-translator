@@ -1,17 +1,18 @@
-"""Языки проекта у уже созданного проекта.
+"""The project languages of a project that already exists.
 
-Раньше пара языков задавалась только при создании и потом не менялась: если
-её указали неверно, проект приходилось заводить заново.
+The pair used to be set at creation time and never changed after: get it wrong
+and the project had to be created from scratch.
 
-Предпросмотр обязателен по той же причине, что и при смене папки оригинала.
-Сканер ищет файлы по метке `_l_<язык>` в имени, и смена языка папки — это
-такая же тихая катастрофа, как неверный путь: все строки станут удалёнными, а
-переводы уедут в архив. Разница в том, что здесь ничто не выглядит подозрительно
-— папка на месте, кнопка нажимается.
+The preview is mandatory for the same reason as when the original folder is
+changed. The scanner finds files by the `_l_<language>` marker in the name, so
+changing the folder language is as quiet a catastrophe as a wrong path: every row
+turns deleted and the translations move to the archive. The difference is that
+nothing here looks suspicious — the folder is in place, the button presses.
 
-Язык текста, наоборот, безопасен: файлов он не касается вовсе, только
-машинного перевода, именования баз памяти и языковых правил проверки. Поэтому
-окно честно говорит «строки не затронуты», когда меняют только его.
+The text locale, by contrast, is safe: it does not touch files at all, only
+machine translation, the naming of memory databases and the language rules of the
+check. That is why the window honestly says «rows are not affected» when only the
+locale changes.
 """
 from __future__ import annotations
 
@@ -31,7 +32,7 @@ from pdxloc.gui.widgets import HintLabel
 
 
 class LanguagesDialog(QDialog):
-    # True — менялась папка языка, и проекту нужно сканирование
+    # True when the language folder changed and the project needs a scan
     languagesChanged = Signal(bool)
 
     def __init__(self, conn: sqlite3.Connection, project_id: int = 1, parent=None):
@@ -60,8 +61,8 @@ class LanguagesDialog(QDialog):
         form.setHorizontalSpacing(10)
         layout.addLayout(form)
 
-        # Игра выше папок языка, потому что решает, какие папки предлагать:
-        # у EU4 нет русской, у Victoria 3 есть турецкая.
+        # The game stands above the language folders because it decides which folders
+        # are offered: EU4 has no Russian, Victoria 3 has Turkish.
         self.game_combo = QComboBox()
         self.game_combo.setEditable(True)
         for game_id in games.ORDER:
@@ -123,11 +124,11 @@ class LanguagesDialog(QDialog):
             box.currentTextChanged.connect(self._refresh)
         self._refresh()
 
-    # --- поля ---
+    # --- fields ---
 
     @staticmethod
     def _language_box(value: str) -> QComboBox:
-        """Папка языка. Поле редактируемое: моды заводят и свои имена."""
+        """The language folder. The field is editable: mods invent names of their own."""
         box = QComboBox()
         box.setEditable(True)
         for code in lang_mod.PARADOX_LANGUAGES:
@@ -146,7 +147,8 @@ class LanguagesDialog(QDialog):
 
     @staticmethod
     def _code(box: QComboBox) -> str:
-        """Код из поля: выбранный пункт несёт его в data, вписанный — в тексте."""
+        """The code from the field: a chosen item carries it in data, a typed one in
+        its text."""
         text = box.currentText().strip()
         index = box.findText(text)
         if index >= 0 and box.itemData(index):
@@ -166,7 +168,7 @@ class LanguagesDialog(QDialog):
             src_locale=lang_mod.resolve_locale(src_lang, src_locale),
             tgt_locale=lang_mod.resolve_locale(tgt_lang, tgt_locale))
 
-    # --- предпросмотр ---
+    # --- preview ---
 
     def game_id(self) -> str:
         text = self.game_combo.currentText().strip()
@@ -176,10 +178,10 @@ class LanguagesDialog(QDialog):
         return games.slug(text) if text else games.CK3
 
     def _on_game_changed(self) -> None:
-        """Смена игры меняет список предлагаемых папок языка.
+        """Changing the game changes which language folders are offered.
 
-        Выбранное значение не трогаем: мод волен завести папку, которой у игры
-        нет, и подменять её за человека нельзя.
+        The chosen value is left alone: a mod is free to create a folder the game
+        does not have, and substituting it for the person is not ours to do.
         """
         for box in (self.src_lang, self.tgt_lang):
             current = box.currentText()
@@ -193,7 +195,7 @@ class LanguagesDialog(QDialog):
     def _on_split_toggled(self, shown: bool) -> None:
         self.locales.setVisible(shown)
         if shown:
-            # подставляем то, что и так подразумевается — чтобы поле не пустовало
+            # fill in what is implied anyway, so the field is not left empty
             values = self.values()
             self.src_locale.setCurrentText(values.src_locale)
             self.tgt_locale.setCurrentText(values.tgt_locale)
@@ -231,9 +233,9 @@ class LanguagesDialog(QDialog):
         project_mod.set_game(self.conn, game_id, self.project_id)
         project_mod.set_languages(self.conn, values, self.project_id)
         if moved:
-            # Файл сейчас открыт, и перенести его отсюда значило бы закрыть
-            # проект посреди диалога. Загон — работа защиты при следующем
-            # открытии; двух механизмов для одного действия быть не должно.
+            # The file is open right now, and moving it from here would mean closing the
+            # project in the middle of a dialog. Sorting it into the right pen is the job
+            # of the guard at the next open; one action should not have two mechanisms.
             QMessageBox.information(
                 self, translate("LanguagesDialog", "Project languages"),
                 fill(translate(

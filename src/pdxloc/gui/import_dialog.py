@@ -32,7 +32,7 @@ from pdxloc.core.loc_import import ImportOptions, ParsedTree
 
 
 class ImportDialog(QDialog):
-    imported = Signal()      # строки изменились — обновить таблицу и счётчики
+    imported = Signal()      # rows changed: refresh the table and the counters
 
     def __init__(self, conn: sqlite3.Connection, project_id: int, parent=None):
         super().__init__(parent)
@@ -41,7 +41,7 @@ class ImportDialog(QDialog):
         self.setWindowTitle(translate("Import", "Load translation from mod"))
         self.setMinimumWidth(640)
 
-        self._tree: ParsedTree | None = None    # разобранное дерево выбранной папки
+        self._tree: ParsedTree | None = None    # the parsed tree of the chosen folder
         self._plan: loc_import.ImportPlan | None = None
 
         proj = conn.execute(
@@ -55,7 +55,7 @@ class ImportDialog(QDialog):
             "Take translations from a folder with ready localization files — "
             "someone else's translation of this mod, say, or your own edits "
             "made directly in the files."))
-        intro.setWordWrap(True)      # иначе окно растягивается на всю ширину экрана
+        intro.setWordWrap(True)      # otherwise the window stretches across the screen
         layout.addWidget(intro)
 
         row = QHBoxLayout()
@@ -77,7 +77,8 @@ class ImportDialog(QDialog):
         self.skip_equal.setChecked(True)
         layout.addWidget(self.skip_equal)
 
-        # Галки не трогают диск — только пересчёт по разобранному дереву.
+        # The checkboxes never touch the disk: only the plan is recomputed over the
+        # already parsed tree.
         for w in (self.overwrite, self.skip_equal):
             w.toggled.connect(self._preview)
         self.path_edit.editingFinished.connect(self._reread)
@@ -95,7 +96,7 @@ class ImportDialog(QDialog):
 
         self._reread()
 
-    # --- служебное ---
+    # --- internals ---
 
     def _options(self) -> ImportOptions:
         return ImportOptions(overwrite=self.overwrite.isChecked(),
@@ -113,13 +114,13 @@ class ImportDialog(QDialog):
             "SELECT rel_path FROM files WHERE project_id = ? AND is_deleted = 0 "
             "ORDER BY rel_path", (self.project_id,))]
 
-    # --- чтение дерева ---
+    # --- reading the tree ---
 
     def _reread(self) -> None:
-        """Разобрать выбранную папку — единственное место, читающее диск.
+        """Parse the chosen folder — the only place here that touches the disk.
 
-        Зовётся при открытии окна и при смене папки. Правила приёма сюда не
-        приходят: они на состав файлов не влияют.
+        Called when the window opens and when the folder changes. The import
+        rules never reach this point: they do not affect which files are found.
         """
         from pdxloc.project import languages as project_languages
 
@@ -138,10 +139,10 @@ class ImportDialog(QDialog):
             QApplication.restoreOverrideCursor()
         self._preview()
 
-    # --- план и применение ---
+    # --- the plan and applying it ---
 
     def _preview(self) -> None:
-        """Пересчитать план по разобранному дереву. Диска не касается."""
+        """Recompute the plan over the parsed tree. Never touches the disk."""
         if self._tree is None:
             return
         self._plan = loc_import.build_plan(
@@ -187,5 +188,5 @@ class ImportDialog(QDialog):
         self.report_box.setPlainText(
             report.summary() + translate("Import", "\n\nDone. Undo it all with Ctrl+Z."))
         self.ok_button.setEnabled(False)
-        self._plan = None            # применять второй раз нечего
+        self._plan = None            # there is nothing left to apply a second time
         self.imported.emit()

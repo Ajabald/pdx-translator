@@ -1,8 +1,8 @@
-"""Вкладка «Записи»: просмотр, правка и удаление пар памяти переводов.
+"""The «Entries» tab: browsing, editing and deleting translation memory pairs.
 
-Свои записи (память проекта) правятся и удаляются прямо здесь; записи
-подключённых баз показываются приглушённым цветом — эти файлы открыты только
-на чтение.
+Own entries — the project's memory — are edited and deleted right here; entries
+of attached databases are shown in a muted colour, because those files are open
+read-only.
 """
 from __future__ import annotations
 
@@ -57,7 +57,7 @@ class TmTableModel(QAbstractTableModel):
         theme.on_change(self._on_theme_changed)
 
     def _on_theme_changed(self) -> None:
-        """Цвет нередактируемых записей берётся в data() — хватит перерисовки."""
+        """The colour of read-only entries comes from data(): a repaint is enough."""
         if self._rows:
             self.dataChanged.emit(
                 self.index(0, 0), self.index(len(self._rows) - 1, len(COLUMNS) - 1))
@@ -66,8 +66,8 @@ class TmTableModel(QAbstractTableModel):
         self.beginResetModel()
         self._rows = tm.browse(
             self.conn, search=search, only_editable=only_editable, limit=BROWSE_LIMIT)
-        # порядок из SQL — «лучший источник и свежее выше»; к нему возвращает
-        # третий клик по заголовку
+        # the SQL order — «better source and newer first»; the third click on a
+        # header returns to it
         self._natural = {r.id: i for i, r in enumerate(self._rows)}
         self._rows = self._sorted_rows()
         self.endResetModel()
@@ -156,9 +156,9 @@ class TmEntriesTab(QWidget):
 
         layout = QVBoxLayout(self)
 
-        # Вводного абзаца на три строки больше нет: он занимал место в самом
-        # верху каждый раз, а сказать хотел ровно то, что и так видно по
-        # цвету строк и подсказкам.
+        # The three-line introduction is gone: it took the topmost spot every
+        # single time to say exactly what the row colours and the tooltips
+        # already say.
         row = QHBoxLayout()
         row.addWidget(QLabel(translate("TmEntries", "Search:")))
         self.search = QLineEdit()
@@ -186,8 +186,9 @@ class TmEntriesTab(QWidget):
         self.table.customContextMenuRequested.connect(self._show_menu)
 
         header = self.table.horizontalHeader()
-        # Оригинал и перевод тянутся, служебные колонки — по содержимому:
-        # раньше все пять стояли фиксированной ширины и текст обрывался.
+        # The original and the translation stretch, the service columns fit
+        # their content: all five used to be a fixed width and the text was cut
+        # off.
         header.setSectionResizeMode(COL_EN, QHeaderView.Stretch)
         header.setSectionResizeMode(COL_RU, QHeaderView.Stretch)
         for col in (COL_ORIGIN, COL_KEY, COL_DATE):
@@ -224,21 +225,23 @@ class TmEntriesTab(QWidget):
         self.reload()
 
     def shutdown(self) -> None:
-        """Погасить отложенный поиск.
+        """Put out a pending search.
 
-        Таймер не должен пережить окно: соединение проекта к тому времени
-        бывает уже закрыто, и отложенный запрос падал на мёртвой базе.
+        The timer must not outlive the window: by then the project connection is
+        sometimes already closed, and the deferred query fell over on a dead
+        database.
         """
         self._debounce.stop()
 
     def status_text(self) -> str:
         return self._status
 
-    # --- данные ---
+    # --- data ---
 
     def reload(self) -> None:
-        # Явная перезагрузка отменяет отложенную: иначе таймер поиска мог
-        # сработать уже после закрытия проекта и упасть на мёртвой базе.
+        # An explicit reload cancels the pending one: otherwise the search
+        # timer could fire after the project was closed and fall over on a dead
+        # database.
         self._debounce.stop()
         self.model.reload(
             search=self.search.text().strip(), only_editable=self.own_only.isChecked())
@@ -269,7 +272,7 @@ class TmEntriesTab(QWidget):
             shown, limited, own, extra)
         self.statusChanged.emit(self._status)
 
-    # --- действия ---
+    # --- actions ---
 
     def _show_menu(self, pos) -> None:
         menu = QMenu(self.table)

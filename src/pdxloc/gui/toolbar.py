@@ -1,11 +1,12 @@
-"""Панель инструментов и полоса контекста проекта.
+"""The toolbar and the project context strip.
 
-Иконки берутся из стандартного набора стиля Qt: свой набор пришлось бы рисовать
-и тащить в сборку, а тема их перекрашивает сама.
+The icons come from the standard Qt style set: a set of our own would have to be
+drawn and shipped, while these the theme repaints by itself.
 
-Контекст (языки проекта и подключённые базы памяти) висит справа в шапке — как
-у ESP/ESM Translator, где игра, кодировка и активная база видны всегда. Раньше
-эти сведения приходилось искать по диалогам.
+The context — the project languages and the attached memory databases — sits on
+the right of the header, the way ESP/ESM Translator always shows the game, the
+encoding and the active database. This used to be information you had to go
+hunting for through dialogs.
 """
 from __future__ import annotations
 
@@ -28,12 +29,12 @@ CTX = "Toolbar"
 
 
 def icon(widget: QWidget, name: str):
-    """Стандартная иконка стиля Qt — для мест, где своей ещё нет."""
+    """A standard Qt style icon, for the places that have none of their own yet."""
     return widget.style().standardIcon(getattr(QStyle, name))
 
 
 class ContextBar(QWidget):
-    """Языки проекта и подключённые базы памяти — всегда на виду."""
+    """The project languages and the attached memory databases, always in sight."""
 
     tmSourcesChanged = Signal()
 
@@ -58,7 +59,7 @@ class ContextBar(QWidget):
         self.set_project(None)
 
     def retranslate(self) -> None:
-        """Полоса контекста собирается заново — подписи в ней динамические."""
+        """The context strip is rebuilt: everything written on it is dynamic."""
         self.langs.setToolTip(translate("Toolbar", "Project languages: original → translation"))
         self.tm_button.setToolTip(translate(
             "Toolbar", "Attached translation memory databases — they can be "
@@ -80,11 +81,12 @@ class ContextBar(QWidget):
         langs = project_mod.languages(self.conn)
         pair = f"{langs.src_lang} → {langs.tgt_lang}"
         if langs.split:
-            # языки текста расходятся с папками — показываем оба, иначе
-            # шапка врала бы о том, на каком языке идёт перевод
+            # the text locales differ from the folders: show both, or the
+            # header would lie about the language being translated into
             pair += f"  ({langs.src_locale} → {langs.tgt_locale})"
-        # Игра впереди языков, как в EET, где она видна всегда: у человека с
-        # проектами двух игр иначе нет способа заметить, что он правит не тот.
+        # The game comes before the languages, as in EET where it is always in
+        # sight: with projects for two games open there is otherwise no way to
+        # notice you are editing the wrong one.
         self.langs.setText(f"{games.title(project_mod.game(self.conn))} · {pair}")
 
         enabled = set(project_mod.get_tm_sources(self.conn))
@@ -127,15 +129,15 @@ class ContextBar(QWidget):
 
 
 def build_toolbar(window, registry) -> QToolBar:
-    """Собрать панель из действий реестра.
+    """Build the toolbar out of the action registry.
 
-    Панель — витрина, а не отдельный набор команд: каждая кнопка обязана иметь
-    пункт главного меню (см. `actions.TOOLBAR` и тест, который это стережёт).
-    Раньше четыре кнопки не имели пункта меню вообще, а две вдобавок были
-    самостоятельными QAction-дублями действий таблицы.
+    The toolbar is a shop window, not a separate set of commands: every button
+    must have a main-menu entry (see `actions.TOOLBAR` and the test that guards
+    it). Four buttons used to have no menu entry at all, and two of those were
+    standalone QAction duplicates of the table's own actions.
     """
     bar = QToolBar(translate("Toolbar", "Toolbar"), window)
-    bar.setObjectName("main_toolbar")     # без имени Qt не сохранит состояние
+    bar.setObjectName("main_toolbar")     # without a name Qt will not save its state
 
     for spec in actions_mod.ACTIONS:
         if spec.icon:

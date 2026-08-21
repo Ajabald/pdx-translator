@@ -1,18 +1,17 @@
-"""Ручной веб-режим: перевод через браузер, без ключей.
+"""The manual web route: translation through a browser, no keys at all.
 
-Перенос приёма из ESP/ESM Translator. Инструмент склеивает пачку строк
-нумерованными разделителями, человек вставляет её в любой веб-переводчик,
-возвращает результат, инструмент режет обратно. Ключей не нужно вовсе, работает
-с чем угодно — и это единственный режим, доступный тому, у кого нет ни одной
-подписки.
+The trick is carried over from ESP/ESM Translator. The tool joins a batch of rows
+with numbered separators, the person pastes it into any web translator, brings
+the result back, and the tool cuts it apart again. No key is needed, it works
+with anything — and it is the only route open to someone with no subscription.
 
-**Разделители нумерованные, и это главное.** Ненумерованный разделитель ловит
-только потерю строки; нумерованный ловит ещё и перестановку — а перевод,
-приземлившийся на чужой ключ, выглядит как сделанная работа и находится через
-недели. При любом расхождении пачка не применяется целиком.
+**The separators are numbered, and that is the whole point.** An unnumbered
+separator catches a lost row only; a numbered one also catches a reordering — and
+a translation that lands on somebody else's key looks like finished work and is
+found weeks later. On any mismatch the batch is not applied at all.
 
-В сеть модуль не ходит: `join` и `split` — обычные функции, и проверяются без
-Qt и без сокета.
+The module never touches the network: `join` and `split` are ordinary functions,
+tested without Qt and without a socket.
 """
 from __future__ import annotations
 
@@ -30,7 +29,7 @@ def _line(separator: str, index: int) -> str:
 
 
 def join(texts: list[str], separator: str = DEFAULT_SEPARATOR) -> str:
-    """Склеить пачку для вставки в переводчик."""
+    """Join a batch for pasting into a translator."""
     parts: list[str] = []
     for index, text in enumerate(texts):
         parts.append(_line(separator, index))
@@ -45,10 +44,11 @@ def _pattern(separator: str) -> re.Pattern:
 
 
 def split(text: str, count: int, separator: str = DEFAULT_SEPARATOR) -> list[str]:
-    """Разрезать ответ обратно. Любое расхождение — отказ применить пачку.
+    """Cut the answer back apart. Any mismatch refuses the whole batch.
 
-    Сверяем не только количество: номера обязаны идти подряд от нуля. Сервис,
-    поменявший куски местами, иначе прошёл бы незамеченным.
+    It is not only the count that is checked: the numbers must run consecutively
+    from zero. A service that swapped two pieces around would otherwise pass
+    unnoticed.
     """
     marks = list(_pattern(separator).finditer(text))
     numbers = [int(m.group(1)) for m in marks]
@@ -67,12 +67,12 @@ def split(text: str, count: int, separator: str = DEFAULT_SEPARATOR) -> list[str
 
 
 class ManualProvider:
-    """Формально провайдер, фактически — конвейер без транспорта.
+    """Formally a provider, in fact a pipeline with no transport.
 
-    Реализует тот же договор, что и остальные, чтобы охват, экранирование
-    разметки, пачка отката и сводка работали ровно так же. Сам ничего не
-    переводит: за него это делает человек в браузере, а `translate_batch`
-    здесь никто не зовёт.
+    It implements the same contract as the others so that the selection, the
+    markup shielding, the undo batch and the summary all behave identically. It
+    translates nothing itself: a person in a browser does that, and nobody ever
+    calls `translate_batch` here.
     """
 
     name = "manual"

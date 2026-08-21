@@ -1,15 +1,16 @@
-"""HTTP поверх стандартной библиотеки: один запрос и разбор кода ответа.
+"""HTTP on the standard library: one request and the reading of its status.
 
-`urllib.request`, а не `requests`: единственная зависимость приложения —
-PySide6, и заводить вторую ради нескольких POST-запросов не стоит. `QtNetwork`
-тоже не подходит — он сигнальный, а вся тяжёлая работа идёт в потоке-воркере
-обычным синхронным циклом.
+`urllib.request` rather than `requests`: the application has one dependency,
+PySide6, and a second is not worth a handful of POST requests. `QtNetwork` does
+not fit either — it is signal-driven, while all the heavy work runs in a worker
+thread as a plain synchronous loop.
 
-Здесь единственное место, где код ответа превращается в осмысленную ошибку.
-Коды передаёт провайдер: у DeepL исчерпанная квота приходит как 456, у Google
-как 403 с причиной в теле, и общей таблицей это не описать.
+This is the single place where a status code turns into a meaningful error. The
+codes come from the provider: with DeepL an exhausted quota arrives as 456, with
+Google as a 403 carrying the reason in the body, and no shared table describes
+that.
 
-Ни ключ, ни тело запроса в сообщения не попадают.
+Neither the key nor the request body ever reaches a message.
 """
 from __future__ import annotations
 
@@ -25,8 +26,8 @@ from pdxloc.core.mt_errors import (
 
 DEFAULT_TIMEOUT = 30.0
 
-# Ответ длиннее этого читать незачем: у всех провайдеров это уже не перевод,
-# а страница от прокси или капча.
+# Reading an answer longer than this is pointless: with every provider it is
+# no longer a translation but a proxy page or a captcha.
 _MAX_BODY = 8 * 1024 * 1024
 
 AUTH_CODES = (401, 403)
@@ -45,10 +46,10 @@ def request_json(
     quota_codes: tuple[int, ...] = QUOTA_CODES,
     opener=None,
 ) -> dict:
-    """Сделать запрос и вернуть разобранный JSON.
+    """Make the request and return the parsed JSON.
 
-    `service` — имя сервиса для сообщений. `opener` подменяется в тестах:
-    ни один тест не открывает сокет.
+    `service` is the service name used in messages. `opener` is replaced in the
+    tests: not one test opens a socket.
     """
     request = urllib.request.Request(
         url, data=data, headers=dict(headers or {}), method=method)
@@ -75,12 +76,12 @@ def request_json(
 
 
 def _without_query(url: str) -> str:
-    """Адрес без параметров: у Google ключ уезжает именно в `?key=…`.
+    """The address without its query: with Google the key rides in `?key=…`.
 
-    Все провайдеры передают `service`, и до подстановки адреса дело не доходит.
-    Но обещание «ключ не попадает в сообщения» не должно держаться на том, что
-    каждый следующий вызов не забудет про имя сервиса: сообщение об ошибке
-    человек копирует в переписку целиком.
+    Every provider passes `service`, so it never comes to falling back on the
+    address. But the promise that «the key never reaches a message» must not rest
+    on every future call remembering the service name: people paste an error
+    message into a chat whole.
     """
     return url.split("?", 1)[0]
 
@@ -91,8 +92,9 @@ def _from_status(
     auth_codes: tuple[int, ...],
     quota_codes: tuple[int, ...],
 ) -> Exception:
-    # Квота проверяется первой: у Google исчерпанный лимит приходит тем же 403,
-    # что и неверный ключ, и провайдер разводит их, передав свои коды.
+    # The quota is checked first: with Google an exhausted limit arrives as the
+    # same 403 as a bad key, and the provider tells them apart by passing its own
+    # codes.
     if error.code in quota_codes:
         return MtQuotaError(
             fill(translate("Mt", "%1 refused: the request limit or the quota "
@@ -121,7 +123,7 @@ def _retry_after(headers) -> float | None:
     try:
         return float(raw)
     except (TypeError, ValueError):
-        return None      # бывает дата в формате HTTP — тогда ждём по-своему
+        return None      # sometimes an HTTP-format date; then we work it out ourselves
 
 
 def _reason(error: Exception) -> str:
