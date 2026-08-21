@@ -1,8 +1,8 @@
-"""Окно «Параметры»: у каждой настройки есть живая точка применения.
+"""The «Preferences» window: every setting has a live point of application.
 
-Мёртвая галка хуже отсутствующей — она обещает то, чего не делает. Поэтому
-проверяем не «диалог открылся», а что значение доезжает до виджета, который
-за него отвечает, и без перезапуска приложения.
+A dead tick is worse than a missing one — it promises what it does not do. That
+is why we check not «the dialog opened» but that the value reaches the widget
+answering for it, and without a restart of the application.
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ RU = 'l_russian:\n a:0 "Привет"\n'
 
 
 class FakeSettings:
-    """QSettings без записи в реестр пользователя."""
+    """QSettings without a write into the user's registry."""
 
     def __init__(self):
         self.store: dict = {}
@@ -75,7 +75,7 @@ def dialog(win, qtbot):
 
 
 def test_opening_the_dialog_writes_nothing(window, qtbot, store) -> None:
-    """Иначе каждый запуск теста гадил бы в настройки пользователя."""
+    """Otherwise every run of the test would foul the user's settings."""
     before = store.writes
     dialog(window, qtbot)
     assert store.writes == before
@@ -105,7 +105,7 @@ def test_font_reaches_the_editor_fields(window, qtbot) -> None:
 
 
 def test_editor_heads_stay_aligned_after_a_font_change(window, qtbot) -> None:
-    """Шапки EN и RU обязаны остаться одной высоты — иначе поля разъезжаются."""
+    """The EN and RU headers are obliged to stay of one height — otherwise the fields come apart."""
     dlg = dialog(window, qtbot)
     dlg.font_size.setValue(16)
     dlg.apply()
@@ -131,12 +131,12 @@ def test_highlight_checkbox_and_preference_are_one_switch(window, qtbot) -> None
 
 
 def test_backup_keep_is_read_at_call_time(store, tmp_path) -> None:
-    """Раньше значение вычислялось на импорте exporter и не менялось до перезапуска."""
+    """The value used to be computed at the import of exporter and did not change until a restart."""
     store.store["backup/keep"] = 2
     assert settings.backup_keep() == 2
 
-    # имена настоящие: чистка узнаёт снимок по времени в имени, и сокращённое
-    # «2026-08-01» она справедливо считает чужой папкой
+    # the names are real ones: the cleaning recognises a snapshot by the time in the
+    # name, and the shortened «2026-08-01» it justly counts as a foreign folder
     project_dir = tmp_path / "backups" / "P"
     stamps = ("2026-08-01_120000", "2026-08-02_120000",
               "2026-08-03_120000", "2026-08-04_120000")
@@ -168,10 +168,10 @@ def test_theme_change_ticks_the_view_menu(window, qtbot) -> None:
 
 
 def test_muted_reminders_can_be_brought_back(window, qtbot, store) -> None:
-    """«Больше не спрашивать» обязано иметь путь назад.
+    """«Do not ask again» is obliged to have a way back.
 
-    Заглушить напоминание можно из него самого, а вернуть — только отсюда.
-    Настройка, которую невозможно отменить, — ловушка.
+    A reminder can be silenced from itself, but brought back only from here. A
+    setting that cannot be undone is a trap.
     """
     from pdxloc.gui import ask
 
@@ -185,7 +185,7 @@ def test_muted_reminders_can_be_brought_back(window, qtbot, store) -> None:
     dlg.apply()
 
     assert not ask.any_muted()
-    # Возвращать больше нечего — и галка это показывает, а не обещает впустую
+    # There is nothing left to bring back — and the tick shows that instead of promising emptily
     assert not dlg.unmute_reminders.isEnabled()
     assert not dlg.unmute_reminders.isChecked()
 
@@ -197,7 +197,7 @@ def test_the_unmute_checkbox_is_dead_while_nothing_is_hidden(window, qtbot,
     assert not dlg.unmute_reminders.isEnabled()
 
 
-# --- машинный перевод ---
+# --- machine translation ---
 
 def test_mt_limits_reach_the_preferences(window, qtbot, store) -> None:
     dlg = dialog(window, qtbot)
@@ -211,7 +211,7 @@ def test_mt_limits_reach_the_preferences(window, qtbot, store) -> None:
 
 
 def test_mt_key_is_stored_per_provider(window, qtbot, store) -> None:
-    """Ключей несколько, и один не должен затирать другой."""
+    """There are several keys, and one must not overwrite another."""
     from pdxloc.core import mt
 
     dlg = dialog(window, qtbot)
@@ -223,7 +223,7 @@ def test_mt_key_is_stored_per_provider(window, qtbot, store) -> None:
 
 
 def test_mt_key_is_not_a_preference(window, qtbot, store) -> None:
-    """`prefs.get` вернул бы защищённую строку вместо ключа."""
+    """`prefs.get` would return a guarded string instead of the key."""
     assert not any(key.startswith("mt/key") for key in prefs.DEFAULTS)
 
 
@@ -237,7 +237,7 @@ def test_mt_key_field_hides_the_key(window, qtbot, store) -> None:
 
 
 def test_key_field_is_dead_while_no_service_is_chosen(window, qtbot, store) -> None:
-    """Поле ключа при выключенном переводе — обещание, которому нечего делать."""
+    """A key field with the translation switched off is a promise with nothing to do."""
     dlg = dialog(window, qtbot)
     dlg.mt_provider.setCurrentIndex(dlg.mt_provider.findData("none"))
     assert not dlg.mt_key.isEnabled()
@@ -245,7 +245,7 @@ def test_key_field_is_dead_while_no_service_is_chosen(window, qtbot, store) -> N
 
 
 def test_opening_the_dialog_does_not_touch_the_stored_key(window, qtbot, store) -> None:
-    """Открыли «Параметры» и закрыли — ключ обязан остаться прежним."""
+    """Opened «Preferences» and closed it — the key is obliged to stay the same."""
     from pdxloc.core import mt
 
     mt.save_api_key("deepl", "ключ")
@@ -255,7 +255,7 @@ def test_opening_the_dialog_does_not_touch_the_stored_key(window, qtbot, store) 
 
 
 def test_every_control_maps_to_a_stored_key(window, qtbot) -> None:
-    """Настройка без ключа — настройка, которую никто не читает."""
+    """A setting without a key is a setting nobody reads."""
     dlg = dialog(window, qtbot)
     dlg.apply()
     for key in prefs.DEFAULTS:

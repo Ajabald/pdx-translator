@@ -1,13 +1,14 @@
-"""Смена языка перерисовывает окно, а не требует перезапуска.
+"""A change of language redraws the window instead of demanding a restart.
 
-Проверяется вся цепочка целиком: собирается настоящий `.qm`, подсовывается
-вместо штатной папки переводов и включается через `language.apply`. Проверять
-подменой `translate` было бы самообманом — мимо остались бы ровно те места, где
-и ломается: загрузка QTranslator и пересборка меню.
+The whole chain is checked as one: a real `.qm` is built, slipped in instead of
+the regular translations folder and switched on through `language.apply`.
+Checking by substituting `translate` would be self-deception — it would leave out
+exactly the places where things break: the loading of the QTranslator and the
+rebuilding of the menu.
 
-Долгожителей шесть (меню, панель, экраны, шапка таблицы, чипы, полоса
-контекста), и каждый обязан обновиться: диалоги создаются заново при открытии и
-язык подхватывают сами, а эти — нет.
+There are six long-livers (the menu, the toolbar, the screens, the table header,
+the chips, the context bar), and each is obliged to refresh: the dialogs are
+created anew at opening and pick the language up themselves, while these do not.
 """
 from __future__ import annotations
 
@@ -32,7 +33,7 @@ EN = 'l_english:\n a:0 "Hello"\n b:0 "World"\n'
 RU = 'l_russian:\n a:0 "Привет"\n'
 
 def build_translations(root: Path, pairs: dict[str, dict[str, str]]) -> None:
-    """Собрать настоящий .qm из пар «контекст → {оригинал: перевод}»."""
+    """Build a real .qm out of the pairs «context → {original: translation}»."""
     body = []
     for context, table in pairs.items():
         messages = "".join(
@@ -56,12 +57,12 @@ def build_translations(root: Path, pairs: dict[str, dict[str, str]]) -> None:
 
 @pytest.fixture
 def translate_ui(tmp_path, monkeypatch):
-    """Перевести указанные строки живого интерфейса выдуманными словами.
+    """Translate the named strings of the live interface with made-up words.
 
-    Оригиналы берутся **из самого кода**, а не переписываются в тест: строки
-    интерфейса ещё переезжают на английский, и захардкоженный список пришлось
-    бы править вслед за каждым модулем — а он тихо перестал бы что-то
-    проверять, оставшись синтаксически верным.
+    The originals are taken **from the code itself** and not copied into the test:
+    the interface strings are still moving to English, and a hard-coded list would
+    have to be mended after every module — and it would quietly stop checking
+    something while staying syntactically right.
     """
     root = tmp_path / "translations"
     root.mkdir()
@@ -114,12 +115,12 @@ def test_menu_bar_follows_the_language(window, translate_ui) -> None:
 
 
 def test_all_six_long_lived_places_are_retranslated(window, translate_ui) -> None:
-    """Диалоги пересоздаются сами; вот эти шестеро — нет."""
+    """The dialogs recreate themselves; these six do not."""
     win = window
     win.context_bar.set_project(None)
 
-    # оригиналы снимаем с живых виджетов: сейчас язык исходный, значит на
-    # экране ровно те строки, что написаны в коде
+    # we take the originals off live widgets: the language is the source one now,
+    # so on the screen are exactly the strings written in the code
     bar = win.editor_screen.filter_bar
     issues_src = bar.issues_check.text()
     create_src = win.start_screen._buttons["create"].text()
@@ -145,7 +146,7 @@ def test_all_six_long_lived_places_are_retranslated(window, translate_ui) -> Non
 
 
 def test_toolbar_shows_the_same_translated_objects(window, translate_ui) -> None:
-    """Панель — витрина реестра, своих копий текста у неё нет."""
+    """The toolbar is a shop window of the registry, it has no copies of the text of its own."""
     win = window
     translate_ui({"Actions": {actions_spec.BY_ID["scan"].text: "КОМАНДА"}})
     on_bar = [a.text() for a in win.toolbar.actions() if not a.isSeparator()]
@@ -153,10 +154,10 @@ def test_toolbar_shows_the_same_translated_objects(window, translate_ui) -> None
 
 
 def test_menu_rebuild_does_not_pile_up_actions(window, translate_ui) -> None:
-    """Пункты радиогрупп создаются заново — они не должны копиться.
+    """The items of the radio groups are created anew — they must not pile up.
 
-    Раньше они висели на самом окне, и каждое переключение языка оставляло
-    ещё один невидимый набор «Показывать/Сортировка/Тема».
+    They used to hang on the window itself, and every switch of language left one
+    more invisible set of «Show/Sort/Theme».
     """
     win = window
     app = QApplication.instance()

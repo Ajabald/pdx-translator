@@ -1,18 +1,19 @@
-"""Проверка «подстановка после глагола-связки».
+"""The check «a substitution after a linking verb».
 
-Повод: CK3 называет черты в русской локализации существительными —
-`trait_loyal` = «Верность», `trait_brave` = «Отвага». Английское «Beesburys
-tend to be [GetTrait('loyal')…]» переводится буквально как «Бисбери склонны
-быть [GetTrait…]», и в игре это разворачивается в «склонны быть Верность».
-В живом проекте таких калек нашлось 72.
+The reason: CK3 names the traits in the Russian localisation with nouns —
+`trait_loyal` = «Верность», `trait_brave` = «Отвага». The English «Beesburys tend
+to be [GetTrait('loyal')…]» is translated literally as «Бисбери склонны быть
+[GetTrait…]», and in the game that unfolds into «склонны быть Верность». In a
+live project 72 such calques were found.
 
-Лечится не скриптовой грамматикой, а оборотом с приложением — «склонны
-проявлять черту: Верность». Так делает и сама ванильная локализация:
-«получает свойство „[GetTrait('heir_in_training').GetName(…)]“».
+It is cured not by scripted grammar but by a turn of phrase with an apposition —
+«склонны проявлять черту: Верность». That is what the vanilla localisation itself
+does: «получает свойство „[GetTrait('heir_in_training').GetName(…)]“».
 
-Опасность правила — зацепить связку в позиции ПОДЛЕЖАЩЕГО, где именительный
-падеж правилен. Такие обороты закрыты отдельными тестами: замер показал, что
-без них правило даёт 21 ложное срабатывание на 136 000 строк, с ними — ноль.
+The danger of the rule is catching a link in the position of the SUBJECT, where
+the nominative case is right. Such turns are covered by tests of their own: the
+measurement showed that without them the rule gives 21 false hits over 136,000
+rows, and with them none.
 """
 from __future__ import annotations
 
@@ -27,7 +28,7 @@ def codes(en: str, ru: str) -> list[str]:
     return check_unit(en, ru)
 
 
-# --- то, ради чего правило заведено -------------------------------------
+# --- what the rule was set up for ---------------------------------------
 
 
 def test_tend_to_be_calque() -> None:
@@ -61,22 +62,22 @@ def test_may_be_calque() -> None:
 
 
 def test_severity_is_warning() -> None:
-    """Игра не ломается — страдает только читаемость."""
+    """The game does not break — only the readability suffers."""
     assert CODES[CALQUE][0] == "warning"
 
 
-# --- позиция подлежащего: именительный правилен, ловить нельзя -----------
+# --- the position of the subject: the nominative is right, catching is not allowed ---
 
 
 def test_subject_position_with_yavlyaetsya_is_fine() -> None:
-    """«целью которых является [Имя]» — подстановка здесь подлежащее."""
+    """«целью которых является [Имя]» — the substitution here is the subject."""
     assert CALQUE not in codes(
         "the scheme targeting [TARGET_CHARACTER.GetShortUIName]",
         "происки, целью которых является [TARGET_CHARACTER.GetShortUIName]")
 
 
 def test_negated_cannot_be_is_fine() -> None:
-    """«целью не может быть [X]» — тоже подлежащее."""
+    """«целью не может быть [X]» — the subject as well."""
     assert CALQUE not in codes(
         "The target cannot be [GetTrait('witch').GetName( CHARACTER.Self )]",
         "Целью шантажа не может быть [GetTrait('witch').GetName( CHARACTER.Self )]")
@@ -94,11 +95,11 @@ def test_ceases_to_be_is_fine() -> None:
         "[X.GetShortUIName|U] перестает быть [CHARACTER.GetHerHis] воспитанником")
 
 
-# --- правильный оборот не должен ловиться -------------------------------
+# --- the right turn of phrase must not be caught ------------------------
 
 
 def test_apposition_after_colon_is_clean() -> None:
-    """Тот приём, которым переписываются кальки."""
+    """The very device the calques get rewritten with."""
     assert CALQUE not in codes(
         f"Beesburys tend to be {TRAIT}.",
         f"Бисбери склонны проявлять черту: {TRAIT}.")
@@ -117,7 +118,7 @@ def test_instrumental_wrapper_is_clean() -> None:
 
 
 def test_english_original_is_never_flagged() -> None:
-    """Правило смотрит только на перевод: по-английски связка безупречна."""
+    """The rule looks only at the translation: in English the link is impeccable."""
     assert CALQUE not in codes(
         f"Beesburys tend to be {TRAIT}.",
         f"У Бисбери часто проявляется черта: {TRAIT}.")

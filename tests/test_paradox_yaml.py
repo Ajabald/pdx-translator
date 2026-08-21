@@ -1,4 +1,4 @@
-"""Тесты парсера/писателя формата Paradox."""
+"""Tests of the parser and writer of the Paradox format."""
 from __future__ import annotations
 
 import pytest
@@ -43,7 +43,7 @@ def test_versions_preserved():
     lf = parse_sample()
     by_key = {e.key: e for e in lf.entries}
     assert by_key["rule_agot_buildings_bla"].version == "0"
-    assert by_key["agot_blackwood_bow_bla.0001.a.tt"].version == ""  # без версии
+    assert by_key["agot_blackwood_bow_bla.0001.a.tt"].version == ""  # without a version
     assert by_key["key_with_escapes"].version == "1"
 
 
@@ -66,7 +66,7 @@ def test_comment_before_and_inline():
 
 
 def test_key_at_column_zero_parsed():
-    # EN-файлы содержат ключи без ведущего пробела
+    # the EN files hold keys without a leading space
     lf = parse_sample()
     assert lf.entries[0].key == "rule_agot_buildings_bla"
 
@@ -78,7 +78,7 @@ def test_unrecognized_line_warns():
 
 
 def test_missing_closing_quote_salvaged():
-    # реальный дефект в файлах BLA: нет закрывающей кавычки
+    # a real defect in the BLA files: there is no closing quote
     lf = py_.parse_text('l_english:\n broken:0 "Text without closing quote\n', source_name="x.yml")
     assert len(lf.entries) == 1
     assert lf.entries[0].text == "Text without closing quote"
@@ -93,8 +93,8 @@ def test_missing_header_warns_but_parses():
 
 
 def test_fully_commented_file_is_not_an_error():
-    """В ванильной локализации есть файлы, закомментированные редактором Paradox
-    целиком: ни заголовка, ни ключей. Ругаться там не на что."""
+    """In the vanilla localisation there are files commented out by the Paradox
+    editor whole: no header, no keys. There is nothing to complain about there."""
     lf = py_.parse_text(
         "# === [LocEditor:RedundantFile] File contains no active keys ===\n"
         "# b_something: \"Что-то\"\n", source_name="x.yml")
@@ -103,10 +103,11 @@ def test_fully_commented_file_is_not_an_error():
 
 
 def test_key_with_apostrophe():
-    """Ключи с апострофом есть в ванильной локализации CK3 (b_ka'abir).
+    """Keys with an apostrophe are in the vanilla CK3 localisation (b_ka'abir).
 
-    Прежний класс символов их не допускал: строка не опознавалась как запись,
-    перевод для неё завести было нельзя, а при записи в мод она исчезла бы.
+    The former character class did not allow them: the line was not recognised as
+    a record, a translation for it could not be set up, and at a write into the mod
+    it would have vanished.
     """
     lf = py_.parse_text(
         'l_english:\n'
@@ -118,7 +119,7 @@ def test_key_with_apostrophe():
 
 
 def test_commented_out_entry_stays_comment():
-    """Расширенный класс ключа не должен превращать комментарии в записи."""
+    """The widened class of a key must not turn comments into records."""
     lf = py_.parse_text('l_english:\n#b_old:0 "Старое"\n a:0 "A"\n', source_name="x.yml")
     assert [e.key for e in lf.entries] == ["a"]
     assert "#b_old" in lf.entries[0].comment_before
@@ -131,21 +132,21 @@ def test_roundtrip_semantic():
     assert lf2.language == lf.language
     assert [(e.key, e.version, e.text, e.comment_inline) for e in lf2.entries] == \
            [(e.key, e.version, e.text, e.comment_inline) for e in lf.entries]
-    # второй прогон стабилен побайтово
+    # the second run is stable byte for byte
     assert py_.render(lf2.language, lf2.entries, lf2.trailing) == rendered
 
 
 def test_real_newline_escaped_on_write():
-    """Настоящий перенос строки в переводе разрывал запись пополам.
+    """A real line break in a translation used to tear a record in two.
 
-    Нажать Enter в поле перевода или вставить текст из мессенджера — обычное
-    дело; в файле мода после этого первая половина оставалась без закрывающей
-    кавычки, а вторая переставала быть записью.
+    Pressing Enter in the translation field or pasting text out of a messenger is
+    an ordinary thing; in the file of the mod after that the first half was left
+    without a closing quote, and the second stopped being a record.
     """
     entry = LocEntry(key="k", version="0", text="Первая строка\nВторая строка")
     rendered = py_.render("russian", [entry])
 
-    assert len(rendered.rstrip("\n").split("\n")) == 2      # заголовок и одна запись
+    assert len(rendered.rstrip("\n").split("\n")) == 2      # the header and one record
     again = py_.parse_text(rendered)
     assert len(again.entries) == 1
     assert again.entries[0].text == "Первая строка\\nВторая строка"
@@ -163,8 +164,8 @@ def test_existing_escape_untouched():
 
 
 def test_raw_quote_inside_value_preserved():
-    """Голая кавычка внутри значения — норма формата: в ванильной локализации
-    CK3 таких записей 8413. Экранировать их нельзя, иначе поедет текст."""
+    """A bare quote inside a value is the norm of the format: in the vanilla CK3
+    localisation there are 8413 such records. Escaping them will not do, the text would shift."""
     entry = LocEntry(key="k", version="0", text='Он сказал "нет" и ушёл')
     assert py_.parse_text(py_.render("russian", [entry])).entries[0].text == 'Он сказал "нет" и ушёл'
 
@@ -187,7 +188,7 @@ def test_write_file_bom(tmp_path):
 def test_real_en_tree_counts():
     files = [p for p in REALDATA_EN.rglob("*.yml") if "_l_english" in p.name]
     assert len(files) == 30
-    # 5276 обычных записей + 1 спасённая строка без закрывающей кавычки
+    # 5276 ordinary records + 1 salvaged row without a closing quote
     total = sum(len(py_.parse_file(p).entries) for p in files)
     assert total == 5277
 
@@ -197,7 +198,7 @@ def test_real_en_tree_counts():
 def test_real_ru_tree_counts():
     files = [p for p in REALDATA_RU.rglob("*.yml") if "_l_russian" in p.name and "_updated" not in p.name]
     assert len(files) == 30
-    # 4342 обычных записи + 1 спасённая строка без закрывающей кавычки
+    # 4342 ordinary records + 1 salvaged row without a closing quote
     total = sum(len(py_.parse_file(p).entries) for p in files)
     assert total == 4343
 
