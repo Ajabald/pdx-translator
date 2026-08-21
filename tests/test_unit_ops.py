@@ -1,4 +1,4 @@
-"""Тесты операций над строками (unit_ops)."""
+"""Tests of the operations over rows (unit_ops)."""
 from __future__ import annotations
 
 import re
@@ -9,17 +9,17 @@ from pdxloc.core.statuses import Status
 
 SRC = Path(unit_ops.__file__).resolve().parents[1]
 
-# Кто, кроме unit_ops, вправе трогать перевод строки — и почему.
+# Who, apart from unit_ops, is entitled to touch the translation of a row — and why.
 #
-#   scanner.py    — обновляет EN-сторону и заполняет пустые строки из файлов
-#                   перевода; правки человека сюда не попадают;
-#   tm.py         — `bulk_apply` заполняет только пустые непереведённые строки,
-#                   затирать ему нечего;
-#   db.py         — миграции схемы, там таблица пересобирается целиком;
-#   loc_import.py — пишет пачкой ради скорости (построчный `save_ru_text` стоил
-#                   одного fsync на строку), но перед записью зовёт
-#                   `record_history` и `status_after_edit` — то есть выполняет
-#                   ровно то требование, ради которого этот сторож заведён.
+#   scanner.py    — refreshes the EN side and fills empty rows from the files of
+#                   the translation; the edits of a human do not get here;
+#   tm.py         — `bulk_apply` fills only the empty untranslated rows, it has
+#                   nothing to overwrite;
+#   db.py         — the schema migrations, where the table is rebuilt whole;
+#   loc_import.py — writes in batches for the sake of speed (a row-by-row
+#                   `save_ru_text` cost one fsync per row), but before writing it
+#                   calls `record_history` and `status_after_edit` — that is, it
+#                   meets the very demand this watchman was set up for.
 _MAY_WRITE_TRANSLATIONS = {"unit_ops.py", "scanner.py", "tm.py", "db.py",
                            "loc_import.py"}
 _WRITES_RU = re.compile(r"UPDATE units SET[^\"']*ru_text", re.IGNORECASE)
@@ -30,8 +30,8 @@ def seed(db):
     db.execute("INSERT INTO files (id, project_id, rel_path) VALUES (1, 1, 'a_l_english.yml')")
     rows = [
         ("k1", "Hello", "untranslated", None),
-        ("k2", "Hello", "untranslated", None),      # тот же EN, что k1
-        ("k3", "Hello", "translated", "Привет"),    # тот же EN, уже переведён
+        ("k2", "Hello", "untranslated", None),      # the same EN as k1
+        ("k3", "Hello", "translated", "Привет"),    # the same EN, already translated
         ("k4", "World", "untranslated", None),
         ("k5", "Stale text", "stale", "Старый"),
     ]
@@ -55,10 +55,10 @@ def test_save_ru_text_transitions(db):
     unit_ops.save_ru_text(db, ids["k1"], "Привет")
     u = get(db, ids["k1"])
     assert u["status"] == Status.TRANSLATED.value and u["ru_text"] == "Привет"
-    # пустой текст сбрасывает
+    # an empty text resets it
     unit_ops.save_ru_text(db, ids["k1"], "  ")
     assert get(db, ids["k1"])["status"] == Status.UNTRANSLATED.value
-    # stale + правка = актуализация
+    # stale + an edit = actualisation
     unit_ops.save_ru_text(db, ids["k5"], "Новый перевод")
     u = get(db, ids["k5"])
     assert u["status"] == Status.TRANSLATED.value
@@ -66,54 +66,53 @@ def test_save_ru_text_transitions(db):
 
 
 def test_status_table_is_the_same_for_a_batch_and_for_a_single_edit():
-    """Таблица переходов одна на оба пути записи — построчный и пакетный.
+    """The transition table is one for both paths of writing — row-by-row and batch.
 
-    Импорт перевода из мода пишет пачкой и зовёт ту же `status_after_edit`, что
-    и правка в поле. Разойдись они — импорт оставлял бы строки в состояниях,
-    которых не бывает при ручной правке, и заметить это можно было бы только
-    глазами, на чужом моде.
+    Importing a translation from a mod writes in batches and calls the same
+    `status_after_edit` as an edit in the field. Let them diverge — and the import
+    would leave rows in states that never arise from a manual edit, and noticing
+    that would only be possible by eye, on somebody else's mod.
     """
     after = unit_ops.status_after_edit
 
-    # пустой текст сбрасывает всё, чем строка была заполнена
+    # an empty text resets everything the row was filled with
     for was in (Status.TRANSLATED, Status.REVIEWED, Status.AUTO,
                 Status.MACHINE, Status.CUSTOM):
         assert after(was.value, None, "было", None, None)[0] == Status.UNTRANSLATED.value
-    # а «игнорируется» стиранием не трогаем: там решение уже принято
+    # while «ignored» we do not touch by erasing: the decision there is already made
     assert after(Status.IGNORED.value, None, None, None, None)[0] == Status.IGNORED.value
 
-    # правка снимает «машинный» и «авто» — иначе строка не уехала бы в мод
+    # an edit takes «machine» and «auto» off — otherwise the row would not travel to the mod
     for was in (Status.UNTRANSLATED, Status.AUTO, Status.MACHINE, Status.IGNORED):
         assert after(was.value, "Перевод", None, None, None)[0] == Status.TRANSLATED.value
 
-    # устарело + другой текст = актуализация, дифф больше не нужен
+    # stale + a different text = actualisation, the diff is no longer needed
     status, prev, kind = after(
         Status.STALE.value, "Новый", "Старый", "Old EN", "cosmetic")
     assert (status, prev, kind) == (Status.TRANSLATED.value, None, None)
 
-    # тот же текст при «устарело» ничего не актуализирует, дифф остаётся
+    # the same text at «stale» actualises nothing, the diff stays
     status, prev, kind = after(
         Status.STALE.value, "Старый", "Старый", "Old EN", "cosmetic")
     assert (status, prev, kind) == (Status.STALE.value, "Old EN", "cosmetic")
 
-    # «проверено» правка не понижает
+    # «reviewed» an edit does not lower
     assert after(Status.REVIEWED.value, "Правка", "Было", None, None)[0] == \
         Status.REVIEWED.value
 
 
 def test_real_newline_normalized_on_save(db):
-    """Enter в поле перевода не должен разводить базу с файлом.
+    """Enter in the translation field must not part the database from the file.
 
-    Раньше настоящий перенос строки доживал до базы, при записи в мод
-    превращался в escape-последовательность формата Paradox — и каждое
-    следующее сканирование докладывало «расхождение с файлом» на строке,
-    которую никто не трогал.
+    A real line break used to live through to the database, at the write into the
+    mod it turned into an escape sequence of the Paradox format — and every next
+    scan reported a «divergence with the file» on a row nobody had touched.
     """
     ids = seed(db)
     unit_ops.save_ru_text(db, ids["k4"], "Первая\nВторая\r\nТретья")
 
     assert get(db, ids["k4"])["ru_text"] == "Первая\\nВторая\\nТретья"
-    # в память переводов попадает то же самое, иначе подсказки разъедутся
+    # the same thing goes into the translation memory, otherwise the hints diverge
     assert tm.lookup(db, "World")[0].ru_text == "Первая\\nВторая\\nТретья"
 
 
@@ -125,12 +124,12 @@ def test_save_feeds_tm(db):
 
 def test_set_status_bulk_gate(db):
     ids = seed(db)
-    # reviewed требует RU: k1 без перевода не изменится, k3 изменится
+    # reviewed demands RU: k1 without a translation will not change, k3 will
     n = unit_ops.set_status(db, [ids["k1"], ids["k3"]], Status.REVIEWED)
     assert n == 1
     assert get(db, ids["k1"])["status"] == Status.UNTRANSLATED.value
     assert get(db, ids["k3"])["status"] == Status.REVIEWED.value
-    # ignored ставится и без перевода
+    # ignored is set even without a translation
     n = unit_ops.set_status(db, [ids["k1"], ids["k4"]], Status.IGNORED)
     assert n == 2
     assert get(db, ids["k1"])["status"] == Status.IGNORED.value
@@ -151,15 +150,15 @@ def test_apply_to_same_en(db):
     assert sorted(targets) == sorted([ids["k1"], ids["k2"]])
     assert get(db, ids["k1"])["ru_text"] == "Привет"
     assert get(db, ids["k1"])["status"] == Status.TRANSLATED.value
-    # k4 (другой EN) не тронут
+    # k4 (a different EN) is untouched
     assert get(db, ids["k4"])["ru_text"] is None
 
 
 def test_apply_to_same_en_is_undoable(db):
-    """Ctrl+Z обязан снимать её целиком: правка задевает сотни строк разом.
+    """Ctrl+Z is obliged to take it off whole: the edit touches hundreds of rows at once.
 
-    Среди целей есть строки со статусом «Авто» — там перевод уже стоял, и
-    затирать его безвозвратно нельзя.
+    Among the targets there are rows with the status «Auto» — there a translation
+    already stood, and overwriting it beyond recall will not do.
     """
     ids = seed(db)
     db.execute("UPDATE units SET ru_text = 'Из памяти', status = ? WHERE id = ?",
@@ -170,7 +169,7 @@ def test_apply_to_same_en_is_undoable(db):
     targets = unit_ops.apply_to_same_en(db, ids["k3"], batch_id=batch)
     assert get(db, ids["k1"])["ru_text"] == "Привет"
 
-    assert unit_ops.last_batch(db)[0] == batch          # операция видна Ctrl+Z
+    assert unit_ops.last_batch(db)[0] == batch          # the operation is visible to Ctrl+Z
     assert unit_ops.undo_batch(db, batch) == len(targets)
     restored = get(db, ids["k1"])
     assert restored["ru_text"] == "Из памяти"
@@ -178,11 +177,11 @@ def test_apply_to_same_en_is_undoable(db):
 
 
 def test_undo_brings_back_the_diff_not_just_the_status(db):
-    """Откат возвращает и то, ЧЕМ строка устарела.
+    """The undo brings back WHAT the row went stale by, too.
 
-    Раньше история хранила только текст и статус: после Ctrl+Z строка снова
-    становилась «Устарело», но `prev_en_text` был потерян — дифф исчезал, и
-    человек оставался с красной строкой без объяснения, чего от него хотят.
+    The history used to keep only the text and the status: after Ctrl+Z the row
+    became «Stale» again, but `prev_en_text` was lost — the diff vanished, and the
+    human was left with a red row and no explanation of what is wanted of them.
     """
     ids = seed(db)
     stale = ids["k5"]
@@ -193,7 +192,7 @@ def test_undo_brings_back_the_diff_not_just_the_status(db):
 
     batch = unit_ops.new_batch_id()
     unit_ops.record_history(db, [stale], origin="manual", batch_id=batch)
-    # актуализация: перевод подтверждён, дифф больше не нужен
+    # actualisation: the translation is confirmed, the diff is no longer needed
     unit_ops.save_ru_text(db, stale, "Новый перевод")
     db.execute("UPDATE units SET prev_en_text = NULL, change_kind = NULL WHERE id = ?",
                (stale,))
@@ -210,7 +209,7 @@ def test_undo_brings_back_the_diff_not_just_the_status(db):
 
 
 def test_history_of_a_fresh_row_carries_no_diff(db):
-    """У неустаревшей строки диффа нет, и выдумывать его откату незачем."""
+    """A row that is not stale has no diff, and there is no point inventing one for the undo."""
     ids = seed(db)
     batch = unit_ops.new_batch_id()
     unit_ops.record_history(db, [ids["k3"]], batch_id=batch)
@@ -227,12 +226,12 @@ def test_apply_best_tm(db):
     assert unit_ops.apply_best_tm(db, ids["k4"])
     u = get(db, ids["k4"])
     assert u["ru_text"] == "Мир из базы" and u["status"] == Status.AUTO.value
-    # без хита — False
+    # without a hit — False
     assert not unit_ops.apply_best_tm(db, ids["k1"]) or get(db, ids["k1"])["status"] == Status.AUTO.value
 
 
 def test_filling_from_memory_leaves_a_history_record(db):
-    """Подстановка затирает то, что было, — редакция обязана остаться."""
+    """The substitution overwrites what was there — the revision is obliged to stay."""
     ids = seed(db)
     unit_ops.save_ru_text(db, ids["k4"], "Мой перевод")
     tm.upsert(db, "World", "Мир из базы")
@@ -244,12 +243,12 @@ def test_filling_from_memory_leaves_a_history_record(db):
 
 
 def test_translations_are_written_only_where_history_is_kept():
-    """Перевод правит `unit_ops` — он же кладёт редакцию в историю.
+    """The translation is edited by `unit_ops` — it also puts the revision into the history.
 
-    Ctrl+Z держится на этом: правка мимо `record_history` откатиться не может,
-    и заметить такую мимо-запись можно только когда пользователь попробует
-    отменить массовую операцию и ничего не произойдёт. Так уже случилось с
-    «применить ко всем строкам с таким же оригиналом».
+    Ctrl+Z rests on that: an edit past `record_history` cannot be undone, and
+    noticing such a write-past is only possible when the user tries to undo a bulk
+    operation and nothing happens. That has already happened with «apply to all
+    rows with the same original».
     """
     hits = [
         f"{path.relative_to(SRC).as_posix()}:{n}"
@@ -274,11 +273,11 @@ def test_is_markup_only():
 
 
 def test_has_nothing_to_translate():
-    """Пустое значение — та же категория, что голый тег: переводить нечего.
+    """An empty value is the same category as a bare tag: there is nothing to translate.
 
-    Отдельный предикат, а не расширение `is_markup_only`: та отвечает на вопрос
-    «строка ИЗ разметки», и пустую строка ею не считает — на этом стоит
-    подсветка. Здесь вопрос другой.
+    A predicate of its own and not an extension of `is_markup_only`: that one
+    answers the question "is the row MADE of markup", and an empty row it does not
+    count as such — the highlighting rests on that. Here the question is another.
     """
     assert unit_ops.has_nothing_to_translate("")
     assert unit_ops.has_nothing_to_translate("   ")
