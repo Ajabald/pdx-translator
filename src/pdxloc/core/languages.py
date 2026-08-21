@@ -1,37 +1,38 @@
-"""Языки локализации Paradox и языки текста — это разные вещи.
+"""A Paradox localisation folder and a text language are different things.
 
-Одно поле «язык перевода» делало две работы, и для CK3+русского они совпадали,
-поэтому не жало:
+One «translation language» field used to do both jobs, and for CK3 with Russian
+the two coincided, so it never pinched:
 
-* **папка игры** (`tgt_lang`) — имя каталога `localization/russian`, метка
-  `_l_russian` в имени файла и заголовок `l_russian:` внутри. Это диктует игра,
-  и список здесь закрытый: чего игра не знает, то она не загрузит;
-* **язык текста** (`tgt_locale`) — на каком языке, собственно, написан перевод.
-  Это нужно машинному переводу, именованию баз памяти и языковым правилам
-  проверки.
+* the **game folder** (`tgt_lang`) — the name of the `localization/russian`
+  directory, the `_l_russian` marker in the file name and the `l_russian:` header
+  inside it. The game dictates this, and the list is closed: what the game does
+  not know it will not load;
+* the **text language** (`tgt_locale`) — what language the translation is
+  actually written in. Machine translation, the naming of memory databases and
+  the language rules of the check all need it.
 
-Расходятся они ровно тогда, когда переводят на язык, которого в игре нет:
-португальский в CK3 кладут в файлы `l_english`, потому что своей папки у него
-не существует. Ровно так и поступает ModTranslationHelper, и без разделения
-такой перевод в проекте не выразить.
+The two part company exactly when the target language has no folder in the game:
+Portuguese in CK3 goes into `l_english` files because no folder of its own
+exists. ModTranslationHelper does precisely the same, and without the split such
+a translation cannot be expressed in a project at all.
 
-Пустая локаль означает «совпадает с папкой языка» — так заведены все проекты,
-созданные до расщепления, и переписывать их не нужно.
+An empty locale means «the same as the language folder» — that is how every
+project created before the split is set up, and none of them needs rewriting.
 """
 from __future__ import annotations
 
 from pdxloc.core.i18n import QT_TRANSLATE_NOOP, translate
 
-# Папки языков, которые понимают игры Paradox. Список открытый в том смысле,
-# что поле редактируемое: моды иногда заводят свои имена.
+# Language folders the Paradox games understand. The list is open in the sense
+# that the field is editable: mods sometimes invent names of their own.
 PARADOX_LANGUAGES: tuple[str, ...] = (
     "english", "french", "german", "spanish", "russian", "simp_chinese",
     "korean", "japanese", "braz_por", "polish", "turkish",
 )
 
-# Как язык папки называется по-человечески. Показывается рядом с самим именем
-# папки, а не вместо него: в путях и заголовках файлов стоит именно `russian`,
-# и прятать это от переводчика незачем.
+# What a folder language is called in human words. Shown next to the folder
+# name rather than instead of it: paths and file headers carry `russian`
+# itself, and there is no point hiding that from the translator.
 LANGUAGE_NAMES: dict[str, str] = {
     "english": QT_TRANSLATE_NOOP("Languages", "English"),
     "french": QT_TRANSLATE_NOOP("Languages", "French"),
@@ -46,8 +47,8 @@ LANGUAGE_NAMES: dict[str, str] = {
     "turkish": QT_TRANSLATE_NOOP("Languages", "Turkish"),
 }
 
-# Код языка текста для папок, у которых он очевиден. Служит и подсказкой при
-# создании проекта, и значением по умолчанию, когда локаль не задана.
+# The text language of the folders where it is obvious. Serves both as a hint
+# when a project is created and as the default when no locale is set.
 LANGUAGE_LOCALES: dict[str, str] = {
     "english": "en",
     "french": "fr",
@@ -62,8 +63,9 @@ LANGUAGE_LOCALES: dict[str, str] = {
     "turkish": "tr",
 }
 
-# Языки текста, которые можно выбрать, когда он не совпадает с папкой игры.
-# Шире списка папок: сюда и попадают те, ради кого расщепление затевалось.
+# Text languages that can be chosen when the language does not match a game
+# folder. Wider than the list of folders: this is where the ones the split was
+# made for live.
 TEXT_LOCALES: dict[str, str] = {
     "en": QT_TRANSLATE_NOOP("Languages", "English"),
     "ru": QT_TRANSLATE_NOOP("Languages", "Russian"),
@@ -83,25 +85,27 @@ TEXT_LOCALES: dict[str, str] = {
 
 
 def default_locale(language: str) -> str:
-    """Код языка текста, подразумеваемый папкой игры.
+    """The text language a game folder implies.
 
-    Незнакомая папка (мод завёл своё имя) даёт пустую локаль — угадывать по
-    имени каталога нечего, пусть переводчик выберет сам.
+    An unfamiliar folder — a mod invented a name of its own — gives an empty
+    locale: there is nothing to guess from a directory name, so let the
+    translator choose.
     """
     return LANGUAGE_LOCALES.get(language, "")
 
 
 def resolve_locale(language: str, locale: str | None) -> str:
-    """Действующий язык текста: заданный явно либо выведенный из папки."""
+    """The text language in force: the one set explicitly, or the one the folder
+    implies."""
     return (locale or "").strip() or default_locale(language)
 
 
 def language_name(language: str) -> str:
-    """«russian» → «Русский (russian)». Имя папки остаётся на виду."""
+    """«russian» → «Russian (russian)». The folder name stays in sight."""
     known = LANGUAGE_NAMES.get(language)
     if not known:
         return language
-    name = translate("Languages", known)      # вне f-строки: см. core/i18n
+    name = translate("Languages", known)      # outside the f-string: see core/i18n
     return f"{name} ({language})"
 
 

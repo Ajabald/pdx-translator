@@ -1,35 +1,36 @@
-"""Хранение ключей доступа: DPAPI там, где он есть.
+"""Storing access keys: DPAPI wherever it exists.
 
-Ключи к сервисам перевода лежат в настройках приложения, то есть в реестре
-Windows. Открытым текстом это значит, что ключ виден всякому, кто откроет
-`regedit` через плечо, и уезжает вместе со скопированным кустом реестра.
+Keys to the translation services live in the application settings, which on
+Windows means the registry. In plain text that means the key is visible to anyone
+who opens `regedit` over your shoulder, and it travels with a copied hive.
 
-`CryptProtectData` шифрует данные на учётной записи Windows. Что это даёт и
-чего не даёт, стоит назвать честно, потому что подсказка в интерфейсе обязана
-говорить то же самое:
+`CryptProtectData` encrypts data against the Windows account. What that gives and
+what it does not is worth naming honestly, because the hint in the interface has
+to say the same thing:
 
-* **защищает** от чужих глаз в реестре и от переноса куста на другую машину;
-* **не защищает** от программы, запущенной под тем же пользователем. Такая
-  программа расшифрует ключ тем же вызовом.
+* it **protects** against other eyes in the registry and against the hive being
+  carried to another machine;
+* it does **not protect** against a program running under the same user. Such a
+  program decrypts the key with the same call.
 
-Отсюда формулировка «защищён Windows для вашей учётной записи», а не
-«зашифрован».
+Hence the wording «protected by Windows for your account» rather than
+«encrypted».
 
-`ctypes`, а не новая зависимость — тем же приёмом и по той же причине, что
-`core/trash.py`. Где DPAPI недоступен (не Windows) или отказал, возвращаем
-текст как есть и **сообщаем об этом**: молчаливый откат научил бы считать
-открытый ключ защищённым.
+`ctypes` instead of a new dependency, by the same trick and for the same reason
+as `core/trash.py`. Where DPAPI is unavailable (not Windows) or refuses, the text
+is returned as it is and **we say so**: a silent fallback would teach people to
+consider a plain key protected.
 """
 from __future__ import annotations
 
 import base64
 import sys
 
-_PREFIX = "dpapi:"      # чем помечен защищённый ключ в хранилище
+_PREFIX = "dpapi:"      # how a protected key is marked in the store
 
 
 def available() -> bool:
-    """Умеет ли система защищать данные на учётной записи."""
+    """Whether the system can protect data against the account."""
     return sys.platform == "win32"
 
 
@@ -45,10 +46,10 @@ def _blob():
 
 
 def protect(plain: str) -> str:
-    """Защитить ключ. Возвращает строку для хранения.
+    """Protect a key. Returns the string to store.
 
-    Не вышло — возвращаем открытый текст: потерять ключ пользователя хуже, чем
-    сохранить его незащищённым, о чём интерфейс и скажет (`is_protected`).
+    If it did not work we return plain text: losing the user's key is worse than
+    storing it unprotected, and the interface says so (`is_protected`).
     """
     if not plain or not available():
         return plain
@@ -72,11 +73,11 @@ def protect(plain: str) -> str:
 
 
 def unprotect(stored: str) -> str:
-    """Прочитать ключ. Незащищённый возвращается как есть.
+    """Read a key. An unprotected one is returned as it is.
 
-    Испорченный или чужой (перенесённый с другой машины) блоб — это не ключ;
-    возвращаем пусто, чтобы интерфейс попросил ввести заново, а не отправлял
-    мусор в сервис.
+    A corrupted or foreign blob — one carried over from another machine — is not
+    a key; we return nothing, so the interface asks for it again instead of
+    sending rubbish to the service.
     """
     if not stored:
         return ""
@@ -104,5 +105,5 @@ def unprotect(stored: str) -> str:
 
 
 def is_protected(stored: str) -> bool:
-    """Лежит ли ключ защищённым. Нужно подсказке в «Параметрах»."""
+    """Whether the stored key is protected. The hint in «Preferences» needs it."""
     return bool(stored) and stored.startswith(_PREFIX)

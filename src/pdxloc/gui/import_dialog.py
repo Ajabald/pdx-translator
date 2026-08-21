@@ -1,19 +1,21 @@
-"""Загрузка перевода из готового дерева локализации.
+"""Loading a translation from a ready localisation tree.
 
-Предпросмотр обязателен: операция меняет тысячи строк разом, и до нажатия
-кнопки должно быть видно, сколько именно строк и что в них станет. Записанное
-уходит одной пачкой и снимается одним Ctrl+Z.
+The preview is mandatory: the operation changes thousands of rows at once, and
+before the button is pressed it must be visible how many rows and what will
+become of them. What gets written goes as one batch and comes back with one
+Ctrl+Z.
 
-**Дерево читается один раз на выбранную папку.** Правила приёма (галки) файлы на
-диске не меняют — они меняют только отбор, поэтому переключение галки
-пересчитывает план по уже разобранному дереву, в памяти. Раньше каждая галка
-заново обходила весь мод, а нажатие кнопки обходило его ещё дважды.
+**The tree is read once per chosen folder.** The import rules — the checkboxes —
+do not change the files on disk; they change the selection only, so toggling one
+recomputes the plan over the already parsed tree, in memory. Every checkbox used
+to walk the whole mod again, and pressing the button walked it twice more.
 
-Потока здесь нет намеренно. Долгой была запись — построчный `commit` стоил
-одного fsync на строку, — и она стала пакетной: сотня тысяч строк уходит за
-секунды. Чтение же после кэширования случается ровно раз на выбранную папку и
-стоит порядка секунды даже на большом моде. Поток ради неё означал бы, что
-фоновая работа переживает модальное окно, — цена выше выигрыша.
+There is deliberately no thread here. The slow part used to be writing — a
+`commit` per row cost one fsync per row — and that is now batched: a hundred
+thousand rows go in seconds. Reading, once cached, happens exactly once per
+chosen folder and costs about a second even on a large mod. A thread for that
+would mean background work outliving a modal window, and the price is higher than
+the gain.
 """
 from __future__ import annotations
 

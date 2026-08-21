@@ -1,16 +1,18 @@
-"""Иконки действий: монохромные SVG, перекрашиваемые под тему.
+"""Action icons: monochrome SVG, repainted to match the theme.
 
-Раньше кнопки панели брали иконки из стиля Qt, и половина по смыслу не
-подходила: дискета означала «записать перевод в мод», «детальный вид папки» —
-«память переводов». Узнать кнопку с одного взгляда было нельзя.
+The toolbar buttons used to take icons from the Qt style, and half of them meant
+the wrong thing: a floppy disk stood for «write the translation to the mod», a
+«detailed folder view» for «translation memory». You could not recognise a button
+at a glance.
 
-Перекраска сделана своим `QIconEngine`, а не переустановкой `QIcon` при смене
-темы: `QIcon` внутри `QAction` — значение, Qt не переспросит его заново, и
-пришлось бы обходить все места, где иконка успела осесть (панель, меню,
-контекстное меню), не забыв ни одного. Движок же берёт цвет в момент отрисовки.
+The repainting is done by a `QIconEngine` of our own rather than by reinstalling
+`QIcon` when the theme changes: a `QIcon` inside a `QAction` is a value, Qt never
+asks for it again, and we would have to visit every place an icon has settled —
+toolbar, menu, context menu — without missing one. The engine takes the colour at
+paint time instead.
 
-`QSvgRenderer` используется напрямую, а не `QIcon("файл.svg")`, — тогда в сборку
-не нужны плагины `qsvg`/`qsvgicon`.
+`QSvgRenderer` is used directly rather than `QIcon("file.svg")`: that way the
+build needs no `qsvg`/`qsvgicon` plugins.
 """
 from __future__ import annotations
 
@@ -23,8 +25,9 @@ from PySide6.QtSvg import QSvgRenderer
 
 from pdxloc.gui import theme
 
-# Пока файла нет, кнопка берёт стандартную иконку стиля — как было раньше.
-# Значит набор можно рисовать по одной иконке, ничего не ломая.
+# While a file is missing the button takes the standard style icon, as it used
+# to. That means the set can be drawn one icon at a time without breaking
+# anything.
 STANDARD_FALLBACK = {
     "scan": "SP_BrowserReload",
     "export": "SP_DialogSaveButton",
@@ -54,20 +57,22 @@ STANDARD_FALLBACK = {
 
 
 def _icon_dir():
-    # importlib.resources, а не Path(__file__): так путь верен и в исходниках,
-    # и внутри onedir-сборки PyInstaller
+    # importlib.resources rather than Path(__file__): the path is then right both
+    # in the sources and inside a PyInstaller onedir build
     return resources.files("pdxloc.gui") / "icons"
 
 
 def app_icon() -> QIcon:
-    """Иконка самого приложения — окно, панель задач, Alt+Tab.
+    """The application's own icon — window, taskbar, Alt+Tab.
 
-    Отдельно от иконок действий и не перекрашивается: те монохромные и живут
-    цветом темы, а эта цветная и одна на приложение.
+    Kept apart from the action icons and never repainted: those are monochrome
+    and live by the theme colour, while this one is in colour and there is one
+    per application.
 
-    Ставить её обязательно: `icon=` в `pdx-translator.spec` задаёт иконку
-    **файла** exe, а окно берёт стандартную иконку Qt, пока ей не сказали
-    иначе. Из исходников exe нет вовсе, и без этого окно всегда безымянное.
+    Setting it is mandatory: `icon=` in `pdx-translator.spec` gives the icon of
+    the exe **file**, while the window takes the default Qt icon until told
+    otherwise. Run from source there is no exe at all, and without this the
+    window is forever nameless.
     """
     try:
         path = _icon_dir() / "app.png"
@@ -75,7 +80,7 @@ def app_icon() -> QIcon:
             return QIcon(str(path))
     except (FileNotFoundError, ModuleNotFoundError):
         pass
-    return QIcon()      # без файла — прежнее поведение, стандартная иконка
+    return QIcon()      # no file: the old behaviour, a standard icon
 
 
 def available(name: str) -> bool:
@@ -93,10 +98,11 @@ def _renderer(name: str) -> QSvgRenderer:
 
 @lru_cache(maxsize=512)
 def _tinted(name: str, color: str, width: int, height: int) -> QPixmap:
-    """Силуэт SVG, залитый цветом темы.
+    """The SVG silhouette, filled with the theme colour.
 
-    Заливка через SourceIn, а не подмена цвета в тексте SVG: не зависит от
-    того, какой краской иконка нарисована, и сохраняет сглаживание.
+    Filled through SourceIn rather than by swapping the colour inside the SVG
+    text: that does not depend on what paint the icon was drawn with, and it
+    keeps the antialiasing.
     """
     pixmap = QPixmap(width, height)
     pixmap.fill(Qt.transparent)
@@ -117,7 +123,7 @@ theme.notifier.changed.connect(_clear_cache)
 
 
 class _ThemedIconEngine(QIconEngine):
-    """Иконка берёт цвет из темы в момент отрисовки."""
+    """The icon takes its colour from the theme at paint time."""
 
     def __init__(self, name: str):
         super().__init__()

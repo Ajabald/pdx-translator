@@ -1,8 +1,8 @@
-"""Поля параметров правила — собираются по типу значения.
+"""Fields for rule parameters, built from the type of the value.
 
-Вынесено из `rules_window.py`: виджет самодостаточен, ничего из окна правил не
-знает и занимает шестую часть его объёма. Окно от этого стало читаемым, а
-редакторы — проверяемыми отдельно.
+Split out of `rules_window.py`: the widget stands alone, knows nothing about the
+rules window and made up a sixth of its bulk. The window became readable and the
+editors became testable on their own.
 """
 from __future__ import annotations
 
@@ -17,17 +17,18 @@ from pdxloc.core.qa_rules import Rule
 
 
 class ParamEditors(QWidget):
-    """Поля параметров правила, собранные по типу значения.
+    """Fields for rule parameters, built from the type of the value.
 
-    Тип берём у значения по умолчанию: список строк — поле через запятую,
-    целое — счётчик, `bool` — галка, строка из фиксированного набора —
-    выпадающий список. Отдельной схемы типов нет намеренно: она разошлась бы
-    с самими параметрами при первой же правке `qa_rules.py`.
+    The type comes from the default value: a list of strings gets a comma
+    separated field, an integer a spin box, a `bool` a checkbox, a string from a
+    fixed set a combo box. There is deliberately no separate type schema: it
+    would drift from the parameters themselves on the first edit to
+    `qa_rules.py`.
     """
 
     changed = Signal()
 
-    # параметры, у которых значения — перечисление, а не свободный текст
+    # parameters whose values are an enumeration rather than free text
     CHOICES = {
         "compare": ("multiset", "set", "count"),
         "direction": ("any", "fewer", "more"),
@@ -67,7 +68,7 @@ class ParamEditors(QWidget):
             "RulesWindow", "Complain only when not a single variable is left in "
                            "the translation, and stay silent when the set merely "
                            "differs"),
-        # параметры своих правил
+        # parameters of the user's own rules
         "pattern": QT_TRANSLATE_NOOP(
             "RulesWindow", "A regular expression; a match counts whole, "
                            "brackets inside do not change that"),
@@ -149,11 +150,11 @@ class ParamEditors(QWidget):
             return edit
         return None
 
-    # Списки склоняющих функций бывают длинными: у французского Stellaris их
-    # 206, у CK2 — 127. В строку через запятую такое не влезает, а править его
-    # там опасно: одна снесённая запятая склеивает два имени, и оба перестают
-    # работать молча. Длинный список получает многострочное поле, по имени на
-    # строку, и остаётся читаемым.
+    # Lists of inflection helpers get long: French Stellaris has 206 of them, CK2
+    # 127. That does not fit a comma-separated line, and editing it there is
+    # dangerous: one deleted comma glues two names together and both stop working
+    # in silence. A long list gets a multi-line field, one name per line, and stays
+    # readable.
     LONG_LIST = 12
 
     def _list_editor(self, value) -> QWidget:
@@ -170,10 +171,10 @@ class ParamEditors(QWidget):
         return box
 
     def _on_list_blur(self, box: QPlainTextEdit):
-        """Правку длинного поля считаем законченной по уходу фокуса.
+        """An edit in a long field counts as finished when focus leaves it.
 
-        У `QPlainTextEdit` нет `editingFinished`, а слать сигнал на каждую
-        букву — значит пересчитывать замечания всего проекта по нажатию клавиши.
+        `QPlainTextEdit` has no `editingFinished`, and emitting on every letter
+        would mean rechecking the whole project on each keystroke.
         """
         original = QPlainTextEdit.focusOutEvent
 
@@ -184,7 +185,7 @@ class ParamEditors(QWidget):
         return handler
 
     def values(self, rule: Rule) -> dict:
-        """Значения полей, приведённые к типу параметра по умолчанию."""
+        """The field values, coerced to the type of the default parameter."""
         out: dict = {}
         for name, default in rule.params.items():
             widget = self._widgets.get(name)
