@@ -1,36 +1,39 @@
-"""Китайский перевод интерфейса: пары «английский оригинал → 简体中文».
+"""The Chinese translation of the interface: pairs «English original → 简体中文».
 
-Файл **собран машинно**, а затем вычитан целиком (2026-08-11). Вычитка была не
-переводом заново: правились места, где перевод менял смысл или сталкивался с
-соседним — «Machine-translate the row» без «машинного», латинские глифы `C`/`I`
-в колонках-кнопках, «Actualize» и «Validate» одним словом 确认, «Duplicate» и
-«Copy» одним словом 复制. Чего вычитка **не** даёт: сверки терминологии с тем,
-как эти вещи зовут в китайских сообществах модов Paradox, — это к носителю.
+The file was **assembled by machine** and then proofread whole (2026-08-11). The
+proofreading was not a translation anew: what was mended were the places where
+the translation changed the meaning or collided with a neighbour —
+«Machine-translate the row» without "machine", the Latin glyphs `C`/`I` in the
+button columns, «Actualize» and «Validate» by the one word 确认, «Duplicate» and
+«Copy» by the one word 复制. What the proofreading does **not** give: a check of
+the terminology against what these things are called in the Chinese communities
+of Paradox mods — that is for a native speaker.
 
-`CHECKED` ниже перечисляет вычитанные контексты и число записей в каждом на
-момент проверки. Число — сторож: добавили строку, счёт разошёлся, и
-`tools/seed_ts.py` возвращает контексту пометку `unfinished` целиком. Лучше
-спросить лишний раз, чем выдать машинную строку за проверенную. Прогон печатает,
-сколько строк ждут взгляда.
+`CHECKED` below lists the proofread contexts and the number of records in each at
+the moment of the check. The number is a watchman: add a string, the count
+diverges, and `tools/seed_ts.py` returns the `unfinished` mark to the whole
+context. Better to ask once too often than to pass a machine string off as
+checked. The run prints how many strings are waiting for an eye.
 
-Оригиналы взяты из `pdxloc_zh_CN.ts` как есть, ни один не набран руками:
-опечатка в английской строке потеряла бы перевод молча. Правя строку в коде,
-поправьте её и здесь — `tools/seed_ts.py` ругается на перевод, которому не
-нашлось оригинала.
+The originals are taken from `pdxloc_zh_CN.ts` as they are, not one of them typed
+by hand: a typo in an English string would lose a translation silently. When
+editing a string in the code, mend it here as well — `tools/seed_ts.py` complains
+about a translation for which no original was found.
 
-Ключ верхнего уровня — контекст перевода (он же `<context><name>` в `.ts`).
+The top-level key is the translation context (the same `<context><name>` as in
+the `.ts`).
 """
 from __future__ import annotations
 
 ZH: dict[str, dict[str, str]] = {}
 
-# контекст -> сколько в нём было записей, когда его вычитали
+# context -> how many records it held when it was proofread
 #
-# `Glossary` здесь **намеренно отсутствует**: окно новое целиком, и пометка о
-# вычитке на нём была бы неправдой. Пусть контекст остаётся `unfinished` — это
-# ровно то состояние, в котором он и находится. Числа у `Actions` (69→71) и
-# `DetailPane` (30→32) подняты: там прибавилось по паре строк, и они прочитаны
-# рядом с соседями, как того и требует пометка.
+# `Glossary` is **deliberately absent** here: the window is entirely new, and a
+# proofreading mark on it would be untrue. Let the context stay `unfinished` —
+# that is exactly the state it is in. The numbers for `Actions` (69→71) and
+# `DetailPane` (30→32) are raised: a couple of strings were added there, and they
+# were read next to their neighbours, exactly as the mark demands.
 CHECKED: dict[str, int] = {
     "Actions": 71,
     "Archive": 11,
@@ -54,15 +57,16 @@ CHECKED: dict[str, int] = {
     "Prefs": 54,
     "Project": 6,
     "QaPanel": 17,
-    # QaRules вычитывался при 68 строках; в него добавились правило про
-    # цветовые коды §…§! и пресет «HOI4 · Русский» — пять строк, которых
-    # человек не видел. Пометка снята целиком: вернуть её должен тот, кто
-    # перечитает контекст, а не тот, кто дописал строки.
+    # QaRules was proofread at 68 strings; a rule about the colour codes §…§! and
+    # the preset «HOI4 · Русский» were added to it — five strings a human has not
+    # seen. The mark is taken off whole: bringing it back is for whoever rereads
+    # the context, not for whoever added the strings.
     "Relocate": 19,
     "RootDialog": 11,
-    # RulesWindow вычитывался при 114 строках; в 0.1.2 в него добавились поле
-    # длинного списка и пояснение про языковой слой. Пометка снята целиком:
-    # вернуть её должен тот, кто перечитает контекст, а не тот, кто дописал.
+    # RulesWindow was proofread at 114 strings; in 0.1.2 the long-list field and
+    # the explanation about the language layer were added to it. The mark is taken
+    # off whole: bringing it back is for whoever rereads the context, not for
+    # whoever added the strings.
     "ScanDialog": 30,
     "ScanStats": 14,
     "Scanner": 2,

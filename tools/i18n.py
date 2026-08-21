@@ -1,16 +1,16 @@
-"""Сборка переводов интерфейса: исходники -> .ts -> .qm.
+"""Building the interface translations: the sources -> .ts -> .qm.
 
-    .venv\\Scripts\\python.exe tools\\i18n.py update    # обновить .ts из кода
-    .venv\\Scripts\\python.exe tools\\i18n.py release   # собрать .qm из .ts
+    .venv\\Scripts\\python.exe tools\\i18n.py update    # refresh the .ts from the code
+    .venv\\Scripts\\python.exe tools\\i18n.py release   # build the .qm out of the .ts
     .venv\\Scripts\\python.exe tools\\i18n.py all
 
-`pyside6-lupdate` и `pyside6-lrelease` лежат в venv — новых зависимостей не
-нужно. `.py` не входит в список расширений lupdate по умолчанию (он рассчитан
-на C++), поэтому `-extensions py` передаётся всегда.
+`pyside6-lupdate` and `pyside6-lrelease` lie in the venv — no new dependencies
+are needed. `.py` is not in the default list of lupdate extensions (it is meant
+for C++), so `-extensions py` is always passed.
 
-Английского файла нет намеренно: строки в коде и так английские, и пустой
-`pdxloc_en.qm` только сбивал бы с толку — `gui/language.py` считает язык
-доступным по наличию файла.
+There is no English file on purpose: the strings in the code are English as it
+is, and an empty `pdxloc_en.qm` would only confuse — `gui/language.py` counts a
+language as available by the presence of a file.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ SRC = ROOT / "src" / "pdxloc"
 TS_DIR = SRC / "gui" / "translations"
 SCRIPTS = ROOT / ".venv" / "Scripts"
 
-# Английский — язык оригинала, его файла нет (см. gui/language.SOURCE)
+# English is the language of the original, it has no file (see gui/language.SOURCE)
 TARGETS = ("ru", "zh_CN")
 
 
@@ -37,21 +37,22 @@ def _sources() -> list[str]:
 
 
 def update() -> None:
-    """Вытащить строки из кода в .ts, сохранив уже сделанные переводы."""
+    """Pull the strings out of the code into .ts, keeping the translations already made."""
     TS_DIR.mkdir(parents=True, exist_ok=True)
     for code in TARGETS:
         ts = TS_DIR / f"pdxloc_{code}.ts"
         cmd = [
             _tool("lupdate"),
             "-extensions", "py",
-            # относительные пути к исходникам: иначе в .ts уезжает путь с
-            # именем пользователя, и файл нельзя показать переводчику
+            # relative paths to the sources: otherwise a path with the user name
+            # travels into the .ts, and the file cannot be shown to a translator
             "-locations", "relative",
-            # Устаревшие записи не храним. Пары «оригинал → перевод» живут в
-            # tools/*_translations.py, и .ts для нас — производная от кода;
-            # оставь lupdate помечать выброшенные строки `vanished`, и они
-            # навсегда потребуют пары в обоих языках. Переформулировал строку —
-            # старая уходит, и её пару надо убрать, о чём и скажут тесты.
+            # We do not keep obsolete records. The pairs «original → translation»
+            # live in tools/*_translations.py, and the .ts is for us a derivative
+            # of the code; leave lupdate to mark the thrown-out strings
+            # `vanished`, and they will demand a pair in both languages forever.
+            # Reworded a string — the old one goes, and its pair has to go too,
+            # which is what the tests will say.
             "-no-obsolete",
             *_sources(),
             "-ts", str(ts),
@@ -61,7 +62,7 @@ def update() -> None:
 
 
 def release() -> None:
-    """Скомпилировать .ts в .qm — их и читает приложение."""
+    """Compile the .ts into .qm — those are what the application reads."""
     for ts in sorted(TS_DIR.glob("pdxloc_*.ts")):
         qm = ts.with_suffix(".qm")
         print(f"-> {qm.name}")

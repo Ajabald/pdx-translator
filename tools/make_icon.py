@@ -1,18 +1,18 @@
-"""Сборка `pdx-translator.ico` из `tools/appicon.svg`.
+"""Building `pdx-translator.ico` out of `tools/appicon.svg`.
 
     .venv\\Scripts\\python.exe tools\\make_icon.py
 
-Новых зависимостей не заводит: рисует Qt (`QtSvg` уже в PySide6), а контейнер
-ICO складывается здесь руками — писать многоразмерный ICO `QImageWriter` не
-умеет, он кладёт одну картинку.
+It sets up no new dependencies: Qt does the drawing (`QtSvg` is in PySide6
+already), and the ICO container is put together here by hand — `QImageWriter`
+cannot write a multi-size ICO, it lays in one picture.
 
-Размеры взяты те, что Windows действительно спрашивает: 16 — панель задач и
-заголовок окна, 32 — рабочий стол, 48 — «крупные значки», 256 — «огромные» и
-предпросмотр в проводнике. Промежуточные 64 и 128 добавлены, чтобы система не
-масштабировала 256 вниз в «плитку».
+The sizes taken are the ones Windows really asks for: 16 — the taskbar and the
+title of the window, 32 — the desktop, 48 — "large icons", 256 — "extra large"
+and the preview in the explorer. The intermediate 64 and 128 are added so that
+the system does not scale 256 down into a "tile".
 
-Данные кладём в PNG, а не BMP: Vista и новее это понимают, а файл выходит втрое
-меньше — 256×256 в BMP занял бы 256 КБ на один размер.
+The data goes into PNG and not BMP: Vista and newer understand that, and the file
+comes out three times smaller — 256×256 in BMP would take 256 KB for one size.
 """
 from __future__ import annotations
 
@@ -23,21 +23,22 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SVG = ROOT / "tools" / "appicon.svg"
 SVG_SMALL = ROOT / "tools" / "appicon-small.svg"
-# Ниже этого размера берём упрощённый рисунок: столбцы на такой сетке
-# сливаются в серую точку, и грубый знак читается лучше подробного.
+# Below this size we take the simplified drawing: on such a grid the columns
+# merge into a grey dot, and a coarse sign reads better than a detailed one.
 SMALL_UPTO = 32
 ICO = ROOT / "pdx-translator.ico"
 PREVIEW = ROOT / "tools" / "appicon-preview.png"
-# Копия внутри пакета: `.ico` в спеке задаёт иконку САМОГО exe, а иконку
-# окна и панели задач ставит `QApplication.setWindowIcon`, и ей нужен файл,
-# доезжающий и до сборки, и до запуска из исходников.
+# A copy inside the package: the `.ico` in the spec sets the icon of the exe
+# ITSELF, while the icon of the window and of the taskbar is set by
+# `QApplication.setWindowIcon`, and that one needs a file which reaches both the
+# build and a run from the sources.
 APP_PNG = ROOT / "src" / "pdxloc" / "gui" / "icons" / "app.png"
 
 SIZES = (16, 32, 48, 64, 128, 256)
 
 
 def render(size: int) -> bytes:
-    """PNG нужного размера из SVG — подробного или упрощённого."""
+    """A PNG of the needed size out of the SVG — the detailed one or the simplified."""
     from PySide6.QtCore import QBuffer, QByteArray, Qt
     from PySide6.QtGui import QImage, QPainter
     from PySide6.QtSvg import QSvgRenderer
@@ -58,13 +59,13 @@ def render(size: int) -> bytes:
 
 
 def build_ico(pngs: dict[int, bytes]) -> bytes:
-    """Контейнер ICO: заголовок, таблица записей, следом сами PNG."""
+    """The ICO container: the header, the table of records, then the PNGs themselves."""
     count = len(pngs)
     header = struct.pack("<HHH", 0, 1, count)      # reserved, type=icon, count
     offset = 6 + 16 * count
     entries, blobs = [], []
     for size, png in sorted(pngs.items()):
-        # 256 записывается нулём: в поле один байт, и 256 в него не влезает
+        # 256 is written as zero: the field is one byte, and 256 does not fit in it
         byte = 0 if size >= 256 else size
         entries.append(struct.pack(
             "<BBBBHHII", byte, byte, 0, 0, 1, 32, len(png), offset))
@@ -74,7 +75,7 @@ def build_ico(pngs: dict[int, bytes]) -> bytes:
 
 
 def build_preview(pngs: dict[int, bytes]) -> None:
-    """Полоса со всеми размерами — чтобы посмотреть глазами, а не гадать."""
+    """A strip with every size — to look with one's own eyes instead of guessing."""
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QImage, QPainter
 
@@ -95,7 +96,7 @@ def build_preview(pngs: dict[int, bytes]) -> None:
 def main() -> int:
     from PySide6.QtGui import QGuiApplication
 
-    QGuiApplication(sys.argv)        # QImage без него не рисует
+    QGuiApplication(sys.argv)        # without it QImage does not draw
     for source in (SVG, SVG_SMALL):
         if not source.is_file():
             print(f"нет исходника: {source}")

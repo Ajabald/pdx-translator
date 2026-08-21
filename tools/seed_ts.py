@@ -1,23 +1,25 @@
-"""Разложить пары «оригинал → перевод» по контекстам `.ts`.
+"""Lay the pairs «original → translation» out over the contexts of the `.ts`.
 
-    .venv\\Scripts\\python.exe tools\\i18n.py update       # сперва вытащить строки
-    .venv\\Scripts\\python.exe tools\\seed_ts.py           # затем заполнить русский
-    .venv\\Scripts\\python.exe tools\\seed_ts.py zh_CN     # и китайский
-    .venv\\Scripts\\python.exe tools\\i18n.py release      # и собрать .qm
+    .venv\\Scripts\\python.exe tools\\i18n.py update       # first pull the strings out
+    .venv\\Scripts\\python.exe tools\\seed_ts.py           # then fill in the Russian
+    .venv\\Scripts\\python.exe tools\\seed_ts.py zh_CN     # and the Chinese
+    .venv\\Scripts\\python.exe tools\\i18n.py release      # and build the .qm
 
-Сверка идёт в обе стороны, и обе важны:
+The reconciliation goes both ways, and both matter:
 
-* **перевод без оригинала** — почти всегда опечатка в английской строке: её
-  правили в коде, а здесь забыли. Молча пропустить значит потерять перевод;
-* **оригинал без перевода** — просто ещё не дошли руки, это нормально, но
-  число таких строк печатается, чтобы видеть остаток.
+* **a translation without an original** — almost always a typo in the English
+  string: it was edited in the code and forgotten here. To skip it silently is
+  to lose a translation;
+* **an original without a translation** — simply not got round to yet, which is
+  normal, but the number of such strings is printed so that the remainder shows.
 
-Китайский собран машинно, и пометка `unfinished` снимается только с **вычитанных
-контекстов** — их перечисляет `zh_translations.CHECKED`. Пометка хранит число
-записей на момент проверки: добавили строку — число разошлось, и контекст снова
-ждёт взгляда. Лучше спросить лишний раз, чем выдать машинную строку за
-проверенную. На сборку `.qm` пометка не влияет — `lrelease` пропускает только
-пустые переводы, — зато в Qt Linguist сразу видно, что проверено, а что нет.
+The Chinese was assembled by machine, and the `unfinished` mark is taken off only
+from the **proofread contexts** — `zh_translations.CHECKED` lists them. The mark
+keeps the number of records at the moment of the check: add a string and the
+number diverges, and the context waits for an eye again. Better to ask once too
+often than to pass a machine string off as checked. The mark does not affect the
+building of the `.qm` — `lrelease` skips only empty translations — but in Qt
+Linguist it shows at once what is checked and what is not.
 """
 from __future__ import annotations
 
@@ -30,12 +32,14 @@ TS_DIR = ROOT / "src" / "pdxloc" / "gui" / "translations"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-# язык -> (модуль с парами, имя словаря, имя таблицы вычитанных контекстов)
+# language -> (the module with the pairs, the name of the dictionary, the name of
+# the table of proofread contexts)
 #
-# Третий элемент и есть пометка «проверено человеком». Пусто (`None`) — язык
-# написан руками целиком, помечать нечего. Иначе `unfinished` снимается только
-# с вычитанных контекстов: перевод, собранный машинно, не должен выдавать себя
-# за проверенный, а Qt Linguist показывает эту пометку переводчику первым делом.
+# The third element is the mark "checked by a human". Empty (`None`) — the
+# language is written by hand whole, there is nothing to mark. Otherwise
+# `unfinished` is taken off only from the proofread contexts: a translation
+# assembled by machine must not pass itself off as checked, and Qt Linguist shows
+# that mark to the translator first thing.
 SOURCES: dict[str, tuple[str, str, str | None]] = {
     "ru": ("ru_translations", "RU", None),
     "zh_CN": ("zh_translations", "ZH", "CHECKED"),
@@ -47,14 +51,15 @@ def load(code: str) -> tuple[dict[str, dict[str, str]], dict[str, int]]:
     module = __import__(module_name)
     pairs = getattr(module, table_name)
     if checked_name is None:
-        # весь язык считается вычитанным: столько записей, сколько есть
+        # the whole language counts as proofread: as many records as there are
         return pairs, {ctx: len(table) for ctx, table in pairs.items()}
     return pairs, dict(getattr(module, checked_name, {}))
 
 
 def main() -> int:
-    # Консоль Windows отдаёт cp1251, и первая же строка со стрелкой роняла
-    # отчёт целиком: сверка проходила, а увидеть её результат было нельзя.
+    # The Windows console hands back cp1251, and the very first line with an
+    # arrow used to bring the whole report down: the reconciliation passed, but
+    # its result could not be seen.
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="replace")
 
@@ -80,9 +85,10 @@ def main() -> int:
     for context in root.findall("context"):
         name = context.findtext("name") or ""
         table = pairs.get(name, {})
-        # Пометка о вычитке хранит число записей на момент проверки. Добавили
-        # строку — число разошлось, и контекст снова ждёт взгляда: лучше
-        # спросить лишний раз, чем выдать машинную строку за проверенную.
+        # The proofreading mark keeps the number of records at the moment of the
+        # check. Add a string — the number diverges, and the context waits for an
+        # eye again: better to ask once too often than to pass a machine string
+        # off as checked.
         context_checked = table and checked.get(name) == len(table)
         if table and not context_checked:
             unchecked_contexts.append(name)
@@ -98,8 +104,9 @@ def main() -> int:
                     missing_translation.append((name, source))
                 continue
             want_type = None if context_checked else "unfinished"
-            # сравнение без strip(): у части строк краевой пробел значащий
-            # (« · ignored: %1»), и со strip() они «заполнялись» каждый прогон
+            # the comparison is without strip(): in some strings the edge space
+            # is meaningful (« · ignored: %1»), and with strip() they were
+            # "filled in" on every run
             if (node.text or "") == text and node.get("type") == want_type:
                 already += 1
                 continue

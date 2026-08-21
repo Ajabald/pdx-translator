@@ -1,15 +1,17 @@
-"""Русский перевод интерфейса: пары «английский оригинал → русский текст».
+"""The Russian translation of the interface: pairs «English original → Russian text».
 
-Заполняется при переносе строк кода на английский и скармливается
-`tools/seed_ts.py`, который раскладывает пары по контекстам в
+It is filled in as the strings of the code move to English and is fed to
+`tools/seed_ts.py`, which lays the pairs out over the contexts in
 `gui/translations/pdxloc_ru.ts`.
 
-Почему не правим `.ts` руками: записей около девятисот, и ручная правка XML
-такого размера — верный способ потерять десяток строк молча. Здесь же пара
-видна целиком, а расхождение с кодом ловит `tools/seed_ts.py`: он ругается
-на перевод, которому в `.ts` не нашлось оригинала.
+Why we do not edit the `.ts` by hand: there are about nine hundred records, and
+editing XML of that size by hand is a sure way to lose a dozen lines silently.
+Here a pair is visible whole, while a divergence from the code is caught by
+`tools/seed_ts.py`: it complains about a translation for which no original was
+found in the `.ts`.
 
-Ключ верхнего уровня — контекст перевода (он же `<context><name>` в `.ts`).
+The top-level key is the translation context (the same `<context><name>` as in
+the `.ts`).
 """
 from __future__ import annotations
 
@@ -133,7 +135,7 @@ RU["MainWindow"] = {
     "T&ools": "&Инструменты",
     "&Help": "&Справка",
     "Check preset: %1": "Набор проверок: %1",
-    # подменю
+    # submenu
     "Show": "Показывать",
     "All": "Все",
     "Sort": "Сортировка",
@@ -147,7 +149,7 @@ RU["MainWindow"] = {
     "shortcut keeps working":
         "Прячет только кнопку панели — команда остаётся в меню, и её клавиша "
         "продолжает работать",
-    # загон чужой игры
+    # the pen of another game
     "Project of another game": "Проект другой игры",
     "The project «%1» belongs to %2, but lies in the folder of %3.\n\n"
     "Move it to %4?":
@@ -155,14 +157,14 @@ RU["MainWindow"] = {
         "Перенести его в %4?",
     "no game in particular": "не относящейся ни к одной игре",
     "Could not move the file:\n%1": "Не удалось перенести файл:\n%1",
-    # статус-бар
+    # the status bar
     "Choose or create a project": "Выберите или создайте проект",
     "Rows selected: %1": "Выбрано строк: %1",
-    # горячие клавиши
+    # keyboard shortcuts
     "Keyboard shortcuts": "Горячие клавиши",
     "F2, double click": "F2, двойной клик",
     "Edit the translation in the cell": "Править перевод прямо в ячейке",
-    # удаление проекта
+    # deleting a project
     "Delete project": "Удаление проекта",
     "Delete": "Удалить",
     "Cancel": "Отмена",
@@ -184,7 +186,7 @@ RU["MainWindow"] = {
         "Не удалось удалить файл:\n%1\n\n%2\n\n"
         "Скорее всего он открыт другой программой.",
     "Project deleted: %1 (%2 files)": "Проект удалён: %1 (файлов: %2)",
-    # открытие и сохранение
+    # opening and saving
     "Project": "Проект",
     "Project file not found:\n%1": "Файл проекта не найден:\n%1",
     "Could not open the project:\n%1": "Не удалось открыть проект:\n%1",
@@ -203,12 +205,12 @@ RU["MainWindow"] = {
     "Could not save:\n%1": "Не удалось сохранить:\n%1",
     "Project saved:\n%1\n\nOpening the copy.":
         "Проект сохранён:\n%1\n\nОткрываю копию.",
-    # сканирование
+    # scanning
     "Scanning": "Сканирование",
     "Scan interrupted — changes were not saved":
         "Сканирование прервано — изменения не сохранены",
     "Error:\n%1": "Ошибка:\n%1",
-    # косметические правки
+    # cosmetic edits
     "Cosmetic edits": "Косметические правки",
     "There are no outdated rows with cosmetic edits.\n\n"
     "Those are changes of punctuation, case and spaces — when the meaning "
@@ -223,7 +225,7 @@ RU["MainWindow"] = {
         "косметически?\n\nСами переводы не изменятся — снимется пометка "
         "«Устарело». Операцию можно отменить (Ctrl+Z).",
     "Rows actualized: %1": "Актуализировано строк: %1",
-    # напоминание о базах памяти при открытии проекта
+    # the reminder about memory databases when a project is opened
     "Translation memory": "Память переводов",
     "There is not a single translation memory database.\n\n"
     "A database built from your copy of the game fills in strings the mod "
@@ -231,14 +233,14 @@ RU["MainWindow"] = {
         "Нет ни одной базы памяти переводов.\n\n"
         "База, собранная из вашей копии игры, подставляет строки, которые мод "
         "скопировал из неё, — часто это сотни строк.\n\nСобрать сейчас?",
-    # смена папки оригинала
+    # changing the source folder
     "Change of the original folder": "Смена папки оригинала",
     "The folder has changed. Scan the project now?\n\nScanning re-reads the "
     "files: translations are kept, changed rows become «Outdated».":
         "Папка изменена. Сканировать проект сейчас?\n\nСканирование "
         "перечитает файлы: переводы сохранятся, изменившиеся строки "
         "станут «Устарело».",
-    # отмена операции
+    # undoing an operation
     "Undo": "Отмена",
     "Nothing to undo.": "Отменять нечего.",
     "Undo operation": "Отмена операции",
@@ -253,7 +255,7 @@ RU["MainWindow"] = {
     "Undo the last operation (%1) and return %2 rows to their previous state?":
         "Отменить последнюю операцию (%1) и вернуть %2 строк к прежнему состоянию?",
     "Rows reverted: %1": "Возвращено строк: %1",
-    # о программе
+    # about the program
     "(no project open)": "(проект не открыт)",
     "A translator's workbench for the localisation of Paradox game mods.<br>"
     "Format: Paradox pseudo-YAML (UTF-8 with BOM) and the older CSV.<br><br>":
@@ -281,7 +283,7 @@ RU["Welcome"] = {
     "Back": "Назад",
     "Next": "Далее",
     "Done": "Готово",
-    # шаг 1 — язык
+    # step 1 — the language
     "Interface language": "Язык интерфейса",
     "Choose the language of the interface. It can be changed at any time in "
     "«File → Preferences».":
@@ -291,7 +293,7 @@ RU["Welcome"] = {
     "translate between — those belong to the project.":
         "Язык интерфейса не связан с языками, между которыми вы переводите: "
         "те задаются в проекте.",
-    # шаг 2 — базы памяти
+    # step 2 — the memory databases
     "Translation memory": "Память переводов",
     "There are no translation memory databases yet. A database built from "
     "your copy of the game fills in strings the mod copied from it — often "
@@ -311,7 +313,7 @@ RU["Welcome"] = {
         "скопировал из игры, и подсказывают, как переводили похожие.",
     "Build a database…": "Собрать базу…",
     "Build one more…": "Собрать ещё одну…",
-    # шаг 3 — первый проект
+    # step 3 — the first project
     "First project": "Первый проект",
     "A project holds everything: rows, statuses, translation memory and the "
     "history of the original. It is a single file you can copy or hand to "
@@ -488,7 +490,7 @@ RU["Relocate"] = {
     "Folder not found: %1": "Папка не найдена: %1",
     "The folder has no localization files *%1*.yml:\n%2":
         "В папке нет файлов локализации *%1*.yml:\n%2",
-    # смена языка папки
+    # changing the language of the folder
     "Only the text language changes — files and rows are not affected. "
     "Machine translation, memory database naming and language-specific checks "
     "will use the new value.":
@@ -567,7 +569,7 @@ RU["MtDialog"] = {
     "«File → Preferences → Machine translation»":
         "Сервис не настроен — выберите его в "
         "«Файл → Параметры → Машинный перевод»",
-    # охват
+    # the reach
     "Which rows to translate:": "Какие строки переводить:",
     "Selected rows": "Выделенные строки",
     "Not translated": "Непереведённые",
@@ -582,7 +584,7 @@ RU["MtDialog"] = {
         "Проверенные, кастомные и игнорируемые строки не трогаются никогда, "
         "как и строки, где переводить нечего: голый [GetName] стоит денег и "
         "не даёт ничего.",
-    # прогон
+    # the run
     "Rows: %1 · characters: %2 · requests: %3 · roughly %4 minutes":
         "Строк: %1 · символов: %2 · запросов: %3 · примерно %4 мин",
     "%1 rows are longer than the service takes in one request and will be "
@@ -599,7 +601,7 @@ RU["MtDialog"] = {
     "Interrupting…": "Прерываю…",
     "Rows worth looking at:": "Строки, на которые стоит взглянуть:",
     "… and %1 more": "… и ещё %1",
-    # ручной режим
+    # manual mode
     "Rows are taken by the same rules as on the «Translate» tab, and the "
     "result is written the same way — the only difference is that you carry "
     "the text to a translator yourself.":
@@ -620,7 +622,7 @@ RU["Mt"] = {
     "Off": "Отключён",
     "The provider returned %1 rows instead of %2":
         "Провайдер вернул %1 строк вместо %2",
-    # ошибки: разделены по тому, что человеку с ними делать
+    # errors: parted by what a human is to do about them
     "Could not reach %1: %2": "Не удалось связаться с %1: %2",
     "%1 refused: the request limit or the quota is exhausted.":
         "%1 отказал: исчерпан лимит запросов или объёма.",
@@ -801,9 +803,10 @@ RU["Export"] = {
         "Выбрать папку — например, папку мода в Documents",
     "Last write: %1": "Последняя запись: %1",
     "Write": "Записать",
-    # Имя файла и заголовок в нём диктует формат игры, а он бывает разный: у
-    # CK3 это `mod_l_russian.yml` с `l_russian:` внутри, у CK2 — `text.csv`,
-    # где язык вообще колонка. Поэтому в подсказке остаётся сам путь.
+    # The file name and the header inside it are dictated by the format of the
+    # game, and that one differs: for CK3 it is `mod_l_russian.yml` with
+    # `l_russian:` inside, for CK2 it is `text.csv`, where the language is a
+    # column altogether. That is why the path itself stays in the hint.
     "Files are written for the game, for example:\n%1":
         "Для игры пишутся файлы, например:\n%1",
     "Files of the language «%1» are written for the game":
@@ -883,8 +886,8 @@ RU["RulesWindow"] = {
     "inside this project":
         "Куда записать настройку: в файл рядом с приложением или внутрь "
         "этого проекта",
-    # сброс — двумя разными действиями: возврат к умолчанию и удаление своей
-    # работы путать в одной кнопке нельзя
+    # the reset — as two different actions: returning to the default and deleting
+    # one's own work must not be confused in one button
     "Reset…": "Сбросить…",
     "Return built-in rules to the preset": "Вернуть базовые правила к набору",
     "The built-in rules already match the preset.":
@@ -899,7 +902,7 @@ RU["RulesWindow"] = {
     "Return the rule to the preset": "Вернуть правило к набору",
     "Set by hand — differs from the preset":
         "Настроено вручную — отличается от набора",
-    # корни дерева: что чьё
+    # the roots of the tree: what belongs to whom
     "Built-in rules": "Базовые правила",
     "The check is written in the application: it can be switched on and off "
     "and made more lenient, but not rewritten or deleted":
@@ -913,7 +916,7 @@ RU["RulesWindow"] = {
     "be switched on by hand":
         "Правила не того языка, на который переводят в этом проекте: они "
         "молчат, но включить их вручную можно",
-    # панель: проверка отдельно, настройка отдельно
+    # the panel: the check apart, the setting apart
     "Check": "Проверка",
     "Check · %1": "Проверка · %1",
     "Setting": "Настройка",
@@ -928,7 +931,7 @@ RU["RulesWindow"] = {
         "Копия своего правила, чтобы править её, не теряя рабочего. Базовое "
         "скопировать нечем — его проверка это код, а не выражение",
     "%1 (copy)": "%1 (копия)",
-    # свои правила
+    # rules of one's own
     "A regular expression; a match counts whole, brackets inside do not "
     "change that":
         "Регулярное выражение; совпадение считается целиком, скобки внутри "
@@ -954,8 +957,9 @@ RU["RulesWindow"] = {
     "A rule of your own: an expression instead of a built-in check":
         "Правило своей выделки: выражение вместо встроенной проверки",
     "Own rule": "Своё правило",
-    # эти две lupdate подставил сам, «по совпадению текста», и пометил
-    # непроверенными: пары обязаны жить здесь, а не приезжать из чужого окна
+    # these two lupdate substituted by itself, "by a coincidence of text", and
+    # marked unchecked: the pairs are obliged to live here and not to arrive from
+    # somebody else's window
     "Name:": "Название:",
     "Delete": "Удалить",
     "Message:": "Замечание:",
@@ -969,7 +973,7 @@ RU["RulesWindow"] = {
     "Delete the rule «%1»?": "Удалить правило «%1»?",
     "The rule is set for all projects — here it can only be switched off":
         "Правило задано на все проекты — здесь его можно только выключить",
-    # обмен
+    # exchange
     "Import…": "Импорт…",
     "Take the setting from a file — someone else's or your own from another "
     "machine":
@@ -1252,7 +1256,7 @@ RU["Prefs"] = {
     "to similar rows only.":
         "Точные совпадения показываются всегда и идут первыми — порог "
         "касается только похожих строк.",
-    # вкладка машинного перевода
+    # the machine translation tab
     "Machine translation": "Машинный перевод",
     "Service:": "Сервис:",
     "Access key:": "Ключ доступа:",
@@ -1494,7 +1498,7 @@ RU["Editor"] = {
 }
 
 RU["DetailPane"] = {
-    # подпись собственной памяти проекта в колонке «Источник» (db.OWN_ORIGIN)
+    # the label of the project's own memory in the «Source» column (db.OWN_ORIGIN)
     "Project": "Проект",
     "highlight terms": "подсвечивать термины",
     "Highlight glossary terms in the original; hover shows the accepted "
@@ -1574,7 +1578,7 @@ RU["QaRules"] = {
     "take minutes. Consider (?:…) or a stricter pattern.":
         "Повтор внутри повторяемой группы — на длинной строке проверка может "
         "занять минуты. Подумайте о (?:…) или более строгом шаблоне.",
-    # категории
+    # categories
     "Markup": "Разметка",
     "Formatting": "Оформление",
     "Typography": "Типографика",
@@ -1582,7 +1586,7 @@ RU["QaRules"] = {
     "Consistency": "Согласованность",
     "Length": "Длина",
     "Own rules": "Свои правила",
-    # виды своих правил
+    # the kinds of rules of one's own
     "Same set of matches": "Тот же набор совпадений",
     "What the expression finds in the original must be found in the "
     "translation — the same items and as many":
@@ -1609,7 +1613,7 @@ RU["QaRules"] = {
     "Forbidden characters": "Запрещённые символы",
     "Every character listed is forbidden in the translation":
         "Каждый перечисленный символ в переводе запрещён",
-    # правила
+    # rules
     "Empty translation": "Пустой перевод",
     "Status is «translated», but the translation is empty":
         "Статус «переведено», но перевод пуст",
@@ -1679,7 +1683,7 @@ RU["QaRules"] = {
     "Suspicious length of the translation": "Подозрительная длина перевода",
     "A heuristic: noisier than it is useful, hence off":
         "Эвристика: шумит больше, чем помогает, поэтому выключена",
-    # наборы
+    # sets
     "Strict": "Строгий",
     "%1 — recommended for this project":
         "%1 — рекомендуется для этого проекта",
@@ -1695,8 +1699,8 @@ RU["UnitsTable"] = {
     "Translation": "Перевод",
     "Change to original": "Правка оригинала",
     "Issues": "Замечания",
-    "C": "К",           # кастомный статус
-    "I": "И",           # игнорировать
+    "C": "К",           # the custom status
+    "I": "И",           # ignore
     "deleted": "удалён",
     "Validate (F10)": "Подтвердить (F10)",
     "Unvalidate (Shift+F10)": "Снять подтверждение (Shift+F10)",
