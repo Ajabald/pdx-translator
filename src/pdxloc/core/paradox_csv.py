@@ -1,28 +1,29 @@
-"""Парсер/писатель локализации старых игр Paradox (CK2, EU3, Victoria 2, HoI3).
+"""Reader and writer for the older Paradox games (CK2, EU3, Victoria 2, HoI3).
 
-До Clausewitz 2.0 текст лежал не в `l_<язык>:`-файлах, а в таблице с точкой с
-запятой:
+Before Clausewitz 2.0 the text lived not in `l_<language>:` files but in a
+semicolon-separated table:
 
     #CODE;ENGLISH;FRENCH;GERMAN;;SPANISH;;;;;;;;;x
     d_cornwall;Cornwall;Cornouailles;Cornwall;;Cornualles;;;;;;;;;x
 
-Отсюда три отличия от `paradox_yaml`, и каждое меняет работу:
+Hence three differences from `paradox_yaml`, and each of them changes the work:
 
-* **язык — это колонка, а не папка.** Файл один на все языки, и перевод живёт
-  внутри той же строки, что оригинал;
-* **русского в формате нет.** Ни в одной шапке ванильной CK2 нет `RUSSIAN` —
-  игра знает английский, французский, немецкий и испанский. Поэтому русификатор
-  подменяет английскую колонку, и мы делаем так же (см. `column_of`);
-* **кодировка однобайтовая.** Ваниль лежит в cp1252, русский перевод — в cp1251
-  вместе со своими шрифтами. Записывать надо в той же, в какой прочитали:
-  utf-8 игра прочтёт как мусор.
+* **the language is a column, not a folder.** There is one file for every
+  language, and the translation lives inside the same row as the original;
+* **the format has no Russian.** Not one header in vanilla CK2 says `RUSSIAN` —
+  the game knows English, French, German and Spanish. So the Russian pack
+  replaces the English column, and we do the same (see `column_of`);
+* **the encoding is single-byte.** Vanilla lies in cp1252, the Russian
+  translation in cp1251 together with its own fonts. It has to be written back in
+  the encoding it was read in: the game reads utf-8 as rubbish.
 
-**Запись идёт подменой одной колонки в исходной строке.** В ванильной CK2 253
-строки имеют больше пятнадцати колонок, а в 196 после маркера `x` стоят ещё
-пустые разделители; в русификаторе за `x` дописан хвостовой комментарий с
-английским оригиналом. Собери мы строку заново по своим правилам — всё это
-исчезло бы вместе с французским и немецким переводами. Поэтому `LocEntry.raw`
-хранит строку целиком, а `render` меняет в ней ровно один сегмент.
+**Writing works by replacing one column inside the source line.** In vanilla CK2
+253 rows have more than fifteen columns, and in 196 of them empty separators
+follow the `x` marker; in the Russian pack a trailing comment with the English
+original is appended after the `x`. Rebuild the line by our own rules and all of
+that would disappear along with the French and German translations. That is why
+`LocEntry.raw` keeps the whole line and `render` changes exactly one segment in
+it.
 """
 from __future__ import annotations
 
@@ -37,26 +38,27 @@ SEPARATOR = ";"
 COMMENT = "#"
 EXT = ".csv"
 
-# Порядок колонок в шапке ванильной CK2. Пятая пропущена намеренно — она пустая
-# и в самой игре (`GERMAN;;SPANISH`), исторически там был итальянский.
+# The order of the columns in the vanilla CK2 header. The fifth is skipped on
+# purpose — it is empty in the game itself (`GERMAN;;SPANISH`), and historically
+# held Italian.
 DEFAULT_COLUMNS: dict[str, int] = {
     "english": 1, "french": 2, "german": 3, "spanish": 5,
 }
 HEADER_RE = re.compile(r"^#\s*CODE\s*;", re.IGNORECASE)
-# Кириллическое слово: три буквы подряд. Одиночная буква не годится — при
-# чтении cp1252-файла как cp1251 отдельные `ö` и `é` превращаются в кириллицу.
+# A Cyrillic word: three letters in a row. A single letter will not do — reading
+# a cp1252 file as cp1251 turns lone `ö` and `é` into Cyrillic.
 CYRILLIC_WORD = re.compile(r"[А-я]{3,}")
 
 ENCODINGS = ("cp1251", "cp1252")
 
 
 def column_of(language: str, header: str = "") -> int:
-    """Номер колонки языка. Незнакомый язык пишется вместо английского.
+    """The column of a language. An unknown one is written over English.
 
-    Русского (как и польского с китайским) в формате нет вовсе, а деть перевод
-    куда-то надо — и единственное рабочее место то же, что выбрал живой
-    русификатор: колонка английского. Игра прочтёт перевод как основной текст,
-    остальные языки останутся на местах.
+    The format has no Russian at all, nor Polish, nor Chinese, and the translation
+    has to go somewhere — and the only workable place is the one the real Russian
+    pack chose: the English column. The game reads the translation as its main
+    text and the other languages stay where they are.
     """
     if header and HEADER_RE.match(header):
         names = [c.strip().lower() for c in header.lstrip("#").split(SEPARATOR)]
@@ -66,19 +68,20 @@ def column_of(language: str, header: str = "") -> int:
 
 
 def detect_encoding(paths: Iterable[Path]) -> str:
-    """Кодировка дерева: cp1251, если в нём есть русский текст, иначе cp1252.
+    """The encoding of a tree: cp1251 when it holds Russian text, cp1252 otherwise.
 
-    Обе кодировки однобайтовые и декодируют что угодно, поэтому отличаем их не
-    по ошибкам разбора, а по содержимому — и **по дереву целиком**, а не по
-    файлу: в русификаторе CK2 есть `WikipediaLinks.csv` из одних ссылок
-    латиницей, и по нему одному вывод был бы обратным. Замер на живых данных:
-    у ванили доля строк с русским словом не превышает 0,0006, у перевода
-    доходит до 0,99 — порог посередине берётся с огромным запасом.
+    Both encodings are single-byte and decode anything, so they are told apart by
+    the content rather than by parse errors — and **over the whole tree** rather
+    than per file: the CK2 Russian pack contains `WikipediaLinks.csv`, made
+    entirely of Latin links, and on that file alone the verdict would be the
+    opposite. Measured on live data: in vanilla the share of rows holding a
+    Russian word never exceeds 0.0006, in the translation it reaches 0.99 — a
+    threshold in the middle is taken with an enormous margin.
     """
     for path in paths:
         try:
-            # первых килобайт хватает: перевод виден с первых же строк, а
-            # читать всё дерево целиком ради одного вопроса дорого
+            # the first few kilobytes are enough: a translation shows from the very first
+            # rows, and reading the whole tree for one question is expensive
             with open(path, "rb") as fh:
                 text = fh.read(64 * 1024).decode("cp1251", errors="replace")
         except OSError:
@@ -93,13 +96,13 @@ def detect_encoding(paths: Iterable[Path]) -> str:
 
 
 def _sanitize(text: str) -> str:
-    """Убрать суррогаты из текста, который поедет в базу.
+    """Strip the surrogates out of text on its way into the database.
 
-    Файлы читаются с `surrogateescape` — иначе байт, которого нет в выбранной
-    кодовой странице, потерялся бы при обратной записи (в ванильной CK2 такой
-    есть: в `text1.csv` чешская колонка местами лежит в cp1250). Суррогатам
-    место в строке, которую мы вернём на диск как есть, но не в SQLite: там они
-    роняют запись. Поэтому в переводимом тексте они становятся «?».
+    Files are read with `surrogateescape` — otherwise a byte absent from the
+    chosen code page would be lost on the way back (vanilla CK2 has one: in
+    `text1.csv` the Czech column lies in cp1250 in places). Surrogates belong in
+    the line we hand back to disk unchanged, but not in SQLite: there they break
+    the write. So in translatable text they become «?».
     """
     if not text.isprintable() or any("\ud800" <= ch <= "\udfff" for ch in text):
         return "".join("?" if "\ud800" <= ch <= "\udfff" else ch for ch in text)
@@ -108,10 +111,11 @@ def _sanitize(text: str) -> str:
 
 def parse_text(text: str, *, language: str = "english",
                source_name: str = "?") -> LocFile:
-    """Разобрать содержимое CSV-файла локализации.
+    """Parse the contents of a CSV localisation file.
 
-    Строка без разделителя — не запись; в ванили таких нет, но у мода бывают, и
-    молчать о них нельзя: это либо потерянная точка с запятой, либо мусор.
+    A line with no separator is not an entry; vanilla has none, but a mod does,
+    and staying silent about them is not allowed: it is either a lost semicolon or
+    litter.
     """
     entries: list[LocEntry] = []
     warnings: list[str] = []
@@ -154,11 +158,11 @@ def parse_text(text: str, *, language: str = "english",
 
 def parse_file(path: Path, *, language: str = "english",
                encoding: str = "") -> LocFile:
-    """Прочитать файл. Байты, чужие для кодировки, переживают круг «чтение —
-    запись» невредимыми: `surrogateescape` прячет их в строке и возвращает при
-    обратной записи. Это не теория — в ванильной CK2 у `text1.csv` чешская
-    колонка местами лежит в cp1250, и без этого приёма перевод одной строки
-    испортил бы соседние языки во всём файле.
+    """Read a file. Bytes foreign to the encoding survive the read-write round
+    trip unharmed: `surrogateescape` hides them inside the string and gives them
+    back when it is written. This is not theory — in vanilla CK2 the Czech column
+    of `text1.csv` lies in cp1250 in places, and without the trick translating one
+    row would corrupt the neighbouring languages throughout the file.
     """
     raw = path.read_bytes()
     encoding = encoding or detect_encoding([path])
@@ -170,24 +174,24 @@ _REAL_NEWLINE = re.compile(r"\r\n|[\r\n]")
 
 
 def escape_value(text: str) -> str:
-    """Привести значение к виду, который переживёт запись в таблицу.
+    """Bring a value into a form that survives being written into the table.
 
-    Перенос строки — как и в `.yml`, двумя символами: настоящий разорвал бы
-    запись пополам. Точка с запятой — отдельная беда этого формата: она здесь
-    разделитель колонок, экранирования формат не знает, и оставь мы её как
-    есть, перевод сдвинул бы французскую и немецкую колонки вправо, а маркер
-    `x` уехал бы за край. Меняем на запятую — потеря заметно меньше, чем
-    сломанная строка в игре.
+    A line break becomes two characters, as in `.yml`: a real one would tear the
+    entry in two. The semicolon is a trouble peculiar to this format: here it
+    separates the columns, the format knows no escaping, and left as it is a
+    translation would shove the French and German columns to the right and push
+    the `x` marker off the edge. We turn it into a comma — a noticeably smaller
+    loss than a broken row in the game.
     """
     return _REAL_NEWLINE.sub(lambda _: "\\n", text).replace(SEPARATOR, ",")
 
 
 def replace_column(raw: str, column: int, value: str) -> str:
-    """Подменить одну колонку строки, сохранив все прочие.
+    """Replace one column of a line, keeping every other.
 
-    `split`/`join` по разделителю возвращает строку символ в символ, пока число
-    сегментов не меняется, — поэтому лишние пустые колонки, маркер `x` и
-    хвостовой комментарий после него доживают до файла нетронутыми.
+    `split`/`join` on the separator returns the line character for character as
+    long as the number of segments does not change — so the spare empty columns,
+    the `x` marker and the trailing comment after it reach the file untouched.
     """
     parts = raw.split(SEPARATOR)
     while len(parts) <= column:
@@ -196,13 +200,13 @@ def replace_column(raw: str, column: int, value: str) -> str:
     return SEPARATOR.join(parts)
 
 
-# Шаблон для ключей, которых в исходном дереве не было: ключ, текст, маркер.
-# Пятнадцать колонок, как в ванили, здесь ни к чему — игра читает до `x`.
+# The template for keys the source tree did not have: key, text, marker. Fifteen
+# columns as in vanilla serve nothing here — the game reads up to the `x`.
 NEW_ROW = "{key};{text};x"
 
 
 def _fits(line: str, encoding: str) -> bool:
-    """Ляжет ли строка в кодировку целиком, ничего не переврав."""
+    """Whether the line fits the encoding whole, without garbling anything."""
     try:
         line.encode(encoding, errors="surrogateescape")
     except UnicodeEncodeError:
@@ -214,17 +218,18 @@ def render(language: str, entries: Iterable[LocEntry], trailing: str = "",
            *, encoding: str = "") -> str:
     """Собрать текст файла.
 
-    **Чужие колонки сохраняются, пока они переживают кодировку.** Перевод на
-    французский пишется в тот же cp1252, что и оригинал, и немецкий с испанским
-    остаются на местах. А вот русский требует cp1251, где нет ни `ê`, ни `ü`:
-    сохрани мы там французскую колонку, `Reconquête` стало бы `Reconquкte` —
-    испорченный текст вместо перевода. В этом случае строка ужимается до
-    «ключ; перевод; x» — ровно так и поступает живой русификатор CK2.
+    **Other people's columns are kept as long as they survive the encoding.** A
+    French translation is written in the same cp1252 as the original, and German
+    and Spanish stay where they are. Russian, however, needs cp1251, which has
+    neither `ê` nor `ü`: keep the French column there and `Reconquête` becomes
+    `Reconquкte` — corrupted text instead of a translation. In that case the line
+    is squeezed down to «key; translation; x», which is exactly what the real CK2
+    Russian pack does.
 
-    Последняя строка всегда завершается переносом: в ванильной CK2 девять
-    файлов из 124 обрываются без него, но дописать перенос безопасно (игра
-    читает построчно), а тянуть за собой признак «этот файл без последнего
-    перевода строки» значило бы держать его в модели ради девяти файлов.
+    The last line always ends with a break: in vanilla CK2 nine files out of 124
+    end without one, but adding it is safe — the game reads line by line — while
+    carrying a «this file has no final newline» flag would mean keeping it in the
+    model for the sake of nine files.
     """
     column = column_of(language)
     parts: list[str] = []
@@ -245,20 +250,20 @@ def render(language: str, entries: Iterable[LocEntry], trailing: str = "",
 def write_file(path: Path, language: str, entries: Iterable[LocEntry],
                trailing: str = "", *, encoding: str = "cp1251",
                newline: str = "\r\n") -> None:
-    """Записать файл. Концы строк по умолчанию CRLF — как в самих играх.
+    """Write a file. The line endings default to CRLF, as in the games themselves.
 
-    Не мелочь: ванильная CK2 вся до последнего файла CRLF, живой русификатор —
-    92 файла из 93. Запиши мы LF, и перевод одной строки показал бы в чужом
-    инструменте сравнения весь файл изменённым.
+    Not a detail: vanilla CK2 is CRLF down to the last file, and the real Russian
+    pack in 92 files out of 93. Write LF and translating one row would show the
+    whole file as changed in somebody else's diff tool.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     text = render(language, entries, trailing, encoding=encoding)
     if newline != "\n":
         text = _REAL_NEWLINE.sub(newline, text)
-    # surrogateescape возвращает на место байты, чужие для этой кодовой
-    # страницы (см. parse_file); всё остальное, что в неё не лезет, заменяем —
-    # потерять из-за одного символа целый файл хуже, чем потерять символ,
-    # который игра всё равно не покажет
+    # surrogateescape puts back the bytes foreign to this code page (see
+    # parse_file); everything else that will not fit is replaced — losing a whole
+    # file over one character is worse than losing a character the game would not
+    # show anyway
     try:
         data = text.encode(encoding, errors="surrogateescape")
     except UnicodeEncodeError:
@@ -267,12 +272,13 @@ def write_file(path: Path, language: str, entries: Iterable[LocEntry],
 
 
 def unescape(text: str) -> str:
-    """Раскрыть \\n — только для отображения и QA, не для хранения."""
+    """Expand the line-break escape — for display and the quality counts only."""
     return text.replace("\\n", "\n")
 
 
 def files(root: Path, language: str = "", *, skip_updated: bool = False) -> list[Path]:
-    """Файлы локализации в дереве. Язык на имя файла не влияет — он колонка."""
+    """Localisation files in a tree. The language does not touch the file name: it
+    is a column."""
     return sorted(
         p for p in root.rglob(f"*{EXT}")
         if not (skip_updated and "_updated" in p.name)
@@ -280,20 +286,22 @@ def files(root: Path, language: str = "", *, skip_updated: bool = False) -> list
 
 
 def map_relpath(rel_posix: str, from_lang: str, to_lang: str) -> str:
-    """Путь того же файла в дереве перевода — он же самый.
+    """The path of the same file in the translation tree — the very same path.
 
-    Языка нет ни в имени файла, ни в пути: и оригинал, и перевод зовутся
-    `HolyFury.csv`, а различаются деревьями (ваниль игры против папки мода).
+    The language is neither in the file name nor in the path: the original and the
+    translation are both called `HolyFury.csv` and differ by their trees, the
+    game's vanilla against the mod folder.
     """
     return rel_posix
 
 
 def detect(root: Path) -> bool:
-    """Похоже ли дерево на локализацию старого формата.
+    """Whether a tree looks like localisation in the older format.
 
-    Смотрим на содержимое, а не на расширение: `.csv` в папке мода бывает и
-    таблицей данных (у CK2 это, например, `culture_table.csv` конвертера в
-    EU4). Признак записи — ключ, разделитель и хоть что-то после него.
+    We look at the content rather than at the extension: a `.csv` in a mod folder
+    is sometimes a data table — in CK2, say, the `culture_table.csv` of the EU4
+    converter. The sign of an entry is a key, a separator and at least something
+    after it.
     """
     for path in root.rglob(f"*{EXT}"):
         try:
