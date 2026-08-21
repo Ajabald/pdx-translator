@@ -72,7 +72,9 @@ def test_unknown_severity_in_overlay_is_ignored() -> None:
 def test_every_preset_is_applicable_and_described(name: str) -> None:
     rules = qa_rules.resolve({"preset": name})
     assert len(rules) == len(qa_rules.BUILTIN_RULES)
-    assert qa_rules.PRESET_LABELS[name]
+    # Подпись игрового набора приезжает из реестра игр, а не из таблицы строк:
+    # «Crusader Kings III» одинаково на всех языках интерфейса.
+    assert qa_rules.preset_label(name)
     assert qa_rules.PRESET_NOTES[name]
 
 
@@ -175,7 +177,8 @@ def test_overlay_over_a_preset_does_not_copy_the_preset() -> None:
     rules = qa_rules.resolve({"preset": "ck3_ru"})
     overlay = qa_rules.make_overlay("ck3_ru", rules)
     assert overlay["rules"] == {}
-    assert overlay["preset"] == "ck3_ru"
+    # прежнее имя понято, но записано нынешнее: файлы не должны плодить старое
+    assert overlay["preset"] == "ck3"
 
 
 def test_project_overlay_does_not_copy_global_edits() -> None:

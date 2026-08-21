@@ -240,7 +240,7 @@ class MainWindow(QMainWindow):
         best = qa_rules.recommended(game, locale)
         items = []
         for name in qa_rules.display_order(game, locale):
-            label = translate("QaRules", qa_rules.PRESET_LABELS[name])
+            label = qa_rules.preset_label(name)
             if name == best:
                 label = fill(translate("QaRules", qa_rules.RECOMMENDED_MARK), label)
             items.append((name, label))
@@ -431,7 +431,7 @@ class MainWindow(QMainWindow):
         self.editor_screen.refresh_issues()
         self.statusBar().showMessage(
             translate("MainWindow", "Check preset: %1").replace(
-                "%1", translate("QaRules", qa_rules.PRESET_LABELS[name])), 5000)
+                "%1", qa_rules.preset_label(name)), 5000)
 
     def _sync_qa_preset_menu(self) -> None:
         """Отметить действующий набор и поднять рекомендуемый наверх.

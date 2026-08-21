@@ -41,7 +41,7 @@ from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from collections.abc import Callable, Mapping
 
-from pdxloc.core import inflections, markup
+from pdxloc.core import games, inflections, markup
 from pdxloc.core.i18n import QT_TRANSLATE_NOOP, translate
 
 ERROR, WARNING, INFO = "error", "warning", "info"
@@ -1169,15 +1169,21 @@ def default_ruleset() -> RuleSet:
 CUSTOM = "custom"
 
 PRESET_ORDER = ("strict", "ck3", "hoi4", "ck2", "stellaris", "quiet", CUSTOM)
+# Только те наборы, у которых имя своё. Игровые зовутся самой игрой, и это имя
+# не переводится — то же правило, что в `core/games.py`: «Crusader Kings III»
+# одинаково на всех языках интерфейса.
 PRESET_LABELS = {
     "strict": QT_TRANSLATE_NOOP("QaRules", "Strict"),
-    "ck3": QT_TRANSLATE_NOOP("QaRules", "Crusader Kings III"),
-    "hoi4": QT_TRANSLATE_NOOP("QaRules", "Hearts of Iron IV"),
-    "ck2": QT_TRANSLATE_NOOP("QaRules", "Crusader Kings II"),
-    "stellaris": QT_TRANSLATE_NOOP("QaRules", "Stellaris"),
     "quiet": QT_TRANSLATE_NOOP("QaRules", "Breakage only"),
     CUSTOM: QT_TRANSLATE_NOOP("QaRules", "Own"),
 }
+
+
+def preset_label(name: str) -> str:
+    """Подпись набора на языке интерфейса. Игра остаётся собой."""
+    if name in PRESET_LABELS:
+        return translate("QaRules", PRESET_LABELS[name])
+    return games.title(name)
 
 # Как наборы звались до 0.1.2, когда игра и язык были склеены в один пресет.
 # Имена лежат в qa_rules.json пользователей, в оверлеях внутри файлов проектов
@@ -1511,6 +1517,9 @@ def make_overlay(preset: str, rules: RuleSet, *,
     русской грамматики», и они остались бы выключенными после смены языка
     проекта — без всякого следа о том, кто их выключил.
     """
+    # Читать прежние имена умеем, писать их — нет: файл, созданный сегодня,
+    # должен нести нынешнее имя набора.
+    preset = PRESET_ALIASES.get(preset, preset)
     base = resolve(under, {"preset": preset}, locale=locale)
     overlay = {
         "version": OVERLAY_VERSION,

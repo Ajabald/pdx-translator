@@ -1051,6 +1051,32 @@ ZH["QaPanel"] = {
 }
 
 ZH["QaRules"] = {
+    "Every rule on, nothing forgiven. For the final read-through, when you would rather sift ten false alarms than miss one real fault.":
+        "全部规则开启，不留任何宽容。适合定稿前的通读：宁可筛掉十条误报，也不放过一处真问题。",
+    "What a CK3 translator does on purpose stops counting as a mistake: a reference wrapped so it can be inflected, an added #L, formatting flags. The helpers your language uses are added on their own.":
+        "CK3 译者有意为之的写法不再算作错误：为变格而包裹的引用、补写的 #L、排版标记。你所用语言的助手会自动加入。",
+    "HOI4 gives each language its own inflection helpers, and a translation swaps plain references for them. This set knows them, so a swap stops reading as a loss.":
+        "HOI4 为每种语言提供各自的变格函数，译文会用它们替换普通引用。本规则集认得这些函数，替换便不再被读作丢失。",
+    "CK2 translations inflect nearly everything and add forms of address the English has none of. That is expected here — a reference that went missing is still caught.":
+        "CK2 的译文几乎处处变格，还会补上英文中没有的称呼。这些在此视为正常——真正丢失的引用仍会被抓出。",
+    "Stellaris inflects names through a grammar system of its own, and many terms are meant to stay as they are in the original. Those stop shouting; anything that breaks the text still does.":
+        "Stellaris 用自己的语法系统处理名称变格，许多术语本就应与原文保持一致。它们不再报警；而破坏文本的问题照旧报警。",
+    "Only what breaks the text in the game: a lost variable or icon, an unclosed tag, an empty translation. Everything else keeps quiet.":
+        "只报会在游戏里破坏文本的问题：丢失的变量或图标、未闭合的标签、空译文。其余一律不作声。",
+    "The built-in values with nothing on top. Start here to set every rule by hand.":
+        "仅使用内置数值，之上不加任何设置。想逐条手动调整规则，就从这里开始。",
+    "A lost variable leaves a hole in the text in the game. A set that merely differs is a softer case, and «only_if_all_lost» keeps quiet about it":
+        "变量丢失会在游戏文本里留下一个窟窿。仅仅是集合不同则要轻得多，「only_if_all_lost」对此不作声",
+    "@gold! is the CK3 icon; the £gold£ form belongs to EU4, HOI4 and Stellaris. Both are checked, because a translator who has worked on another game types the icon they are used to":
+        "@gold! 是 CK3 的图标写法；£gold£ 属于 EU4、HOI4 和 Stellaris。两者都要检查：做过另一款游戏的译者会顺手打出自己习惯的那种",
+    "The colour of HOI4, EU4 and Stellaris: §Y…§!. A lost §! paints the rest of the line, and a swapped code can turn a warning green":
+        "HOI4、EU4 和 Stellaris 的颜色写法：§Y…§!。丢掉 §! 会把整行后半段染色，写错代码则可能把警告变成绿色",
+    "The Stellaris grammar system: «Empress&!fem,vowel» and «A $1$|||vowel:An $1$». Variants the translator adds for cases are fine; a lost tag is not — it changes the gender of a name everywhere it is substituted":
+        "Stellaris 的语法系统：「Empress&!fem,vowel」与「A $1$|||vowel:An $1$」。译者为各种格补写的变体属于正常；丢失标签则不然——它会改变该名称在所有替换处的性别",
+    "An edge space is often in the original too: that is how the game glues strings together. Compared against the source, the rule stays quiet about those":
+        "边缘空格往往原文里就有：游戏正是靠它拼接字符串。与原文比对时，本规则对这些不作声",
+    "The original is often unbalanced itself, and the translation has nothing to do with it — hence the check against the source":
+        "原文本身常常就不成对，与译文无关——因此才要与原文比对",
     "A repetition inside a repeated group — on a long row the check can take minutes. Consider (?:…) or a stricter pattern.":
         "重复组内还有重复——在长文本上这项检查可能耗时数分钟。建议改用 (?:…) 或更严格的模式。",
     "Markup":
@@ -1099,27 +1125,18 @@ ZH["QaRules"] = {
         "变量 $…$",
     "Variables $…$ do not match the original":
         "变量 $…$ 与原文不一致",
-    "A lost variable is a hole in the text right in the game. Of the hits on a live translation, 56% are exactly that and 44% are a differing set — the latter are silenced by «only_if_all_lost»":
-        "丢失变量会在游戏文本中留下空洞。在真实译文中，56% 的触发正是这种情况，"
-        "另外 44% 只是集合不同——后者可用「only_if_all_lost」关掉",
     "Icons @…! and £…£":
         "图标 @…! 和 £…£",
     "Icons do not match the original":
         "图标与原文不一致",
-    "@gold! is the CK3 icon. £gold£ belongs to EU4/HOI4/Stellaris and never occurs in CK3 — zero matches over 440 000 rows — but it is still checked, because a translator who saw one elsewhere may type it":
-        "@gold! 是 CK3 的图标写法。£gold£ 属于 EU4/HOI4/Stellaris，在 CK3 中一次也没有出现过——44 万行中零匹配——但仍然检查它，因为在系列其他作品中见过它的译者可能会写成那样。",
     "Colour codes §…§!":
         "颜色代码 §…§!",
     "Colour codes do not match the original":
         "颜色代码与原文不一致",
-    "The HOI4/EU4/Stellaris colour: §Y…§!. A lost §! paints the rest of the line, a swapped code turns a warning green. Quiet on live data: 25 hits over the whole vanilla Russian HOI4 (11 290 rows carry a colour)":
-        "HOI4/EU4/Stellaris 的颜色写法：§Y…§!。丢失的 §! 会把整行余下的文字染色，换错代码则会让警告变成绿色。在实际数据上很安静：整个原版俄语 HOI4 只有 25 处（11 290 行带有颜色）。",
     "Grammar tags and variants":
         "语法标记与变体",
     "A grammar tag or variant of the original was lost":
         "原文中的语法标记或变体丢失了",
-    "The Stellaris 3.6 system: «Empress&!fem,vowel» and «A $1$|||vowel:An $1$». Added variants are not counted — it is the translator who writes them for cases, 6 327 rows of the Russian tree against 463 of the English one; a lost tag, on the contrary, changes the gender of a name everywhere it is substituted":
-        "Stellaris 3.6 的系统：「Empress&!fem,vowel」与「A $1$|||vowel:An $1$」。新增的变体不计——它们正是译者为变格而写的，俄语树有 6 327 行，英语树只有 463 行；而丢失标记则会改变该名称在所有替换处的性别。",
     "Formatting tags #…":
         "格式标签 #…",
     "The set of formatting tags differs from the original":
@@ -1148,8 +1165,6 @@ ZH["QaRules"] = {
         "首尾空格",
     "Extra spaces at the beginning or the end":
         "开头或结尾有多余的空格",
-    "The edge space is in the original too — that is how the game glues strings together; on a live translation this is 93% of all hits of the rule":
-        "原文中同样有首尾空格——游戏正是这样拼接字符串的；在实际翻译中这占该规则全部触发的 93%",
     "Double spaces":
         "连续空格",
     "Double spaces in the translation":
@@ -1158,8 +1173,6 @@ ZH["QaRules"] = {
         "引号和括号不成对",
     "Unpaired quotes or brackets in the translation":
         "译文中引号或括号不成对",
-    "The original itself is often unbalanced — on a live translation that is 74% of all hits, and the translation has nothing to do with it":
-        "原文本身就常常不配对——在实际翻译中这占全部触发的 74%，与译文无关",
     "Missing space before a substitution":
         "替换项前缺少空格",
     "Missing space before a substitution — the words will stick together":
@@ -1186,34 +1199,12 @@ ZH["QaRules"] = {
         "一条启发式规则：噪声大于价值，因此默认关闭",
     "Strict":
         "严格",
-    "CK3 · Russian":
-        "CK3 · 俄语",
-    "HOI4 · Russian":
-        "HOI4 · 俄语",
-    "CK2 · Russian":
-        "CK2 · 俄语",
-    "Stellaris · Russian":
-        "Stellaris · 俄语",
     "%1 — recommended for this project":
         "%1 — 推荐用于本项目",
     "Breakage only":
         "仅致命问题",
     "Own":
         "自定义",
-    "Every rule on, no leniency. For proofreading a finished translation, when noise is tolerable but a miss is not.":
-        "全部规则启用，不做宽松处理。适用于校对已完成的译文——此时可以容忍噪声，但不能漏掉问题。",
-    "Techniques of the Russian CK3 translation are not counted as errors: a wrapper for inflection, an added #L, formatting flags. On a live translation (136 113 rows) — 37 040 issues against 12 591.":
-        "俄语 CK3 翻译中的惯用技巧不算作错误：用于变格的包裹、额外的 #L、格式标志。在实际翻译中（136 113 行）——37 040 个问题对 12 591 个。",
-    "The Russian HOI4 inflects with functions of its own — [JAP.GetAdjRuLower] instead of [JAP.GetAdjective], an ending glued to the word. On the vanilla translation (124 893 rows) — 5 269 issues against 11 072.":
-        "俄语 HOI4 使用游戏自带的函数来变格：用 [JAP.GetAdjRuLower] 代替 [JAP.GetAdjective]，词尾直接紧贴其后。在原版翻译中（124 893 行）——5 269 个问题对 11 072 个。",
-    "The Russian CK2 inflects everything: 259 functions of the game do the endings, and the translator adds an address where English has none. On the vanilla translation (89 616 rows) — 24 047 issues against 45 593.":
-        "俄语 CK2 对一切都做变格：词尾由游戏的 259 个函数完成，译者还会在英文没有称呼的地方补上称呼。在原版翻译中（89 616 行）——24 047 个问题对 45 593 个。",
-    "Stellaris inflects names with its own grammar system, and half of the noise here is names that match the original. On the vanilla translation (148 751 rows) — 29 525 issues against 32 969, and 17 156 of them are lowered to a signal.":
-        "Stellaris 用自带的语法系统对名称做变格，而这里一半的噪声是与原文相同的名称。在原版翻译中（148 751 行）——29 525 个问题对 32 969 个，其中 17 156 个被降为提示。",
-    "Only what breaks the text in the game: lost variables, icons and references, unclosed tags, an empty translation.":
-        "只保留会在游戏中破坏文本的问题：丢失的变量、图标和引用，未闭合的标签，空译文。",
-    "Built-in values without a preset — tuned by hand from here.":
-        "不套用预设的内置值——从这里手动调整。",
 }
 
 ZH["Relocate"] = {

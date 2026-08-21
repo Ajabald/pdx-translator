@@ -158,7 +158,7 @@ class RulesTab(QWidget):
         game, locale = rules_state.game(), rules_state.locale()
         best = qa_rules.recommended(game, locale)
         for name in qa_rules.display_order(game, locale):
-            label = translate("QaRules", qa_rules.PRESET_LABELS[name])
+            label = qa_rules.preset_label(name)
             if name == best:
                 label = fill(translate("QaRules", qa_rules.RECOMMENDED_MARK), label)
             self.preset_combo.addItem(label, name)
@@ -748,7 +748,7 @@ class RulesTab(QWidget):
             return
 
         lines = [fill(translate("RulesWindow", "Preset: %1"),
-                      translate("QaRules", qa_rules.PRESET_LABELS[bundle.preset])),
+                      qa_rules.preset_label(bundle.preset)),
                  fill(translate("RulesWindow", "Rules edited: %1"),
                       len(bundle.changed)),
                  fill(translate("RulesWindow", "Own rules: %1"), len(bundle.added))]

@@ -2738,11 +2738,71 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
     </message>
     <message>
         <location line="+4" />
-        <source>A lost variable is a hole in the text right in the game. Of the hits on a live translation, 56% are exactly that and 44% are a differing set — the latter are silenced by «only_if_all_lost»</source>
-        <translation>Потерянная переменная — дыра в тексте прямо в игре. На живом переводе 56% срабатываний именно такие, а 44% — отличается набор; вторые гасятся параметром «only_if_all_lost»</translation>
+        <source>A lost variable leaves a hole in the text in the game. A set that merely differs is a softer case, and «only_if_all_lost» keeps quiet about it</source>
+        <translation>Потерянная переменная оставляет в тексте дыру прямо в игре. Просто различающийся набор — случай мягче, и «only_if_all_lost» о нём молчит</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+11" />
+        <source>@gold! is the CK3 icon; the £gold£ form belongs to EU4, HOI4 and Stellaris. Both are checked, because a translator who has worked on another game types the icon they are used to</source>
+        <translation>@gold! — иконка CK3; форма £gold£ принадлежит EU4, HOI4 и Stellaris. Проверяются обе: переводчик, работавший над другой игрой, наберёт привычную</translation>
+    </message>
+    <message>
+        <location line="+17" />
+        <source>The colour of HOI4, EU4 and Stellaris: §Y…§!. A lost §! paints the rest of the line, and a swapped code can turn a warning green</source>
+        <translation>Цвет HOI4, EU4 и Stellaris: §Y…§!. Потерянный §! красит остаток строки, а перепутанный код способен сделать предупреждение зелёным</translation>
+    </message>
+    <message>
+        <location line="+14" />
+        <source>The Stellaris grammar system: «Empress&amp;!fem,vowel» and «A $1$|||vowel:An $1$». Variants the translator adds for cases are fine; a lost tag is not — it changes the gender of a name everywhere it is substituted</source>
+        <translation>Грамматическая система Stellaris: «Empress&amp;!fem,vowel» и «A $1$|||vowel:An $1$». Варианты, дописанные ради падежей, — норма; потерянный тег — нет: он меняет род имени всюду, куда его подставят</translation>
+    </message>
+    <message>
+        <location line="+68" />
+        <source>An edge space is often in the original too: that is how the game glues strings together. Compared against the source, the rule stays quiet about those</source>
+        <translation>Краевой пробел часто есть и в оригинале: так игра склеивает строки. При сверке с оригиналом правило о таких молчит</translation>
+    </message>
+    <message>
+        <location line="+21" />
+        <source>The original is often unbalanced itself, and the translation has nothing to do with it — hence the check against the source</source>
+        <translation>Оригинал и сам часто несбалансирован, а перевод тут ни при чём — потому и сверка с оригиналом</translation>
+    </message>
+    <message>
+        <location line="+200" />
+        <source>Every rule on, nothing forgiven. For the final read-through, when you would rather sift ten false alarms than miss one real fault.</source>
+        <translation>Все правила включены, ничего не прощается. Для финальной вычитки, когда лучше перебрать десяток ложных тревог, чем пропустить одну настоящую.</translation>
+    </message>
+    <message>
+        <location line="+4" />
+        <source>What a CK3 translator does on purpose stops counting as a mistake: a reference wrapped so it can be inflected, an added #L, formatting flags. The helpers your language uses are added on their own.</source>
+        <translation>То, что переводчик CK3 делает намеренно, перестаёт быть ошибкой: обёртка вокруг ссылки ради склонения, дописанный #L, флаги оформления. Помощники вашего языка подключаются сами.</translation>
+    </message>
+    <message>
+        <location line="+5" />
+        <source>HOI4 gives each language its own inflection helpers, and a translation swaps plain references for them. This set knows them, so a swap stops reading as a loss.</source>
+        <translation>HOI4 даёт каждому языку свои функции склонения, и перевод меняет на них обычные ссылки. Набор их знает, поэтому замена перестаёт читаться как потеря.</translation>
+    </message>
+    <message>
+        <location line="+4" />
+        <source>CK2 translations inflect nearly everything and add forms of address the English has none of. That is expected here — a reference that went missing is still caught.</source>
+        <translation>Переводы CK2 склоняют почти всё и дописывают обращения, которых в английском нет. Здесь это в порядке вещей — а пропавшую ссылку правило по-прежнему поймает.</translation>
+    </message>
+    <message>
+        <location line="+4" />
+        <source>Stellaris inflects names through a grammar system of its own, and many terms are meant to stay as they are in the original. Those stop shouting; anything that breaks the text still does.</source>
+        <translation>Stellaris склоняет имена собственной грамматической системой, и многие термины должны остаться как в оригинале. Такие перестают кричать; то, что ломает текст, кричит по-прежнему.</translation>
+    </message>
+    <message>
+        <location line="+5" />
+        <source>Only what breaks the text in the game: a lost variable or icon, an unclosed tag, an empty translation. Everything else keeps quiet.</source>
+        <translation>Только то, что ломает текст в игре: потерянная переменная или иконка, незакрытый тег, пустой перевод. Остальное молчит.</translation>
+    </message>
+    <message>
+        <location line="+4" />
+        <source>The built-in values with nothing on top. Start here to set every rule by hand.</source>
+        <translation>Встроенные значения и ничего сверху. Отсюда начинают, когда хотят настроить каждое правило руками.</translation>
+    </message>
+    <message>
+        <location line="-349" />
         <source>Icons @…! and £…£</source>
         <translation>Иконки @…! и £…£</translation>
     </message>
@@ -2752,12 +2812,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Иконки не совпадают с оригиналом</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>@gold! is the CK3 icon. £gold£ belongs to EU4/HOI4/Stellaris and never occurs in CK3 — zero matches over 440 000 rows — but it is still checked, because a translator who saw one elsewhere may type it</source>
-        <translation>@gold! — иконка CK3. £gold£ принадлежит EU4/HOI4/Stellaris и в CK3 не встречается ни разу на 440 тысячах строк, но проверяется всё равно: переводчик, видевший её в другой игре серии, может её написать</translation>
-    </message>
-    <message>
-        <location line="+12" />
+        <location line="+13" />
         <source>Colour codes §…§!</source>
         <translation>Цветовые коды §…§!</translation>
     </message>
@@ -2767,12 +2822,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Цветовые коды не совпадают с оригиналом</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>The HOI4/EU4/Stellaris colour: §Y…§!. A lost §! paints the rest of the line, a swapped code turns a warning green. Quiet on live data: 25 hits over the whole vanilla Russian HOI4 (11 290 rows carry a colour)</source>
-        <translation>Цвет HOI4/EU4/Stellaris: §Y…§!. Потерянный §! красит остаток строки, а подменённый код превращает предупреждение в зелёное. На живых данных правило тихое: 25 срабатываний на всю ванильную русскую HOI4 (цвет есть в 11 290 строках)</translation>
-    </message>
-    <message>
-        <location line="+10" />
+        <location line="+12" />
         <source>Grammar tags and variants</source>
         <translation>Грамматические теги и варианты</translation>
     </message>
@@ -2782,12 +2832,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Потерян грамматический тег или вариант из оригинала</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>The Stellaris 3.6 system: «Empress&amp;!fem,vowel» and «A $1$|||vowel:An $1$». Added variants are not counted — it is the translator who writes them for cases, 6 327 rows of the Russian tree against 463 of the English one; a lost tag, on the contrary, changes the gender of a name everywhere it is substituted</source>
-        <translation>Система Stellaris 3.6: «Empress&amp;!fem,vowel» и «A $1$|||vowel:An $1$». Добавленные варианты не в счёт — их и пишет переводчик ради падежей, 6 327 строк русского дерева против 463 английского; а потерянный тег, наоборот, меняет род имени всюду, куда оно подставится</translation>
-    </message>
-    <message>
-        <location line="+12" />
+        <location line="+13" />
         <source>Formatting tags #…</source>
         <translation>Теги оформления #…</translation>
     </message>
@@ -2857,12 +2902,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Лишние пробелы в начале или в конце</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>The edge space is in the original too — that is how the game glues strings together; on a live translation this is 93% of all hits of the rule</source>
-        <translation>Краевой пробел есть и в самом оригинале — так в игре склеивают строки; на живом переводе это 93% всех срабатываний правила</translation>
-    </message>
-    <message>
-        <location line="+7" />
+        <location line="+10" />
         <source>Double spaces</source>
         <translation>Двойные пробелы</translation>
     </message>
@@ -2882,12 +2922,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Непарные кавычки или скобки в переводе</translation>
     </message>
     <message>
-        <location line="+3" />
-        <source>The original itself is often unbalanced — on a live translation that is 74% of all hits, and the translation has nothing to do with it</source>
-        <translation>Несбалансирован бывает сам оригинал — на живом переводе это 74% всех срабатываний, и перевод там ни при чём</translation>
-    </message>
-    <message>
-        <location line="+8" />
+        <location line="+11" />
         <source>Missing space before a substitution</source>
         <translation>Пропущен пробел перед подстановкой</translation>
     </message>
@@ -2947,37 +2982,17 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Эвристика: шумит больше, чем помогает, поэтому выключена</translation>
     </message>
     <message>
-        <location line="+122" />
+        <location line="+124" />
         <source>Strict</source>
         <translation>Строгий</translation>
     </message>
     <message>
-        <location line="+1" />
-        <source>CK3 · Russian</source>
-        <translation>CK3 · русский</translation>
-    </message>
-    <message>
-        <location line="+53" />
+        <location line="+57" />
         <source>%1 — recommended for this project</source>
         <translation>%1 — рекомендуется для этого проекта</translation>
     </message>
     <message>
-        <location line="-52" />
-        <source>HOI4 · Russian</source>
-        <translation>HOI4 · русский</translation>
-    </message>
-    <message>
-        <location line="+1" />
-        <source>CK2 · Russian</source>
-        <translation>CK2 · русский</translation>
-    </message>
-    <message>
-        <location line="+1" />
-        <source>Stellaris · Russian</source>
-        <translation>Stellaris · русский</translation>
-    </message>
-    <message>
-        <location line="+1" />
+        <location line="-56" />
         <source>Breakage only</source>
         <translation>Только поломки</translation>
     </message>
@@ -2985,41 +3000,6 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <location line="+1" />
         <source>Own</source>
         <translation>Свой</translation>
-    </message>
-    <message>
-        <location line="+3" />
-        <source>Every rule on, no leniency. For proofreading a finished translation, when noise is tolerable but a miss is not.</source>
-        <translation>Все правила включены, послаблений нет. Для вычитки готового перевода, когда шум терпим, а пропуск — нет.</translation>
-    </message>
-    <message>
-        <location line="+3" />
-        <source>Techniques of the Russian CK3 translation are not counted as errors: a wrapper for inflection, an added #L, formatting flags. On a live translation (136 113 rows) — 37 040 issues against 12 591.</source>
-        <translation>Приёмы русского перевода CK3 не считаются ошибками: обёртка ради склонения, дописанный #L, флаги оформления. На живом переводе (136 113 строк) — 37 040 замечаний против 12 591.</translation>
-    </message>
-    <message>
-        <location line="+5" />
-        <source>The Russian HOI4 inflects with functions of its own — [JAP.GetAdjRuLower] instead of [JAP.GetAdjective], an ending glued to the word. On the vanilla translation (124 893 rows) — 5 269 issues against 11 072.</source>
-        <translation>Русская HOI4 склоняет собственными функциями игры: [JAP.GetAdjRuLower] вместо [JAP.GetAdjective], окончание дописано вплотную. На ванильном переводе (124 893 строки) — 5 269 замечаний против 11 072.</translation>
-    </message>
-    <message>
-        <location line="+5" />
-        <source>The Russian CK2 inflects everything: 259 functions of the game do the endings, and the translator adds an address where English has none. On the vanilla translation (89 616 rows) — 24 047 issues against 45 593.</source>
-        <translation>Русская CK2 склоняет всё подряд: окончания делают 259 функций игры, а обращение переводчик дописывает там, где по-английски его нет. На ванильном переводе (89 616 строк) — 24 047 замечаний против 45 593.</translation>
-    </message>
-    <message>
-        <location line="+5" />
-        <source>Stellaris inflects names with its own grammar system, and half of the noise here is names that match the original. On the vanilla translation (148 751 rows) — 29 525 issues against 32 969, and 17 156 of them are lowered to a signal.</source>
-        <translation>Stellaris склоняет имена собственной грамматической системой, а половина здешнего шума — названия, совпавшие с оригиналом. На ванильном переводе (148 751 строка) — 29 525 замечаний против 32 969, и 17 156 из них понижены до сигнала.</translation>
-    </message>
-    <message>
-        <location line="+5" />
-        <source>Only what breaks the text in the game: lost variables, icons and references, unclosed tags, an empty translation.</source>
-        <translation>Только то, от чего ломается текст в игре: потерянные переменные, иконки и ссылки, незакрытые теги, пустой перевод.</translation>
-    </message>
-    <message>
-        <location line="+3" />
-        <source>Built-in values without a preset — tuned by hand from here.</source>
-        <translation>Встроенные значения без пресета — дальше настраивается вручную.</translation>
     </message>
 </context>
 <context>
@@ -5140,35 +5120,35 @@ An unfinished database file will not be created.</source>
     <name>Welcome</name>
     <message>
         <location filename="../welcome_dialog.py" line="+51" />
-        <location line="+177" />
+        <location line="+183" />
         <source>Getting started</source>
         <translation>Знакомство</translation>
     </message>
     <message>
-        <location line="-155" />
-        <location line="+156" />
+        <location line="-161" />
+        <location line="+162" />
         <source>Skip</source>
         <translation>Пропустить</translation>
     </message>
     <message>
-        <location line="-152" />
-        <location line="+153" />
+        <location line="-158" />
+        <location line="+159" />
         <source>Back</source>
         <translation>Назад</translation>
     </message>
     <message>
-        <location line="-150" />
-        <location line="+130" />
+        <location line="-156" />
+        <location line="+136" />
         <source>Next</source>
         <translation>Далее</translation>
     </message>
     <message>
-        <location line="-115" />
+        <location line="-121" />
         <source>Choose the language of the interface. It can be changed at any time in «File → Preferences».</source>
         <translation>Выберите язык интерфейса. Его можно поменять в любой момент в «Файл → Параметры».</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+23" />
         <source>The interface language has nothing to do with the languages you translate between — those belong to the project.</source>
         <translation>Язык интерфейса не связан с языками, между которыми вы переводите: те задаются в проекте.</translation>
     </message>

@@ -1538,6 +1538,32 @@ RU["DetailPane"] = {
 }
 
 RU["QaRules"] = {
+    "Every rule on, nothing forgiven. For the final read-through, when you would rather sift ten false alarms than miss one real fault.":
+        "Все правила включены, ничего не прощается. Для финальной вычитки, когда лучше перебрать десяток ложных тревог, чем пропустить одну настоящую.",
+    "What a CK3 translator does on purpose stops counting as a mistake: a reference wrapped so it can be inflected, an added #L, formatting flags. The helpers your language uses are added on their own.":
+        "То, что переводчик CK3 делает намеренно, перестаёт быть ошибкой: обёртка вокруг ссылки ради склонения, дописанный #L, флаги оформления. Помощники вашего языка подключаются сами.",
+    "HOI4 gives each language its own inflection helpers, and a translation swaps plain references for them. This set knows them, so a swap stops reading as a loss.":
+        "HOI4 даёт каждому языку свои функции склонения, и перевод меняет на них обычные ссылки. Набор их знает, поэтому замена перестаёт читаться как потеря.",
+    "CK2 translations inflect nearly everything and add forms of address the English has none of. That is expected here — a reference that went missing is still caught.":
+        "Переводы CK2 склоняют почти всё и дописывают обращения, которых в английском нет. Здесь это в порядке вещей — а пропавшую ссылку правило по-прежнему поймает.",
+    "Stellaris inflects names through a grammar system of its own, and many terms are meant to stay as they are in the original. Those stop shouting; anything that breaks the text still does.":
+        "Stellaris склоняет имена собственной грамматической системой, и многие термины должны остаться как в оригинале. Такие перестают кричать; то, что ломает текст, кричит по-прежнему.",
+    "Only what breaks the text in the game: a lost variable or icon, an unclosed tag, an empty translation. Everything else keeps quiet.":
+        "Только то, что ломает текст в игре: потерянная переменная или иконка, незакрытый тег, пустой перевод. Остальное молчит.",
+    "The built-in values with nothing on top. Start here to set every rule by hand.":
+        "Встроенные значения и ничего сверху. Отсюда начинают, когда хотят настроить каждое правило руками.",
+    "A lost variable leaves a hole in the text in the game. A set that merely differs is a softer case, and «only_if_all_lost» keeps quiet about it":
+        "Потерянная переменная оставляет в тексте дыру прямо в игре. Просто различающийся набор — случай мягче, и «only_if_all_lost» о нём молчит",
+    "@gold! is the CK3 icon; the £gold£ form belongs to EU4, HOI4 and Stellaris. Both are checked, because a translator who has worked on another game types the icon they are used to":
+        "@gold! — иконка CK3; форма £gold£ принадлежит EU4, HOI4 и Stellaris. Проверяются обе: переводчик, работавший над другой игрой, наберёт привычную",
+    "The colour of HOI4, EU4 and Stellaris: §Y…§!. A lost §! paints the rest of the line, and a swapped code can turn a warning green":
+        "Цвет HOI4, EU4 и Stellaris: §Y…§!. Потерянный §! красит остаток строки, а перепутанный код способен сделать предупреждение зелёным",
+    "The Stellaris grammar system: «Empress&!fem,vowel» and «A $1$|||vowel:An $1$». Variants the translator adds for cases are fine; a lost tag is not — it changes the gender of a name everywhere it is substituted":
+        "Грамматическая система Stellaris: «Empress&!fem,vowel» и «A $1$|||vowel:An $1$». Варианты, дописанные ради падежей, — норма; потерянный тег — нет: он меняет род имени всюду, куда его подставят",
+    "An edge space is often in the original too: that is how the game glues strings together. Compared against the source, the rule stays quiet about those":
+        "Краевой пробел часто есть и в оригинале: так игра склеивает строки. При сверке с оригиналом правило о таких молчит",
+    "The original is often unbalanced itself, and the translation has nothing to do with it — hence the check against the source":
+        "Оригинал и сам часто несбалансирован, а перевод тут ни при чём — потому и сверка с оригиналом",
     "A repetition inside a repeated group — on a long row the check can "
     "take minutes. Consider (?:…) or a stricter pattern.":
         "Повтор внутри повторяемой группы — на длинной строке проверка может "
@@ -1584,42 +1610,14 @@ RU["QaRules"] = {
     "Variables $…$": "Переменные $…$",
     "Variables $…$ do not match the original":
         "Переменные $…$ не совпадают с оригиналом",
-    "A lost variable is a hole in the text right in the game. Of the hits on a "
-    "live translation, 56% are exactly that and 44% are a differing set — the "
-    "latter are silenced by «only_if_all_lost»":
-        "Потерянная переменная — дыра в тексте прямо в игре. На живом переводе "
-        "56% срабатываний именно такие, а 44% — отличается набор; вторые "
-        "гасятся параметром «only_if_all_lost»",
     "Icons @…! and £…£": "Иконки @…! и £…£",
     "Icons do not match the original": "Иконки не совпадают с оригиналом",
-    "@gold! is the CK3 icon. £gold£ belongs to EU4/HOI4/Stellaris and never "
-    "occurs in CK3 — zero matches over 440 000 rows — but it is still checked, "
-    "because a translator who saw one elsewhere may type it":
-        "@gold! — иконка CK3. £gold£ принадлежит EU4/HOI4/Stellaris и в CK3 не "
-        "встречается ни разу на 440 тысячах строк, но проверяется всё равно: "
-        "переводчик, видевший её в другой игре серии, может её написать",
     "Colour codes §…§!": "Цветовые коды §…§!",
     "Colour codes do not match the original":
         "Цветовые коды не совпадают с оригиналом",
-    "The HOI4/EU4/Stellaris colour: §Y…§!. A lost §! paints the rest of the "
-    "line, a swapped code turns a warning green. Quiet on live data: 25 hits "
-    "over the whole vanilla Russian HOI4 (11 290 rows carry a colour)":
-        "Цвет HOI4/EU4/Stellaris: §Y…§!. Потерянный §! красит остаток строки, "
-        "а подменённый код превращает предупреждение в зелёное. На живых "
-        "данных правило тихое: 25 срабатываний на всю ванильную русскую HOI4 "
-        "(цвет есть в 11 290 строках)",
     "Grammar tags and variants": "Грамматические теги и варианты",
     "A grammar tag or variant of the original was lost":
         "Потерян грамматический тег или вариант из оригинала",
-    "The Stellaris 3.6 system: «Empress&!fem,vowel» and «A $1$|||vowel:An $1$». "
-    "Added variants are not counted — it is the translator who writes them for "
-    "cases, 6 327 rows of the Russian tree against 463 of the English one; a "
-    "lost tag, on the contrary, changes the gender of a name everywhere it is "
-    "substituted":
-        "Система Stellaris 3.6: «Empress&!fem,vowel» и «A $1$|||vowel:An $1$». "
-        "Добавленные варианты не в счёт — их и пишет переводчик ради падежей, "
-        "6 327 строк русского дерева против 463 английского; а потерянный тег, "
-        "наоборот, меняет род имени всюду, куда оно подставится",
     "Formatting tags #…": "Теги оформления #…",
     "The set of formatting tags differs from the original":
         "Набор тегов оформления отличается от оригинала",
@@ -1643,19 +1641,11 @@ RU["QaRules"] = {
     "Edge spaces": "Пробелы по краям",
     "Extra spaces at the beginning or the end":
         "Лишние пробелы в начале или в конце",
-    "The edge space is in the original too — that is how the game glues "
-    "strings together; on a live translation this is 93% of all hits of the rule":
-        "Краевой пробел есть и в самом оригинале — так в игре склеивают "
-        "строки; на живом переводе это 93% всех срабатываний правила",
     "Double spaces": "Двойные пробелы",
     "Double spaces in the translation": "Двойные пробелы в переводе",
     "Unpaired quotes and brackets": "Непарные кавычки и скобки",
     "Unpaired quotes or brackets in the translation":
         "Непарные кавычки или скобки в переводе",
-    "The original itself is often unbalanced — on a live translation that is "
-    "74% of all hits, and the translation has nothing to do with it":
-        "Несбалансирован бывает сам оригинал — на живом переводе это 74% "
-        "всех срабатываний, и перевод там ни при чём",
     "Missing space before a substitution": "Пропущен пробел перед подстановкой",
     "Missing space before a substitution — the words will stick together":
         "Пропущен пробел перед подстановкой — слова слипнутся",
@@ -1685,52 +1675,10 @@ RU["QaRules"] = {
         "Эвристика: шумит больше, чем помогает, поэтому выключена",
     # наборы
     "Strict": "Строгий",
-    "CK3 · Russian": "CK3 · русский",
-    "HOI4 · Russian": "HOI4 · русский",
-    "CK2 · Russian": "CK2 · русский",
-    "Stellaris · Russian": "Stellaris · русский",
     "%1 — recommended for this project":
         "%1 — рекомендуется для этого проекта",
     "Breakage only": "Только поломки",
     "Own": "Свой",
-    "Every rule on, no leniency. For proofreading a finished translation, "
-    "when noise is tolerable but a miss is not.":
-        "Все правила включены, послаблений нет. Для вычитки готового "
-        "перевода, когда шум терпим, а пропуск — нет.",
-    "Techniques of the Russian CK3 translation are not counted as errors: a "
-    "wrapper for inflection, an added #L, formatting flags. On a live "
-    "translation (136 113 rows) — 37 040 issues against 12 591.":
-        "Приёмы русского перевода CK3 не считаются ошибками: обёртка "
-        "ради склонения, дописанный #L, флаги оформления. На живом "
-        "переводе (136 113 строк) — 37 040 замечаний против 12 591.",
-    "The Russian HOI4 inflects with functions of its own — "
-    "[JAP.GetAdjRuLower] instead of [JAP.GetAdjective], an ending glued to the "
-    "word. On the vanilla translation (124 893 rows) — 5 269 issues against "
-    "11 072.":
-        "Русская HOI4 склоняет собственными функциями игры: "
-        "[JAP.GetAdjRuLower] вместо [JAP.GetAdjective], окончание дописано "
-        "вплотную. На ванильном переводе (124 893 строки) — 5 269 замечаний "
-        "против 11 072.",
-    "The Russian CK2 inflects everything: 259 functions of the game do the "
-    "endings, and the translator adds an address where English has none. On "
-    "the vanilla translation (89 616 rows) — 24 047 issues against 45 593.":
-        "Русская CK2 склоняет всё подряд: окончания делают 259 функций игры, а "
-        "обращение переводчик дописывает там, где по-английски его нет. На "
-        "ванильном переводе (89 616 строк) — 24 047 замечаний против 45 593.",
-    "Stellaris inflects names with its own grammar system, and half of the "
-    "noise here is names that match the original. On the vanilla translation "
-    "(148 751 rows) — 29 525 issues against 32 969, and 17 156 of them are "
-    "lowered to a signal.":
-        "Stellaris склоняет имена собственной грамматической системой, а "
-        "половина здешнего шума — названия, совпавшие с оригиналом. На "
-        "ванильном переводе (148 751 строка) — 29 525 замечаний против "
-        "32 969, и 17 156 из них понижены до сигнала.",
-    "Only what breaks the text in the game: lost variables, icons and "
-    "references, unclosed tags, an empty translation.":
-        "Только то, от чего ломается текст в игре: потерянные переменные, "
-        "иконки и ссылки, незакрытые теги, пустой перевод.",
-    "Built-in values without a preset — tuned by hand from here.":
-        "Встроенные значения без пресета — дальше настраивается вручную.",
 }
 
 RU["UnitsTable"] = {
