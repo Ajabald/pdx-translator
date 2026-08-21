@@ -1,4 +1,4 @@
-"""Панель инструментов, меню «Вид» и полоса контекста проекта."""
+"""The toolbar, the «View» menu and the context bar of the project."""
 from __future__ import annotations
 
 import os
@@ -27,14 +27,14 @@ def window(tmp_path, make_tree, qtbot, monkeypatch):
     ru = make_tree({"m_l_russian.yml": RU}, "ru")
     path = tmp_path / "p.pdxproj"
     conn = project.create_project(path, name="P", src_root=en, tgt_root=ru)
-    scan_project(conn, 1)      # иначе открытие проекта позовёт модальный скан
+    scan_project(conn, 1)      # otherwise opening the project will call a modal scan
     conn.close()
 
     from pdxloc.gui.main_window import MainWindow
 
     win = MainWindow()
     qtbot.addWidget(win)
-    win.project_path = path      # без него скан не запустится
+    win.project_path = path      # without it the scan will not start
     return win, path
 
 
@@ -42,15 +42,15 @@ def test_project_actions_disabled_without_project(window):
     win, _ = window
     assert not win.act_export.isEnabled()
     assert not win.act_validate.isEnabled()
-    assert win.toolbar.actions()          # панель собрана
+    assert win.toolbar.actions()          # the toolbar is assembled
 
 
 def test_context_bar_shows_langs_and_bases(window):
     win, path = window
     win.open_project(path)
     assert win.act_export.isEnabled()
-    # игра впереди языков: у человека с проектами двух игр это единственный
-    # способ заметить, что он правит не тот
+    # the game comes before the languages: for somebody with projects of two games
+    # that is the only way to notice they are editing the wrong one
     assert win.context_bar.langs.text() == "Crusader Kings III · english → russian"
     assert "Memory databases" in win.context_bar.tm_button.text()
 
@@ -60,7 +60,7 @@ def test_context_bar_cleared_on_close(window):
     win.open_project(path)
     win._close_project()
     assert win.context_bar.langs.text() == ""
-    assert not win.act_export.isEnabled()      # действия проекта снова выключены
+    assert not win.act_export.isEnabled()      # the project actions are off again
     assert not win.stats_label.text()
 
 
@@ -69,7 +69,7 @@ def test_selection_count_shown(window):
     win.open_project(path)
     win.editor_screen.table.selectAll()
     assert "2" in win.selection_label.text()
-    # одна строка — счётчик не нужен, он только шумит
+    # one row — the counter is not needed, it only makes noise
     win._on_selection_changed(1)
     assert win.selection_label.text() == ""
 
@@ -95,12 +95,12 @@ def test_view_toggles_hide_widgets(window):
     assert win.editor_screen.file_tree.isVisibleTo(win.editor_screen)
 
 
-# --- «Вид → Колонки» и «Вид → Кнопки статуса» ---------------------------
+# --- «View → Columns» and «View → Status buttons» -----------------------
 
 
 @pytest.fixture
 def opened(window, monkeypatch):
-    """Окно с проектом и с QSettings, не уезжающими в реестр пользователя."""
+    """A window with a project and with QSettings that do not travel into the user's registry."""
     win, path = window
     store: dict = {}
     monkeypatch.setattr(settings, "qsettings", lambda: _Store(store))
@@ -109,7 +109,7 @@ def opened(window, monkeypatch):
 
 
 class _Store:
-    """QSettings поверх обычного словаря — свой на каждый тест."""
+    """QSettings over an ordinary dictionary — one of its own per test."""
 
     def __init__(self, store: dict):
         self._store = store
@@ -132,11 +132,11 @@ def test_column_can_be_hidden_and_shown_again(opened):
 
 
 def forget(action, checked: bool) -> None:
-    """Вернуть пункт в исходное состояние, не тронув настройку.
+    """Return an item to its initial state without touching the setting.
 
-    Так выглядит только что собранное окно: галки стоят, настройка ещё не
-    прочитана. Обычный `setChecked` тут не годится — он сам пишет в настройку и
-    стёр бы то, что мы собираемся проверить.
+    That is what a freshly assembled window looks like: the ticks are set, the
+    setting has not been read yet. An ordinary `setChecked` will not do here — it
+    writes into the setting itself and would erase what we are about to check.
     """
     action.blockSignals(True)
     action.setChecked(checked)
@@ -144,7 +144,7 @@ def forget(action, checked: bool) -> None:
 
 
 def test_hidden_column_is_remembered_by_name_not_by_number(opened):
-    """Вставь кто-нибудь колонку в середину — номера сдвинулись бы молча."""
+    """Let somebody insert a column in the middle — the numbers would shift silently."""
     from pdxloc.gui.units_model import COL_FILE
 
     win, store = opened
@@ -159,7 +159,7 @@ def test_hidden_column_is_remembered_by_name_not_by_number(opened):
 
 
 def test_the_last_column_cannot_be_hidden(opened):
-    """Спрятать таблицу целиком — не настройка, а поломка."""
+    """Hiding the table whole is not a setting but a breakage."""
     from pdxloc.gui.units_model import DATA_COLUMNS
 
     win, _ = opened
@@ -173,7 +173,7 @@ def test_the_last_column_cannot_be_hidden(opened):
 
 
 def test_status_button_hides_only_the_toolbar_button(opened):
-    """Прятать сам QAction нельзя: он же в меню «Перевод» и в контекстном."""
+    """Hiding the QAction itself will not do: it is also in the «Translation» menu and in the context one."""
     win, _ = opened
     button = win.toolbar.widgetForAction(win.act_validate)
     win.button_actions["validate"].setChecked(False)

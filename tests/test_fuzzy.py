@@ -1,7 +1,7 @@
-"""Похожие строки в памяти переводов и конкорданс.
+"""Similar rows in the translation memory, and the concordance.
 
-Точное совпадение по хешу молчит, когда строки отличаются на слово-два — а при
-переводе сабмода поверх мода это обычный случай.
+An exact match by hash keeps quiet when the rows differ by a word or two — and
+when translating a submod on top of a mod that is an ordinary case.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ SEED = [
 
 @pytest.fixture
 def conn(tmp_path):
-    """Соединение как у настоящего проекта: ATTACH баз работает только так."""
+    """A connection as in a real project: ATTACH of databases works only that way."""
     c = project.create_project(
         tmp_path / "p.pdxproj", name="P", src_root=tmp_path / "en", tgt_root=tmp_path / "ru")
     yield c
@@ -39,7 +39,7 @@ def memory(conn):
 
 
 def _old_schema_base(path, name="Старая", pairs=(("The Bridge Must Be Paid", "Старый перевод"),)):
-    """База схемы v1 — без индекса похожих строк."""
+    """A database of schema v1 — without the index of similar rows."""
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(path))
     conn.executescript(tm_import.TM_DDL)
@@ -63,7 +63,7 @@ def test_exact_match_scores_one_and_comes_first(memory):
 
 
 def test_similar_string_found(memory):
-    """Ради этого всё и затевалось: строка отличается на пару слов."""
+    """That is what the whole thing was started for: the row differs by a couple of words."""
     hits = fuzzy.lookup_similar(memory, "You are Targaryen")
     similar = {h.ru_text: h.score for h in hits}
     assert "Я Таргариен" in similar
@@ -71,7 +71,7 @@ def test_similar_string_found(memory):
 
 
 def test_markup_does_not_break_match(memory):
-    """Разметка CK3 одинакова у сотен строк и сравнению только мешает."""
+    """The CK3 markup is the same in hundreds of rows and only gets in the way of the comparison."""
     hits = fuzzy.lookup_similar(memory, "#bold The Bridge Must Be Paid#!")
     assert hits and hits[0].ru_text == "Мост должен быть оплачен"
     assert hits[0].score == 1.0
@@ -88,8 +88,8 @@ def test_threshold_respected(memory):
 
 
 def test_fresh_translation_is_searchable_at_once(memory):
-    """Индекс памяти проекта живёт на триггерах — без них новая запись
-    находилась бы только после перезапуска."""
+    """The index of the project memory lives on triggers — without them a new record
+    would be found only after a restart."""
     tm.upsert(memory, "We are Targaryen", "Мы Таргариены")
     memory.commit()
     assert any(h.ru_text == "Мы Таргариены"
@@ -102,16 +102,16 @@ def test_empty_query(memory):
 
 
 def test_concordance_finds_fragment(memory):
-    found = fuzzy.concordance(memory, "targaryen")      # регистр не важен
+    found = fuzzy.concordance(memory, "targaryen")      # the case does not matter
     assert {r.ru_text for r in found} == {"Я Таргариен", "Ты Таргариен"}
-    assert fuzzy.concordance(memory, "x") == []         # слишком короткий кусок
+    assert fuzzy.concordance(memory, "x") == []         # too short a piece
 
 
-# --- поиск по подключённым базам ---
+# --- the search over the attached databases ---
 
 @pytest.fixture
 def base_path(tmp_path):
-    """Готовая база .pdxtm с индексом."""
+    """A ready .pdxtm database with an index."""
     path = tmp_path / "Bdd" / "mod_english-russian.pdxtm"
     conn = tm_import.create_tm_database(
         path, name="Мод", src_lang="english", tgt_lang="russian", kind="import")
@@ -138,15 +138,16 @@ def test_similar_from_attached_base(conn, base_path):
 
 
 def test_base_without_index_does_not_break_search(conn, base_path, tmp_path):
-    """База старой схемы просто не участвует в поиске похожих, а не роняет его."""
+    """A database of the old schema simply takes no part in the search for
+    similar ones — it does not bring the search down."""
     old = _old_schema_base(tmp_path / "Bdd" / "old_english-russian.pdxtm")
     project.attach_tm_sources(conn, [old, base_path])
 
     hits = fuzzy.lookup_similar(conn, "The Bridge Must Be Repaid")
 
-    assert hits                                        # поиск работает
+    assert hits                                        # the search works
     assert "Старый перевод" not in {h.ru_text for h in hits}
-    # …а точное совпадение по хешу от неё по-прежнему приходит
+    # …while an exact match by hash still comes from it
     assert "Старый перевод" in {h.ru_text for h in tm.lookup(conn, "The Bridge Must Be Paid")}
 
 
@@ -154,7 +155,7 @@ def test_build_index_upgrades_old_base(conn, tmp_path):
     old = _old_schema_base(tmp_path / "Bdd" / "old_english-russian.pdxtm")
 
     assert tm_import.build_fts_index(old) == 1
-    assert tm_import.build_fts_index(old) == 1      # повторный вызов безвреден
+    assert tm_import.build_fts_index(old) == 1      # a repeated call is harmless
 
     project.attach_tm_sources(conn, [old])
     hits = fuzzy.lookup_similar(conn, "The Bridge Must Be Repaid")
@@ -162,7 +163,7 @@ def test_build_index_upgrades_old_base(conn, tmp_path):
 
 
 def test_own_memory_wins_over_base(conn, base_path):
-    """При равном сходстве свой перевод важнее чужой базы."""
+    """With equal similarity one's own translation matters more than a foreign database."""
     tm.upsert(conn, "The Bridge Must Be Paid", "Мой перевод моста")
     conn.commit()
     project.attach_tm_sources(conn, [base_path])
@@ -174,4 +175,4 @@ def test_own_memory_wins_over_base(conn, base_path):
 
 
 def test_fts5_available():
-    assert db_module.fts5_available() is True      # стандартная сборка Python
+    assert db_module.fts5_available() is True      # the standard build of Python
