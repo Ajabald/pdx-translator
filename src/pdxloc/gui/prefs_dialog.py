@@ -1,11 +1,11 @@
-"""Окно «Параметры».
+"""The «Preferences» window.
 
-До него настройки были размазаны: часть в меню «Вид», часть внутри диалогов
-задач, а папки Bdd/Projects/backups и число резервных копий вообще не имели
-интерфейса — только ключи реестра. Меню «Вид» осталось при своём: видимость
-панелей — это вид, а не настройка.
+Before it the settings were smeared about: some in the «View» menu, some inside
+the task dialogs, while the Bdd/Projects/backups folders and the number of
+backups had no interface at all — only registry keys. The «View» menu kept what
+is properly its own: the visibility of panels is a view, not a setting.
 
-Правило вкладок: сюда попадает только то, у чего есть живая точка применения.
+The rule for the tabs: only what has a live point where it applies gets in here.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from pdxloc.gui.widgets import HintLabel
 
 
 class _PathRow(QWidget):
-    """Поле пути с кнопкой «Обзор…» — одинаковое во всех трёх строках."""
+    """A path field with a «Browse…» button, the same in all three rows."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -78,7 +78,7 @@ class PreferencesDialog(QDialog):
 
         self.load()
 
-    # --- вкладки ---
+    # --- tabs ---
 
     def _general_tab(self) -> QWidget:
         page = QWidget()
@@ -93,9 +93,9 @@ class PreferencesDialog(QDialog):
         form.addRow(translate("Prefs", "Colour theme:"), self.theme_combo)
         self.reopen_last = QCheckBox(translate("Prefs", "Open the last project on startup"))
         form.addRow(self.reopen_last)
-        # Единственный путь назад для «больше не спрашивать»: заглушить
-        # напоминание можно из него самого, а вернуть — только отсюда.
-        # Настройка, которую невозможно отменить, — ловушка.
+        # The only way back from «do not ask again»: a reminder can be silenced from
+        # inside itself, but brought back only from here. A setting that cannot be
+        # undone is a trap.
         self.unmute_reminders = QCheckBox(
             translate("Prefs", "Show hidden reminders again"))
         form.addRow(self.unmute_reminders)
@@ -179,12 +179,12 @@ class PreferencesDialog(QDialog):
         return page
 
     def _mt_tab(self) -> QWidget:
-        """Машинный перевод: провайдер, ключ и рамки прогона.
+        """Machine translation: the provider, the key and the bounds of a run.
 
-        Панели провайдеров лежат в стопке, а не рядом: у DeepL это выбор между
-        Free и Pro, у LLM — модель и пожелания к переводу, у Yandex — ещё и
-        идентификатор каталога. Показанные разом, они висели бы мёртвыми
-        три четверти времени.
+        The provider panels live in a stack rather than side by side: for DeepL
+        it is a choice between Free and Pro, for the LLM ones a model and wishes
+        about the translation, for Yandex a folder id as well. Shown all at once
+        they would hang there dead three quarters of the time.
         """
         page = QWidget()
         box = QVBoxLayout(page)
@@ -217,7 +217,7 @@ class PreferencesDialog(QDialog):
         self.mt_key_state = HintLabel("")
         form.addRow(self.mt_key_state)
 
-        # --- панели, зависящие от провайдера ---
+        # --- the panels that depend on the provider ---
         self.mt_panels = QStackedWidget()
         self.mt_deepl_pro = QCheckBox(
             translate("Prefs", "Pro subscription (a different address, not a tariff)"))
@@ -231,7 +231,7 @@ class PreferencesDialog(QDialog):
         self.mt_llm_prompt.setFixedHeight(60)
         self.mt_yandex_folder = QLineEdit()
 
-        self.mt_panels.addWidget(QWidget())                     # 0 — ничего
+        self.mt_panels.addWidget(QWidget())                     # 0 means nothing
         self.mt_panels.addWidget(self._panel({"": self.mt_deepl_pro}))
         self.mt_panels.addWidget(self._panel({
             translate("Prefs", "Model:"): self.mt_llm_model,
@@ -282,15 +282,16 @@ class PreferencesDialog(QDialog):
             form.addRow(label, widget) if label else form.addRow(widget)
         return page
 
-    # --- поведение вкладки машинного перевода ---
+    # --- behaviour of the machine translation tab ---
 
     _PANEL_BY_PROVIDER = {"deepl": 1, "claude": 2, "openai": 2, "yandex": 3}
 
     def _on_provider_changed(self) -> None:
         name = self.mt_provider.currentData() or "none"
         self.mt_panels.setCurrentIndex(self._PANEL_BY_PROVIDER.get(name, 0))
-        # Спрашивает ли сервис ключ, знает он сам: у заглушки и ручного режима
-        # ключа нет, и поле ввода при них — обещание, которому нечего делать.
+        # Whether a service asks for a key is its own business: the stub and the manual
+        # route have none, and with them an input field is a promise with nothing to
+        # do.
         provider = mt.PROVIDERS.get(name)
         needs_key = bool(getattr(provider, "needs_key", False))
         for widget in (self.mt_key, self.mt_key_show, self.mt_key_check):
@@ -302,10 +303,10 @@ class PreferencesDialog(QDialog):
         self.mt_key.setEchoMode(QLineEdit.Normal if shown else QLineEdit.Password)
 
     def _show_key_state(self, name: str) -> None:
-        """Сказать правду о том, как лежит ключ.
+        """Tell the truth about how the key is stored.
 
-        Молчаливый откат к открытому тексту научил бы считать незащищённый
-        ключ защищённым, поэтому обе половины названы прямо.
+        A silent fallback to plain text would teach people to consider an
+        unprotected key protected, so both halves are named outright.
         """
         if name == "none" or not self.mt_key.text():
             self.mt_key_state.setText("")
@@ -321,7 +322,7 @@ class PreferencesDialog(QDialog):
                          "protect it."))
 
     def _check_key(self) -> None:
-        """Один дешёвый запрос — принимает ли сервис ключ."""
+        """One cheap request: does the service accept the key."""
         from pdxloc.gui import mt_worker
 
         name = self.mt_provider.currentData() or "none"
@@ -348,13 +349,13 @@ class PreferencesDialog(QDialog):
             timeout=float(self.mt_timeout.value()),
         )
 
-    # --- значения ---
+    # --- values ---
 
     def load(self) -> None:
-        """Показать текущие значения.
+        """Show the current values.
 
-        Читаем, но ничего не пишем: иначе простое открытие окна (в том числе из
-        теста) засоряло бы настройки пользователя.
+        We read but write nothing: otherwise merely opening the window — from a
+        test, among other things — would litter the user's settings.
         """
         self.language_combo.setCurrentIndex(
             max(self.language_combo.findData(language.current()), 0))
@@ -386,18 +387,18 @@ class PreferencesDialog(QDialog):
         self.mt_throttle.setValue(prefs.get("mt/throttle_ms"))
         self.mt_retries.setValue(prefs.get("mt/retries"))
         self.mt_timeout.setValue(prefs.get("mt/timeout_sec"))
-        # провайдера ставим последним: он подтягивает ключ и панель под себя
+        # the provider goes last: it pulls in the key and its own panel
         self.mt_provider.setCurrentIndex(
             max(self.mt_provider.findData(prefs.get("mt/provider")), 0))
         self._on_provider_changed()
 
     def _load_reminders(self) -> None:
-        """Галка живёт, только пока есть что возвращать.
+        """The box is alive only while there is something to bring back.
 
-        Иначе она обещала бы действие, которому не над чем сработать, — а это
-        ровно та мёртвая галка, которой здесь быть не должно. Подсказка при
-        этом объясняет, почему она погашена: погашенный элемент без объяснения
-        читается как поломка.
+        Otherwise it would promise an action with nothing to act on — exactly the
+        dead checkbox that must not be here. The tooltip meanwhile explains why
+        it is greyed out: a disabled control with no explanation reads as
+        breakage.
         """
         muted = ask.any_muted()
         self.unmute_reminders.setChecked(False)
@@ -441,15 +442,16 @@ class PreferencesDialog(QDialog):
         prefs.set("mt/throttle_ms", self.mt_throttle.value())
         prefs.set("mt/retries", self.mt_retries.value())
         prefs.set("mt/timeout_sec", self.mt_timeout.value())
-        # Ключ идёт мимо prefs: он защищается и хранится по провайдеру,
-        # а сигнал «настройка изменилась» на каждую его правку не нужен никому.
+        # The key goes past prefs: it is protected and stored per provider, and nobody
+        # needs a «setting changed» signal on every edit of it.
         if provider != "none":
             mt.save_api_key(provider, self.mt_key.text())
             self._show_key_state(provider)
 
-        # Язык и тема — последними: обе перерисовывают окна, и делать это стоит
-        # уже с применёнными шрифтом и высотой строки. Язык вперёд темы: он
-        # меняет длину подписей, а тема — только цвета.
+        # The language and the theme go last: both repaint the windows, and that is
+        # worth doing with the font and the row height already applied. Language before
+        # theme: it changes the length of the labels, while the theme changes only
+        # colours.
         from PySide6.QtWidgets import QApplication
 
         app = QApplication.instance()
