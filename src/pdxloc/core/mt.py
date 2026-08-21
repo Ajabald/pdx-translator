@@ -164,6 +164,13 @@ def translate_texts(
 
 
 # --- access keys ---
+#
+# The keys do not live in `gui/prefs.py`, and that is not a detail. `prefs.get`
+# would hand back the protected string instead of the key, while `prefs.notifier`
+# would broadcast a «setting changed» signal on every keystroke in the input
+# field. There is also one key per provider, while `prefs.DEFAULTS` needs the
+# name at import time. So they sit next to `bdd_dir` and the list of recent
+# projects, through `settings`.
 
 _KEY_PREFIX = "mt/key/"
 

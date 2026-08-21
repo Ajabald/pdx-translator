@@ -176,7 +176,13 @@ def unescape(text: str) -> str:
     return text.replace("\\n", "\n").replace('\\"', '"')
 
 
-# --- where the language sits in the tree ---
+# --- where the language sits in the tree ---------------------------------
+#
+# These three functions used to live in `core/scanner.py`, because there was one
+# format and the scan was the only thing that knew about it. With a second format
+# about (`core/paradox_csv.py`, the older games of the series) they belong here:
+# how the language shows up in a file name and in a path is a property of the
+# format, not of the scanner.
 
 
 def lang_tag(language: str) -> str:
