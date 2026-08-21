@@ -1,9 +1,9 @@
-"""Примеры внутри правил — рабочая самопроверка, а не украшение.
+"""The examples inside the rules are a working self-check, not a decoration.
 
-Приём подсмотрен у LanguageTool, где каждое правило обязано нести пример
-срабатывания и пример молчания. Польза двойная: в окне правил по ним видно,
-что правило вообще делает, а здесь они не дают правилу тихо сломаться при
-правке параметров.
+The device is borrowed from LanguageTool, where every rule is obliged to carry an
+example of a hit and an example of silence. The use is double: in the rules window
+they show what a rule does at all, and here they do not let a rule break quietly
+at an edit of the parameters.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ IDS = [r.id for r in RULES]
 
 
 def only(code: str) -> qa_rules.RuleSet:
-    """Набор из одного правила — чтобы пример проверял именно его."""
+    """A set of one rule — so that the example checks exactly it."""
     return qa_rules.default_ruleset().restricted_to({code})
 
 
@@ -42,7 +42,7 @@ def test_ok_examples_stay_silent(rule: qa_rules.Rule) -> None:
             f"{rule.id}: пример молчания сработал — {en!r} / {ru!r}"
 
 
-# --- целостность самого набора ------------------------------------------
+# --- the integrity of the set itself ------------------------------------
 
 
 def test_ids_are_unique() -> None:
@@ -61,7 +61,7 @@ def test_every_rule_has_a_title_and_message() -> None:
 
 
 def test_every_rule_is_implemented() -> None:
-    """Правило без проверки молчало бы всегда — хуже, чем его отсутствие."""
+    """A rule without a check would keep quiet always — worse than its absence."""
     special = set(qa_rules.PROJECT_WIDE) | {qa_rules.EMPTY}
     for rule in RULES:
         if rule.id in special:
@@ -74,7 +74,7 @@ def test_no_orphan_checks() -> None:
 
 
 def test_params_are_json_friendly() -> None:
-    """Настройки уедут в файл — значит только простые типы."""
+    """The settings will travel into a file — so only simple types."""
     import json
 
     for rule in RULES:

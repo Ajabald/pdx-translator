@@ -1,4 +1,4 @@
-"""GUI-тесты v2 (offscreen): in-cell правка, quick-колонки, дерево, чипы."""
+"""GUI tests of v2 (offscreen): in-cell editing, the quick columns, the tree, the chips."""
 from __future__ import annotations
 
 import os
@@ -45,8 +45,8 @@ def test_edit_role_returns_raw_text(scanned, qtbot):
     idx = model.index(0, COL_RU)
     display = model.data(idx, Qt.DisplayRole)
     edit = model.data(idx, Qt.EditRole)
-    assert len(edit) == 500          # сырой полный
-    assert len(display) < 200        # обрезанный
+    assert len(edit) == 500          # the raw full one
+    assert len(display) < 200        # the trimmed one
 
 
 def test_flags_editable_only_ru(scanned, qtbot):
@@ -66,20 +66,20 @@ def test_setdata_saves_and_transitions(scanned, qtbot):
     assert row["ru_text"] == "Пока"
     assert row["status"] == Status.TRANSLATED.value
     assert saved == [row["id"]]
-    # одинаковый текст -> False, повторного сохранения нет
+    # the same text -> False, there is no repeated saving
     assert not model.setData(model.index(0, COL_RU), "Пока", Qt.EditRole)
 
 
 def test_quick_cols_glyphs_and_applicability(scanned, qtbot):
     conn, pid = scanned
-    model = loaded_model(conn, pid, search="greet")   # переведённая строка
+    model = loaded_model(conn, pid, search="greet")   # a translated row
     r = model.row_data(0)
-    # ✓ применим (translated -> reviewed), ✗ нет (не reviewed)
+    # ✓ applies (translated -> reviewed), ✗ does not (not reviewed)
     assert model._quick_applicable(r, Status.REVIEWED)
     assert not model._quick_applicable(r, Status.TRANSLATED)
-    model2 = loaded_model(conn, pid, search="bye")    # непереведённая
+    model2 = loaded_model(conn, pid, search="bye")    # an untranslated one
     r2 = model2.row_data(0)
-    assert not model2._quick_applicable(r2, Status.REVIEWED)   # нет RU
+    assert not model2._quick_applicable(r2, Status.REVIEWED)   # no RU
     assert model2._quick_applicable(r2, Status.IGNORED)
     for col, (glyph, _, _, _) in QUICK_COLS.items():
         assert model.data(model.index(0, col), Qt.DisplayRole) == glyph
@@ -124,5 +124,5 @@ def test_status_chips(qtbot):
     clicks = []
     bar.chipClicked.connect(clicks.append)
     bar._on_chip("translated")
-    bar._on_chip("translated")    # повторный клик = сброс
+    bar._on_chip("translated")    # a repeated click = a reset
     assert clicks == ["translated", ""]

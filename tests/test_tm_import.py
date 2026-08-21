@@ -1,4 +1,4 @@
-"""Тесты сборки баз памяти переводов и их подключения к проекту."""
+"""Tests of building translation memory databases and attaching them to a project."""
 from __future__ import annotations
 
 import pytest
@@ -31,21 +31,21 @@ def test_build_from_dirs(tmp_path, make_tree):
     out, report = build_vanilla(tmp_path, make_tree)
     assert out.is_file()
     assert report.files == 1
-    assert report.pairs == 2          # k_same (== оригиналу) и k_lonely не в счёт
+    assert report.pairs == 2          # k_same (== the original) and k_lonely do not count
     assert report.skipped == 2
     meta = project.tm_meta(out)
     assert meta["format"] == "pdxtm"
     assert meta["kind"] == "game"
     assert meta["name"] == "Ваниль CK3"
     assert meta["src_lang"] == "english" and meta["tgt_lang"] == "russian"
-    # число записей считается только по просьбе: COUNT(*) идёт полным сканом,
-    # а описание спрашивают в основном ради «это вообще база памяти?»
+    # the number of records is counted only on request: COUNT(*) goes as a full scan,
+    # while the description is asked for mostly for «is this a memory database at all?»
     assert "entries" not in meta
     assert project.tm_meta(out, with_count=True)["entries"] == "2"
 
 
 def test_sibling_dir_autodetect(tmp_path, make_tree):
-    """Указана только папка оригинала — соседняя папка языка находится сама."""
+    """Only the folder of the original is given — the neighbouring language folder is found by itself."""
     root = tmp_path / "localization"
     (root / "english").mkdir(parents=True)
     (root / "russian").mkdir(parents=True)
@@ -65,7 +65,7 @@ def test_missing_target_dir(tmp_path, make_tree):
 
 
 def test_attached_db_used_for_lookup(tmp_path, make_tree, monkeypatch):
-    """Подключённая база даёт подсказки и автозаполнение в проекте."""
+    """An attached database gives hints and auto-filling in the project."""
     tm_path, _ = build_vanilla(tmp_path, make_tree)
     monkeypatch.setattr(settings, "bdd_dir", lambda: tm_path.parent)
 
@@ -97,7 +97,7 @@ def test_own_translation_wins_over_game_db(tmp_path, make_tree, monkeypatch):
     project.set_tm_sources(conn, [tm_path.name])
     project.attach_tm_sources(conn, project.project_tm_paths(conn))
 
-    tm.upsert(conn, "Hello", "Здравствуйте")     # свой перевод
+    tm.upsert(conn, "Hello", "Здравствуйте")     # our own translation
     conn.commit()
     hits = tm.lookup(conn, "Hello")
     assert hits[0].ru_text == "Здравствуйте" and hits[0].origin == "Project"
@@ -107,10 +107,10 @@ def test_own_translation_wins_over_game_db(tmp_path, make_tree, monkeypatch):
 
 def test_ambiguous_variants_are_resolved_by_source_priority(
         tmp_path, make_tree, monkeypatch):
-    """База и проект расходятся — побеждает свой перевод, а не молчание.
+    """The database and the project diverge — one's own translation wins, not silence.
 
-    Приоритет тот же, что у подсказок и у F7: собственная память проекта важнее
-    подключённой базы игры.
+    The priority is the same as for the hints and for F7: the project's own memory
+    matters more than an attached database of the game.
     """
     tm_path, _ = build_vanilla(tmp_path, make_tree)
     monkeypatch.setattr(settings, "bdd_dir", lambda: tm_path.parent)

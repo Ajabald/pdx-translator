@@ -1,9 +1,9 @@
-"""Хранение ключей доступа.
+"""Storing the access keys.
 
-Проверяется не стойкость шифрования — её обеспечивает система, — а то, что
-инструмент **не врёт о состоянии ключа**. Открытый ключ, показанный как
-защищённый, хуже открытого ключа, показанного честно: во втором случае человек
-хотя бы знает, где он лежит.
+What is checked is not the strength of the encryption — the system provides that
+— but that the tool **does not lie about the state of a key**. A plain key shown
+as protected is worse than a plain key shown honestly: in the second case the
+human at least knows where it lies.
 """
 from __future__ import annotations
 
@@ -34,15 +34,15 @@ def test_empty_key_stays_empty() -> None:
 
 
 def test_plain_text_is_returned_as_is() -> None:
-    """Ключи, записанные прежней версией, читаются без потерь."""
+    """The keys written by a former version are read without loss."""
     assert secrets.unprotect("sk-старый-ключ") == "sk-старый-ключ"
 
 
 def test_a_broken_blob_yields_nothing(monkeypatch) -> None:
-    """Испорченный или чужой блоб — это не ключ.
+    """A spoilt or foreign blob is no key.
 
-    Вернуть мусор значило бы отправить его в сервис и получить непонятную
-    ошибку авторизации вместо внятного «введите ключ заново».
+    Returning rubbish would mean sending it to the service and getting an
+    incomprehensible authorisation error instead of a plain «enter the key again».
     """
     assert secrets.unprotect("dpapi:не-base64-вовсе") == ""
     assert secrets.unprotect("dpapi:" + "AAAA") == ""
@@ -55,7 +55,7 @@ def test_without_dpapi_the_key_is_stored_plainly() -> None:
 
 
 def test_failure_falls_back_instead_of_losing_the_key(monkeypatch) -> None:
-    """Потерять ключ пользователя хуже, чем сохранить его незащищённым."""
+    """Losing the user's key is worse than keeping it unprotected."""
     monkeypatch.setattr(secrets, "available", lambda: True)
     monkeypatch.setattr(secrets, "_blob", lambda: (_ for _ in ()).throw(OSError()))
     assert secrets.protect("ключ") == "ключ"

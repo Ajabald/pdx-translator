@@ -1,4 +1,4 @@
-"""Тесты файлов проектов: создание, открытие, сохранение копии."""
+"""Tests of project files: creating, opening, saving a copy."""
 from __future__ import annotations
 
 import pytest
@@ -31,7 +31,7 @@ def test_create_refuses_existing(tmp_path):
 
 
 def test_export_root_survives_reopen(tmp_path):
-    """Папка вывода — часть проекта, а не настройка приложения."""
+    """The output folder is a part of the project, not a setting of the application."""
     path = tmp_path / "p.pdxproj"
     conn = project.create_project(path, name="A", src_root="e", tgt_root="r")
     assert project.get_export_root(conn) is None
@@ -72,11 +72,11 @@ def test_save_as(tmp_path, make_tree):
 
 
 def test_checkpoint_empties_the_journal(tmp_path, make_tree):
-    """Журнал не должен доживать до следующего открытия.
+    """The journal must not live through to the next opening.
 
-    Скан пишет проект одной транзакцией, и рядом с файлом остаётся `-wal`
-    размером со всё записанное: у ванильной HOI4 это 182 МБ при базе в 181 МБ,
-    и каждое открытие начиналось с чтения этих мегабайт.
+    A scan writes the project in one transaction, and next to the file a `-wal` the
+    size of everything written is left: for vanilla HOI4 that is 182 MB against a
+    database of 181 MB, and every opening began by reading those megabytes.
     """
     en = make_tree({"m_l_english.yml": 'l_english:\n k:0 "Hello"\n'}, "en")
     ru = make_tree({}, "ru")
@@ -95,10 +95,10 @@ def test_checkpoint_empties_the_journal(tmp_path, make_tree):
 
 
 def test_the_similarity_index_is_built_on_first_use(tmp_path, make_tree):
-    """Индекс похожих строк ждёт первого запроса, а не открытия проекта.
+    """The index of similar rows waits for the first query, not for the opening of the project.
 
-    У ванильной HOI4 своя память проекта — 106 268 записей, и индекс по ней
-    стоит 0,2 с; нужен он ровно тогда, когда переводчик встал на строку.
+    Vanilla HOI4 has 106,268 records in the project's own memory, and an index over
+    it costs 0.2 s; it is needed exactly when the translator stands on a row.
     """
     from pdxloc.core import fuzzy, tm
     from pdxloc.db import OWN_TM_FTS
