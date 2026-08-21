@@ -1,11 +1,12 @@
-"""Сравнение редакций оригинала: что именно изменил автор мода.
+"""Comparing revisions of the original: what exactly the mod author changed.
 
-Две задачи:
-  * решить, стоит ли изменение внимания переводчика (`classify_change`);
-  * показать, где именно текст изменился (`changed_ranges`, `word_diff`).
+Two jobs:
+  * decide whether a change deserves the translator's attention
+    (`classify_change`);
+  * show where the text changed (`changed_ranges`, `word_diff`).
 
-Слово здесь — то, что видит переводчик, поэтому сравниваем по словам, а не по
-символам: посимвольный дифф на длинных описаниях превращается в кашу.
+A word here is what the translator sees, so the comparison goes by words rather
+than by characters: a per-character diff turns long descriptions into mush.
 """
 from __future__ import annotations
 
@@ -21,19 +22,21 @@ ChangeKind = Literal["cosmetic", "meaningful"]
 COSMETIC = "cosmetic"
 MEANINGFUL = "meaningful"
 
-# Слова вместе с пробелами после них — чтобы склейка кусков давала исходный текст
+# Words together with the spaces after them, so joining the pieces gives back
+# the source text
 _WORD_RE = re.compile(r"\S+\s*")
 _PUNCT_RE = re.compile(r"[.,;:!?…—–\-\"'`«»„“”()\[\]{}]+")
 _SPACE_RE = re.compile(r"\s+")
 
 
 def _markup_tokens(text: str) -> list[str]:
-    """Разметка CK3 в порядке появления: её изменения переводчик обязан перенести.
+    """CK3 markup in order of appearance: its changes must reach the translation.
 
-    Каждый паттерн ищется по всему тексту независимо, поэтому `#TOOLTIP:KEY`
-    попадает в список дважды: целиком от `fmt_param` и головой от `fmt_open`.
-    Это не ошибка и чинить это не надо — счёт симметричен с обеих сторон
-    сравнения, а вердикт зависит только от того, совпали списки или нет.
+    Every pattern is searched over the whole text independently, so `#TOOLTIP:KEY`
+    lands in the list twice: whole from `fmt_param` and by its head from
+    `fmt_open`. That is not a fault and needs no fixing — the count is symmetric
+    on both sides of the comparison, and the verdict depends only on whether the
+    two lists matched.
     """
     tokens: list[str] = []
     for pattern in markup.structural_patterns():
@@ -42,7 +45,8 @@ def _markup_tokens(text: str) -> list[str]:
 
 
 def normalize_for_compare(text: str) -> str:
-    """Текст без того, что не меняет смысла: разметки, пунктуации, регистра, пробелов."""
+    """The text without what does not change the meaning: markup, punctuation,
+    case, whitespace."""
     for pattern in markup.structural_patterns():
         text = pattern.sub(" ", text)
     text = text.replace("\\n", " ")
@@ -51,11 +55,12 @@ def normalize_for_compare(text: str) -> str:
 
 
 def classify_change(old: str, new: str) -> ChangeKind:
-    """Косметическая правка или смысловая.
+    """A cosmetic edit or a meaningful one.
 
-    Косметическая — если после вычистки пунктуации, регистра и пробелов текст
-    тот же И набор разметки не изменился. Изменение разметки считаем значимым:
-    его придётся перенести в перевод, даже если слова остались прежними.
+    Cosmetic when, after punctuation, case and whitespace are stripped, the text
+    is the same AND the set of markup has not changed. A change of markup counts
+    as meaningful: it has to be carried into the translation even if the words
+    stayed as they were.
     """
     if _markup_tokens(old) != _markup_tokens(new):
         return MEANINGFUL
@@ -63,11 +68,11 @@ def classify_change(old: str, new: str) -> ChangeKind:
 
 
 class _Token:
-    """Слово с его местом в исходном тексте.
+    """A word together with its place in the source text.
 
-    Сравниваем по самому слову, а подсвечиваем по координатам: иначе слово в
-    конце строки (без пробела после) считается отличным от такого же слова в
-    середине.
+    The comparison goes by the word itself while the highlighting goes by the
+    coordinates: otherwise a word at the end of a line, with no space after it,
+    counts as different from the same word in the middle.
     """
 
     __slots__ = ("word", "start", "end", "raw")
@@ -90,9 +95,9 @@ def _tokens(text: str) -> list[_Token]:
 
 
 def word_diff(old: str, new: str) -> list[tuple[str, str]]:
-    """Пословный дифф: [("equal"|"insert"|"delete", фрагмент), …].
+    """A word-level diff: [("equal"|"insert"|"delete", fragment), …].
 
-    Склейка фрагментов equal+insert даёт новый текст, equal+delete — старый.
+    Joining the equal+insert fragments gives the new text, equal+delete the old.
     """
     old_tokens, new_tokens = _tokens(old), _tokens(new)
 
@@ -115,9 +120,9 @@ def word_diff(old: str, new: str) -> list[tuple[str, str]]:
 
 
 def changed_ranges(old: str, new: str) -> list[tuple[int, int]]:
-    """Диапазоны (начало, конец) в НОВОМ тексте, которых не было в старом.
+    """Ranges (start, end) in the NEW text that the old one did not have.
 
-    Ровно то, что нужно для подсветки прямо в поле оригинала.
+    Exactly what is needed to highlight right inside the original field.
     """
     old_tokens, new_tokens = _tokens(old), _tokens(new)
     ranges: list[tuple[int, int]] = []
@@ -129,7 +134,8 @@ def changed_ranges(old: str, new: str) -> list[tuple[int, int]]:
 
 
 def _merge(ranges: list[tuple[int, int]]) -> list[tuple[int, int]]:
-    """Склеить соседние диапазоны, чтобы не плодить подсветку встык."""
+    """Join neighbouring ranges so the highlighting does not come in abutting
+    pieces."""
     if not ranges:
         return []
     merged = [ranges[0]]
@@ -143,7 +149,7 @@ def _merge(ranges: list[tuple[int, int]]) -> list[tuple[int, int]]:
 
 
 def summarize_change(old: str, new: str, limit: int = 80) -> str:
-    """Короткое описание правки для списка и подсказки."""
+    """A short description of the edit, for the list and the tooltip."""
     kind = classify_change(old, new)
     added = "".join(t for op, t in word_diff(old, new) if op == "insert").strip()
     removed = "".join(t for op, t in word_diff(old, new) if op == "delete").strip()

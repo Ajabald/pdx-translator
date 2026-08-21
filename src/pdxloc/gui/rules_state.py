@@ -1,14 +1,15 @@
-"""Действующий набор правил проверки — один на всё приложение.
+"""The rule set in force — one for the whole application.
 
-Проверка вызывается из трёх мест (колонка «!» таблицы, пересчёт одной строки
-после правки, отчёт F6), и раньше каждое звало `qa.check_unit` без набора, то
-есть всегда со встроенными значениями. Настройка обязана доходить до всех трёх
-одновременно, иначе таблица и отчёт разойдутся в числах на одном и том же
-проекте.
+The check is called from three places (the «!» column of the table, the recheck
+of one row after an edit, the F6 report), and each of them used to call
+`qa.check_unit` with no rule set, that is, always with the built-in values. A
+setting has to reach all three at once, or the table and the report disagree in
+their numbers on one and the same project.
 
-Устройство по образцу `gui/prefs.py`: значение и сигнал о смене. Слоёв два —
-глобальный файл рядом с приложением и оверлей внутри файла проекта; их порядок
-и правила слияния описаны в `core/qa_rules.py`.
+Built after the pattern of `gui/prefs.py`: a value and a signal that it changed.
+There are two layers — the global file next to the application and the overlay
+inside the project file; their order and the merge rules are described in
+`core/qa_rules.py`.
 """
 from __future__ import annotations
 
@@ -31,15 +32,15 @@ notifier = _Notifier()
 
 _global: dict = {}
 _project: dict = {}
-_locale: str = ""          # язык перевода открытого проекта
-_game: str = ""            # и его игра — вдвоём они выбирают рекомендуемый пресет
+_locale: str = ""          # the translation language of the open project
+_game: str = ""            # and its game: together they pick the recommended preset
 _ruleset: RuleSet = qa_rules.default_ruleset()
 
 
-# --- чтение ---
+# --- reading ---
 
 def ruleset() -> RuleSet:
-    """Набор, которым проверяются строки прямо сейчас."""
+    """The set the rows are being checked with right now."""
     return _ruleset
 
 
@@ -52,11 +53,11 @@ def project_overlay() -> dict:
 
 
 def preset() -> str:
-    """Действующий пресет.
+    """The preset in force.
 
-    Проектный перекрывает глобальный, но только если задан: «Свой» в проекте
-    означает «без своего пресета», и глобальный при этом остаётся в силе —
-    ровно так же его применяет `qa_rules.resolve`.
+    The project's one overrides the global one, but only when it is set: «Own» in
+    a project means «no preset of its own», and the global one stays in force —
+    exactly the way `qa_rules.resolve` applies it.
     """
     chosen = _project.get("preset")
     if chosen in qa_rules.PRESETS and chosen != qa_rules.CUSTOM:
@@ -65,16 +66,17 @@ def preset() -> str:
 
 
 def locale() -> str:
-    """Язык перевода открытого проекта — по нему гасятся языковые правила."""
+    """The translation language of the open project; language rules are silenced
+    by it."""
     return _locale
 
 
 def game() -> str:
-    """Игра открытого проекта. Пусто — проекта нет.
+    """The game of the open project. Empty means there is no project.
 
-    Нужна витринам пресетов: рекомендуемый набор выбирается парой «игра плюс
-    язык», и спрашивать её у соединения на каждую перерисовку меню незачем —
-    здесь она уже прочитана.
+    The preset showcases need it: the recommended set is the one named after the
+    game, and asking the connection for it on every repaint of the menu would be
+    pointless — here it has already been read.
     """
     return _game
 
@@ -85,10 +87,10 @@ def _rebuild() -> None:
     notifier.changed.emit()
 
 
-# --- глобальный слой ---
+# --- the global layer ---
 
 def load_global() -> None:
-    """Прочитать файл глобальной настройки. Битый файл — не повод падать."""
+    """Read the global settings file. A broken file is no reason to crash."""
     global _global
     path = settings.qa_rules_path()
     data: dict = {}
@@ -115,11 +117,11 @@ def save_global(overlay: dict) -> None:
             path.write_text(json.dumps(_global, ensure_ascii=False, indent=2),
                             encoding="utf-8")
     except OSError:
-        pass        # настройка всё равно действует до конца сеанса
+        pass        # the setting is in force until the end of the session anyway
     _rebuild()
 
 
-# --- слой проекта ---
+# --- the project layer ---
 
 def open_project(conn: sqlite3.Connection) -> None:
     global _project, _locale, _game
@@ -148,10 +150,10 @@ def save_project(conn: sqlite3.Connection, overlay: dict) -> None:
 
 
 def on_change(slot) -> None:
-    """Подписаться на смену набора.
+    """Subscribe to a change of the rule set.
 
-    Слот должен быть связанным методом QObject: такая связь сама разрывается
-    при удалении виджета, а лямбда пережила бы его и обратилась к мёртвому
-    C++ объекту.
+    The slot must be a bound method of a QObject: such a connection breaks itself
+    when the widget is deleted, while a lambda would outlive it and reach into a
+    dead C++ object.
     """
     notifier.changed.connect(slot)

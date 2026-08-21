@@ -75,12 +75,12 @@ def set(key: str, value) -> None:   # noqa: A001 — it reads as prefs.set(...)
 
 
 def get_flag(key: str, default: bool = False) -> bool:
-    """Галка, ключ которой известен не на импорте, а во время работы.
+    """A flag whose key is known at run time rather than at import time.
 
-    Такие есть у напоминаний (`gui/ask.py`): имя ключа складывается из имени
-    напоминания. В `DEFAULTS` их не пропишешь — `ask` импортируется позже
-    самого `prefs`. Проверка «ключ обязан быть объявлен» здесь не действует,
-    поэтому пользоваться этим стоит только там, где иначе никак.
+    The reminders have such keys (`gui/ask.py`): the key name is built from the
+    reminder name. They cannot be listed in `DEFAULTS` — `ask` is imported later
+    than `prefs` itself. The «a key must be declared» check does not apply here,
+    so this is worth using only where there is no other way.
     """
     value = settings.qsettings().value(key, default)
     return value if isinstance(value, bool) else str(value).lower() == "true"
@@ -94,10 +94,10 @@ def set_flag(key: str, value: bool) -> None:
 
 
 def on_change(slot) -> None:
-    """Подписаться на смену настройки.
+    """Subscribe to a change of a setting.
 
-    Слот должен быть связанным методом QObject: такая связь сама разрывается
-    при удалении виджета. Лямбда пережила бы его и обращалась к мёртвому
-    C++ объекту.
+    The slot must be a bound method of a QObject: such a connection breaks itself
+    when the widget is deleted. A lambda would outlive it and reach into a dead
+    C++ object.
     """
     notifier.changed.connect(slot)

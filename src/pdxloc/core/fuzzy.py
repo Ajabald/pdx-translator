@@ -1,10 +1,11 @@
-"""Похожие строки в памяти переводов и конкорданс.
+"""Similar rows in the translation memory, and the concordance.
 
-Точное совпадение по хешу (`tm.lookup`) молчит, когда строки отличаются на
-слово-два — а при переводе сабмода поверх мода это как раз обычный случай.
-Здесь совпадение ищется по сходству текста: кандидаты отбираются полнотекстовым
-индексом (он живёт внутри `.pdxtm`), а оцениваются `difflib` из стандартной
-библиотеки. На корпусе в 50 тысяч пар запрос стоит пару миллисекунд.
+An exact match by hash (`tm.lookup`) stays silent when two rows differ by a word
+or two — and when translating a submod on top of a mod that is the ordinary case.
+Here a match is looked for by similarity of the text: the candidates are selected
+by a full-text index (which lives inside the `.pdxtm`) and scored with `difflib`
+from the standard library. On a corpus of fifty thousand pairs a query costs a
+couple of milliseconds.
 """
 from __future__ import annotations
 
@@ -18,15 +19,17 @@ from pdxloc.core import markup, tm
 from pdxloc.core.models import TmHit
 from pdxloc.core.tm import TmRecord
 
-# Кандидатов на базу. Замер на живом проекте (BLA + база AGOT на 45 тыс. пар):
-# 50 → 21 мс на строку и подсказка для 40% непереведённых, 100 → 23 мс и 41%,
-# 200 → 28 мс и те же 41%. Берём середину.
+# Candidates per database. Measured on a live project (BLA plus the AGOT
+# database of 45 000 pairs): 50 gives 21 ms per row and a suggestion for 40% of
+# the untranslated ones, 100 gives 23 ms and 41%, 200 gives 28 ms and the same
+# 41%. We take the middle.
 CANDIDATES_PER_BASE = 100
 MIN_SCORE = 0.6
 
-# Слово — две и более буквы подряд, без цифр и подчёркиваний. Публичное имя:
-# по этой же границе слова режет текст глоссарий (`core/glossary.py`), и две
-# токенизации в одном приложении разъехались бы на первом же уточнении.
+# A word is two or more letters in a row, no digits and no underscores. The
+# name is public: the glossary (`core/glossary.py`) cuts text on the same word
+# boundary, and two tokenisations in one application would drift apart on the
+# first refinement.
 WORD = re.compile(r"[^\W\d_]{2,}", re.UNICODE)
 
 # Служебные слова есть в каждой второй строке базы: кандидатов по ним приходят
@@ -154,10 +157,10 @@ def lookup_similar(
 def concordance(
     conn: sqlite3.Connection, fragment: str, *, limit: int = 200,
 ) -> list[TmRecord]:
-    """Как этот кусок текста переводили раньше.
+    """How this piece of text was translated before.
 
-    Ищем по подстроке, а не по словам: переводчику нужно найти и «Targaryen»,
-    и «of the Iron Islands» целиком.
+    The search goes by substring rather than by words: a translator needs to find
+    both «Targaryen» and «of the Iron Islands» whole.
     """
     fragment = fragment.strip()
     if len(fragment) < 2:
