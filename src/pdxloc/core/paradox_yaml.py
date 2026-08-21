@@ -134,17 +134,17 @@ _REAL_NEWLINE = re.compile(r"\r\n|[\r\n]")
 
 
 def escape_value(text: str) -> str:
-    """Привести значение к одной строке.
+    """Bring a value onto one line.
 
-    В формате Paradox перенос внутри текста записывается двумя символами
-    (обратный слэш и «n»); настоящий перевод строки разрывает запись пополам, и
-    файл становится битым: первая половина остаётся без закрывающей кавычки, а
-    вторая перестаёт быть записью. Попасть туда он может легко — достаточно
-    нажать Enter в поле перевода или вставить текст из мессенджера.
+    In the Paradox format a break inside the text is written as two characters, a
+    backslash and an «n»; a real line break tears an entry in two and the file
+    becomes broken: the first half is left without a closing quote and the second
+    stops being an entry. Getting one in there is easy — pressing Enter in the
+    translation field or pasting text from a messenger is enough.
 
-    Кавычки при этом НЕ трогаем: игра читает значение до последней кавычки в
-    строке, и голая кавычка внутри текста — норма (в ванильной локализации CK3
-    таких записей 8413 против 89 с экранированной).
+    The quotes are NOT touched: the game reads a value up to the last quote on the
+    line, and a bare quote inside the text is normal (the vanilla CK3 localisation
+    has 8413 such entries against 89 with an escaped one).
     """
     return _REAL_NEWLINE.sub(lambda _: "\\n", text)
 
@@ -172,7 +172,7 @@ def write_file(path: Path, language: str, entries: Iterable[LocEntry], trailing:
 
 
 def unescape(text: str) -> str:
-    """Раскрыть \\n и \\" — только для отображения и QA, не для хранения."""
+    """Expand the escapes — for display and the quality counts, not for storage."""
     return text.replace("\\n", "\n").replace('\\"', '"')
 
 
