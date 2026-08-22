@@ -26,8 +26,23 @@ What 0.1.2 adds and fixes is below; the description of 0.1.0 follows it, unchang
   them, in each interface language rather than as a translation of one. The
   measurement counts they used to quote moved to the architecture notes, where
   they belong.
+* **A project can be created without a translation folder.** A mod that exists
+  only in English has no such folder, and the window used to demand one anyway.
+  Leave the field empty and you are asked for the folder once, at the first
+  write into the mod; after that it is remembered. The folder can also be
+  changed at any time — «Project → Change translation folder…», with the same
+  preview the original folder has had.
 
 ## 🔧 Fixed
+
+* **The offered translation folder could point past the mod.** It was guessed
+  from the name of the original folder, so a mod keeping both languages in one
+  tree — `…\mod\localization` with `english` and `russian` inside — was offered
+  `…\mod\russian`, a folder the game never reads. Nothing failed: the project
+  simply found no translation and later offered to write into the wrong place.
+  The offer now comes from the pairs actually on disk. And because the folder
+  used to be written once and by nothing else, a project created with the wrong
+  one stayed wrong for life; that is what the new command is for.
 
 * **The first-run wizard could not build the first database.** «Build a
   database…» did nothing at all: the memory window wanted an open project, and
@@ -49,6 +64,15 @@ What 0.1.2 adds and fixes is below; the description of 0.1.0 follows it, unchang
   said «Russian».
 * **A README in Chinese**, next to the English and the Russian one — the
   interface has been translated for a while, the description had not.
+
+## 🈶 About the Chinese interface
+
+Everything is translated, but the windows that are new or rewritten in 0.1.2 —
+the rules window, the rule descriptions, the glossary — were translated by
+machine and have not been read by a native speaker. The wording is checked
+against the terms the rest of the interface already uses, and nothing more than
+that is claimed: in Qt Linguist those contexts are marked `unfinished`, which is
+exactly what they are. Corrections are welcome.
 
 ## ✨ What it does
 

@@ -119,7 +119,8 @@ Or double-click `run.bat`. Building the portable version:
 ## Quick start
 
 1. **Create a project**: pick the game, the source folder (where `*_l_english.yml`
-   files live), the translation folder and the languages.
+   files live) and the languages. The translation folder can be left empty — a mod
+   that is English only has none yet, and it is asked for at the first write.
 2. **F5** — scan: the strings land in the table.
 3. Translate: double-click the translation cell or edit in the bottom panel.
    `Ctrl+Enter` saves and moves to the next untranslated row.
