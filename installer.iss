@@ -67,10 +67,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; \
 ; The whole tree of the PyInstaller onedir build.
 Source: "dist\pdx-translator\*"; DestDir: "{app}"; \
     Flags: ignoreversion recursesubdirs createallsubdirs
-; The licences go next to the application and not only into the wizard: the LGPL
-; requires telling the recipient about Qt, and a wizard gets closed and forgotten.
-Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "THIRD-PARTY.md"; DestDir: "{app}"; Flags: ignoreversion
+; The licences are not listed here: PyInstaller already puts `LICENSE`,
+; `LICENSE.LGPL-3.0.txt` and `THIRD-PARTY.md` into the build (see the `datas` of
+; `pdx-translator.spec`), so the line above carries them. One source for both the
+; installer and the portable archive — listing them twice is how the archive came
+; to have none of them while the installer had two of the three.
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"

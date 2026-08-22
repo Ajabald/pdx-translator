@@ -22,7 +22,13 @@ block_cipher = None
 # for the sake of one line.
 
 import re
+import shutil
 from pathlib import Path
+
+# The build redistributes Qt — some 93 MB of the 120 — and the LGPL owes its
+# recipients the text. These three travel with it; the list is named because the
+# same three are moved to the root of the build at the end of this file.
+LICENCE_FILES = ("LICENSE", "LICENSE.LGPL-3.0.txt", "THIRD-PARTY.md")
 
 from PyInstaller.utils.win32.versioninfo import (
     FixedFileInfo, StringFileInfo, StringStruct, StringTable, VarFileInfo,
@@ -67,9 +73,15 @@ a = Analysis(
     # buttons quietly fall back to the standard Qt style icons. The interface
     # translations are there for the same reason: without the .qm the application
     # quietly stays English.
+    #
+    # The licence files are here for a different reason: they used to be a step in
+    # a checklist a human performs, and a release is built by CI on a tag, where
+    # no human is present — so the published archive went out carrying Qt and no
+    # licence at all.
     datas=[
         ("src/pdxloc/gui/icons", "pdxloc/gui/icons"),
         ("src/pdxloc/gui/translations", "pdxloc/gui/translations"),
+        *((name, ".") for name in LICENCE_FILES),
     ],
     hiddenimports=[],
     hookspath=[],
@@ -112,3 +124,10 @@ coll = COLLECT(
     upx=False,
     name="pdx-translator",
 )
+
+# PyInstaller 6 puts every data file into `_internal`, in among the Qt DLLs. A
+# licence buried there is distributed but not seen, so the three files are moved
+# up to the root of the build, where whoever unpacks the archive meets them.
+for _name in LICENCE_FILES:
+    _up = Path(DISTPATH) / "pdx-translator" / _name
+    shutil.move(str(Path(DISTPATH) / "pdx-translator" / "_internal" / _name), str(_up))

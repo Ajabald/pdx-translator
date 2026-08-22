@@ -39,16 +39,18 @@ Two things keep that obligation met:
    have made that hard, and it was rejected for other reasons anyway (slow start
    and antivirus false positives — see `pdx-translator.spec`).
 
-**The LGPL text has to be added by hand.** Checked on PySide6 6.11.1: the wheels
-ship exactly one licence file, `LicenseRef-Qt-Commercial.txt`, in
+**The LGPL text does not come with PySide6.** Checked on 6.11.1: the wheels ship
+exactly one licence file, `LicenseRef-Qt-Commercial.txt`, in
 `.venv\Lib\site-packages\pyside6*-*.dist-info\licenses\` — the LGPL text is not
-in there at all. So packaging a release means downloading
-<https://www.gnu.org/licenses/lgpl-3.0.txt> and putting it next to the
-executable as `LICENSE.LGPL-3.0.txt`, together with a copy of this file.
+in there at all. It is kept in this repository instead, as
+[LICENSE.LGPL-3.0.txt](LICENSE.LGPL-3.0.txt), taken verbatim from
+<https://www.gnu.org/licenses/lgpl-3.0.txt>.
 
-This is a step in the build checklist of [ACCEPTANCE.md](ACCEPTANCE.md), not an
-automatic part of `pdx-translator.spec`: forgetting it breaks an obligation, and
-an obligation is worth a line a human reads rather than a line a script hides.
+`pdx-translator.spec` carries that file, [LICENSE](LICENSE) and this one into the
+build, so both the portable archive and the installer hold all three next to the
+executable. It used to be a step in a checklist a human performs — and a release
+is built by CI on a tag, where no human is present: until 0.1.2 the published
+archive went out with Qt inside and no licence file at all.
 
 ## Development-only tools
 

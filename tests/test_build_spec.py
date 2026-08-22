@@ -36,6 +36,45 @@ def test_the_spec_builds_a_version_resource_from_the_real_version() -> None:
     assert "PDX Translator" in rendered
 
 
+def test_the_build_carries_the_licences() -> None:
+    """The archive redistributes Qt, so it owes its recipients the LGPL text.
+
+    The portable build holds Qt — some 93 MB of the 120 — and the release archive
+    is `dist/pdx-translator/*` packed by CI on a tag. Whatever the spec does not
+    carry is simply not in it: until 0.1.2 the published archive went out with no
+    licence file at all, while a checklist for a human said all three were there.
+    """
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    spec = (root / "pdx-translator.spec").read_text(encoding="utf-8")
+    listed = re.search(r"LICENCE_FILES = \((.*?)\)", spec, re.S)
+    assert listed, "в спеке нет списка лицензий"
+    for name in ("LICENSE", "LICENSE.LGPL-3.0.txt", "THIRD-PARTY.md"):
+        assert (root / name).is_file(), f"нет файла {name}"
+        assert f'"{name}"' in listed.group(1), (
+            f"{name} не попадает в сборку: в архиве релиза его не будет")
+    datas = re.search(r"datas=\[(.*?)\],", spec, re.S)
+    assert datas and "LICENCE_FILES" in datas.group(1), (
+        "список лицензий заведён, но в datas не подключён")
+
+
+def test_the_installer_does_not_ship_the_licences_twice() -> None:
+    """One source for the archive and the installer, or they drift apart.
+
+    They already did: the installer listed two of the three files itself, the
+    archive listed none, and the difference showed only in what people downloaded.
+    """
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    script = (root / "installer.iss").read_text(encoding="utf-8")
+    for name in ("LICENSE", "LICENSE.LGPL-3.0.txt", "THIRD-PARTY.md"):
+        assert f'Source: "{name}"' not in script, (
+            f"{name} перечислен и в спеке, и в установщике")
+
+
 def test_the_spec_points_at_a_real_icon_file() -> None:
     """The spec promises an `.ico` — the file is obliged to exist.
 
