@@ -3,21 +3,21 @@ name: tests
 on:
   push:
     branches: [main]
-    # Без фильтра тегов теговый пуш — не событие вовсе, и job `build` ниже,
-    # как бы точно ни было написано его условие, не выполнится никогда.
+    # Without a tag filter a tag push is not an event at all, and the `build` job
+    # below will never run, however precisely its condition is written.
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
-# По умолчанию токену хватает чтения; право на запись выдаётся точечно тому
-# job, который создаёт релиз.
+# By default the token needs read access; write is granted pointwise to the job
+# that creates the release.
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Новый коммит в ветку отменяет прогон предыдущего, а вот сборку релиза по
-  # тегу обрывать нельзя — она одна на тег.
+  # A new commit to a branch cancels the run of the previous one, but a release
+  # build by tag must not be interrupted — there is one per tag.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -26,12 +26,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Нижняя обещанная граница (`requires-python` в pyproject) и версия,
-        # на которой ведётся разработка. Обещание «Python 3.11+» проверяется,
-        # а не декларируется.
+        # The lower bound we promise (`requires-python` in pyproject) and the
+        # version development happens on. The promise «Python 3.11+» is checked
+        # rather than declared.
         python-version: ["3.11", "3.14"]
     env:
-      QT_QPA_PLATFORM: offscreen      # тесты GUI без реального экрана
+      QT_QPA_PLATFORM: offscreen      # the GUI tests without a real screen
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -45,29 +45,30 @@ jobs:
           pip install -e .
           pip install --group dev
       - name: Lint
-        # Линтер держит в узде то, что глазами не увидишь: неопределённое имя
-        # в редко нажимаемом пункте меню так и жило, пока его не нашёл ruff.
+        # The linter keeps in check what the eye does not catch: an undefined name
+        # in a rarely pressed menu item lived on until ruff found it.
         run: ruff check .
       - name: Build translations
-        # `.qm` — производная от `.ts`, и тест сверяет их время правки. После
-        # checkout метки произвольны, поэтому переводы собираются заново.
+        # The `.qm` is a derivative of the `.ts`, and a test compares their edit
+        # times. After a checkout the stamps are arbitrary, so the translations
+        # are rebuilt.
         run: python tools/i18n.py release
       - name: Run tests
         run: pytest -q -m "not realdata"
 
   build:
-    # Портативная сборка прикладывается к релизу при пуше тега vX.Y.Z
+    # The portable build is attached to the release on a push of a vX.Y.Z tag
     if: startsWith(github.ref, 'refs/tags/v')
     needs: pytest
     runs-on: windows-latest
     permissions:
-      contents: write     # без этого softprops/action-gh-release получает 403
+      contents: write     # without this softprops/action-gh-release gets a 403
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          # Собираем на нижней поддерживаемой: интерпретатор уезжает внутрь
-          # портативной сборки, и брать более новый, чем обещано, незачем.
+          # Built on the lowest supported one: the interpreter travels inside the
+          # portable build, and taking a newer one than promised is pointless.
           python-version: "3.11"
           cache: pip
           cache-dependency-path: pyproject.toml
@@ -83,37 +84,39 @@ jobs:
       - name: Package
         run: Compress-Archive -Path dist/pdx-translator/* -DestinationPath pdx-translator-${{ github.ref_name }}.zip
       - name: Install Inno Setup
-        # На образе раннера его нет; choco там есть всегда.
+        # The runner image does not have it; choco is always there.
         run: choco install innosetup --no-progress -y
       - name: Installer
-        # Версия без «v»: тег зовётся v0.1.0, а Windows в свойствах файла хочет
-        # числа. `VersionInfoVersion` от «v» подавился бы.
+        # The version without the «v»: the tag is called v0.1.0, while Windows
+        # wants numbers in the file properties. `VersionInfoVersion` would choke
+        # on the «v».
         run: |
           $version = "${{ github.ref_name }}" -replace '^v',''
-          # Путь не угадываем: choco ставит машинно, winget — в профиль
-          # пользователя, и жёсткая строка ломается на первом же расхождении.
-          # Скобки в имени переменной обязательно в ${...}: иначе PowerShell
-          # обрывает имя на ProgramFiles, а «(x86)» разбирает отдельно.
+          # The path is not guessed: choco installs machine-wide, winget into the
+          # user profile, and a hard-coded string breaks at the first divergence.
+          # The braces in the variable name are obligatory as ${...}: otherwise
+          # PowerShell cuts the name at ProgramFiles and parses «(x86)» apart.
           $iscc = @(
             "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
             "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
             "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
           ) | Where-Object { Test-Path $_ } | Select-Object -First 1
           if (-not $iscc) { $iscc = (Get-Command ISCC -ErrorAction SilentlyContinue).Source }
-          if (-not $iscc) { throw "ISCC.exe не найден" }
+          if (-not $iscc) { throw "ISCC.exe not found" }
           Write-Host "ISCC: $iscc"
           & $iscc /DAppVersion=$version installer.iss
-          if ($LASTEXITCODE -ne 0) { throw "сборка установщика не удалась" }
+          if ($LASTEXITCODE -ne 0) { throw "the installer build failed" }
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             pdx-translator-*.zip
             pdx-translator-setup-*.exe
           name: PDX Translator ${{ github.ref_name }}
-          # Описание релиза лежит в репозитории и правится вместе с кодом.
-          # Иначе оно пишется в веб-форме второпях и нигде не хранится: к
-          # следующему выпуску вспоминать, что изменилось, будет не по чему.
+          # The release description lives in the repository and is edited together
+          # with the code. Otherwise it gets written in a web form in a hurry and
+          # is kept nowhere: by the next release there is nothing to recall what
+          # changed from.
           body_path: RELEASE_NOTES.md
-          # Релиз без архива хуже красного CI: люди увидят версию, которую
-          # нечем скачать.
+          # A release without an archive is worse than a red CI: people see a
+          # version there is nothing to download.
           fail_on_unmatched_files: true

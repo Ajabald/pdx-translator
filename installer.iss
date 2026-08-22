@@ -1,13 +1,13 @@
-; Установщик PDX Translator (Inno Setup 6).
+; The PDX Translator installer (Inno Setup 6).
 ;
 ;   iscc /DAppVersion=0.1.0 installer.iss
 ;
-; Версия приходит из командной строки, а не пишется здесь: она уже задана в
-; `pdxloc/__init__.py`, и третья копия разъехалась бы с первыми двумя.
-; Собирается в CI после PyInstaller — см. .github/workflows/ci.yml.
+; The version comes from the command line rather than being written here: it is
+; set already in `pdxloc/__init__.py`, and a third copy would part ways with the
+; first two. Built in CI after PyInstaller — see .github/workflows/ci.yml.
 
 #ifndef AppVersion
-  #error Передайте версию: iscc /DAppVersion=0.1.0 installer.iss
+  #error Pass the version: iscc /DAppVersion=0.1.0 installer.iss
 #endif
 
 #define AppName "PDX Translator"
@@ -15,8 +15,8 @@
 #define AppUrl "https://github.com/Ajabald/pdx-translator"
 
 [Setup]
-; Идентификатор не меняется между выпусками — по нему обновление находит
-; предыдущую установку и заменяет её, а не ставит вторую копию рядом.
+; The identifier does not change between releases — an update finds the previous
+; installation by it and replaces it instead of putting a second copy alongside.
 AppId={{D6243354-FC2A-4B41-ABE1-7DC4DDD9D4A0}
 AppName={#AppName}
 AppVersion={#AppVersion}
@@ -27,16 +27,17 @@ AppSupportURL={#AppUrl}/issues
 AppUpdatesURL={#AppUrl}/releases
 VersionInfoVersion={#AppVersion}
 
-; --- ГЛАВНОЕ РЕШЕНИЕ: установка для пользователя, а не в Program Files ------
+; --- THE MAIN DECISION: install for the user, not into Program Files -------
 ;
-; Приложение пишет рядом с собой: `Bdd`, `Projects`, `backups`,
-; `qa_rules.json` и `pdx-translator.log` (см. `settings.app_root`). В
-; Program Files обычному пользователю писать нельзя, и всё это молча
-; сломалось бы — либо потребовало прав администратора на каждый запуск.
+; The application writes next to itself: `Bdd`, `Projects`, `backups`,
+; `qa_rules.json` and `pdx-translator.log` (see `settings.app_root`). An
+; ordinary user cannot write into Program Files, and all of that would break
+; silently — or demand administrator rights at every start.
 ;
-; `PrivilegesRequired=lowest` ставит в `%LOCALAPPDATA%\Programs`, куда писать
-; можно, и установка проходит без запроса прав вовсе. Кому нужно иначе —
-; `PrivilegesRequiredOverridesAllowed=dialog` даёт выбрать установку для всех.
+; `PrivilegesRequired=lowest` installs into `%LOCALAPPDATA%\Programs`, where
+; writing is allowed, and the installation asks for no rights at all. For those
+; who want otherwise, `PrivilegesRequiredOverridesAllowed=dialog` offers the
+; choice of installing for everyone.
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 DefaultDirName={autopf}\{#AppName}
@@ -63,11 +64,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; \
     GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-; Всё дерево onedir-сборки PyInstaller целиком.
+; The whole tree of the PyInstaller onedir build.
 Source: "dist\pdx-translator\*"; DestDir: "{app}"; \
     Flags: ignoreversion recursesubdirs createallsubdirs
-; Лицензии кладём рядом с приложением, а не только в мастер: LGPL требует
-; сообщить получателю про Qt, а мастер закрывают и забывают.
+; The licences go next to the application and not only into the wizard: the LGPL
+; requires telling the recipient about Qt, and a wizard gets closed and forgotten.
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "THIRD-PARTY.md"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -79,13 +80,14 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; \
     Flags: nowait postinstall skipifsilent
 
-; Удаление трогает только то, что положил установщик. Папки `Bdd`, `Projects`
-; и `backups` остаются: это работа переводчика — базы памяти, файлы проектов и
-; резервные копии переводов. Снести их вместе с программой значило бы стереть
-; месяцы чужого труда, и вернуть его будет неоткуда.
+; Uninstalling touches only what the installer put there. The folders `Bdd`,
+; `Projects` and `backups` stay: that is the translator's work — memory
+; databases, project files and backups of translations. Sweeping them away with
+; the program would erase months of somebody's labour, and there would be
+; nowhere to get it back from.
 ;
-; Но молчать об этом нельзя: оставшаяся папка выглядит как недоделанное
-; удаление. Поэтому в конце говорим, что именно сохранено и где.
+; But keeping quiet about it will not do: a folder left behind looks like an
+; unfinished uninstall. So at the end we say what exactly was kept, and where.
 
 [CustomMessages]
 en.DataKept=Your work has been kept and not deleted:
@@ -112,8 +114,9 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   Kept: String;
 begin
-  // Только после удаления и только в обычном режиме: в тихом (/VERYSILENT)
-  // окно некому закрыть, и удаление повисло бы навсегда.
+  // Only after the uninstall and only in the ordinary mode: in the silent one
+  // (/VERYSILENT) there is nobody to close the window, and the uninstall would
+  // hang forever.
   if (CurUninstallStep = usPostUninstall) and (not UninstallSilent) then
   begin
     Kept := KeptFolders();

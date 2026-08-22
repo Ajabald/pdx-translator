@@ -1,10 +1,11 @@
-# В репозитории переводы строк всегда LF, в рабочей копии — как принято в системе.
-# Без этого на Windows файлы уезжают в коммит с CRLF, и любой правке соседа
-# соответствует «изменён весь файл».
+# In the repository line endings are always LF, in the working copy whatever the
+# system uses. Without this, files on Windows travel into a commit with CRLF, and
+# any edit by a neighbour shows up as «the whole file changed».
 * text=auto eol=lf
 
-# Файлы локализации Paradox приложение пишет само (UTF-8 с BOM, LF) — в
-# репозитории их нет, но правило страхует от случайного добавления образцов.
+# The Paradox localisation files the application writes itself (UTF-8 with BOM,
+# LF). The repository holds none, but the rule insures against a sample being
+# added by accident.
 *.yml text eol=lf
 *.svg text eol=lf
 *.bat text eol=crlf

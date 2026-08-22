@@ -1,23 +1,25 @@
-# PyInstaller: сборка портативной версии.
+# PyInstaller: building the portable version.
 #   .venv\Scripts\pyinstaller.exe pdx-translator.spec
 #
-# Сборка в папку (onedir), а не в один файл: одиночный exe распаковывается при
-# каждом запуске (медленный старт) и часто ловит ложные срабатывания антивирусов.
-# Рядом с exe приложение создаёт папки Bdd и Projects — режим переносимый.
+# Built into a folder (onedir) rather than a single file: a lone exe unpacks
+# itself at every start (a slow one) and often trips antivirus heuristics.
+# Next to the exe the application creates Bdd and Projects — the mode is portable.
 
 block_cipher = None
 
-# --- свойства exe ---------------------------------------------------------
+# --- the properties of the exe --------------------------------------------
 #
-# Без ресурса версии у файла пустая вкладка «Подробно», и это не косметика:
-# безымянный exe без издателя и описания — типовой признак для эвристик
-# антивирусов, а подписывать сборку нам нечем.
+# Without a version resource the file has an empty «Details» tab, and that is no
+# cosmetic matter: a nameless exe with no publisher and no description is a
+# textbook sign for antivirus heuristics, and we have nothing to sign the build
+# with.
 #
-# Версия НЕ дублируется здесь строкой, а читается из `pdxloc.__init__`:
-# продублированная, она разъезжается с настоящей на первом же выпуске, и
-# заметить это некому — свойства файла никто не читает, пока не понадобятся.
-# Разбор регуляркой, а не импортом: спека выполняется до того, как пакет
-# оказывается на пути, и импорт тянул бы за собой PySide6 ради одной строки.
+# The version is NOT duplicated here as a string but read out of
+# `pdxloc.__init__`: duplicated, it parts ways with the real one at the very
+# first release, and there is nobody to notice — nobody reads the properties of a
+# file until they are needed. Parsed by a regex rather than imported: the spec
+# runs before the package is on the path, and an import would drag PySide6 along
+# for the sake of one line.
 
 import re
 from pathlib import Path
@@ -31,7 +33,7 @@ _init = Path("src/pdxloc/__init__.py").read_text(encoding="utf-8")
 VERSION = re.search(r'__version__\s*=\s*"([^"]+)"', _init).group(1)
 COPYRIGHT = re.search(r'COPYRIGHT\s*=\s*"([^"]+)"', _init).group(1)
 
-# Windows хочет ровно четыре числа; «0.1.0» превращается в (0, 1, 0, 0).
+# Windows wants exactly four numbers; «0.1.0» becomes (0, 1, 0, 0).
 _numbers = tuple(int(p) for p in VERSION.split(".")) + (0, 0, 0, 0)
 FILEVERS = _numbers[:4]
 
@@ -39,9 +41,9 @@ version_info = VSVersionInfo(
     ffi=FixedFileInfo(filevers=FILEVERS, prodvers=FILEVERS,
                       mask=0x3F, flags=0x0, OS=0x40004, fileType=0x1),
     kids=[
-        # Кодовая страница 04B0 — Unicode. Язык 0000 «нейтральный», а не
-        # английский: интерфейс переключается между тремя языками, и объявлять
-        # файл англоязычным было бы неправдой.
+        # Code page 04B0 is Unicode. Language 0000 is «neutral» rather than
+        # English: the interface switches between three languages, and declaring
+        # the file English would be untrue.
         StringFileInfo([StringTable("000004B0", [
             StringStruct("CompanyName", "Ajabald"),
             StringStruct("ProductName", "PDX Translator"),
@@ -61,9 +63,10 @@ a = Analysis(
     ["src/pdxloc/__main__.py"],
     pathex=["src"],
     binaries=[],
-    # Иконки панели и меню лежат файлами внутри пакета — без них кнопки
-    # молча уедут на стандартные иконки стиля Qt. Переводы интерфейса — там же
-    # и по той же причине: без .qm приложение молча остаётся английским.
+    # The toolbar and menu icons are files inside the package — without them the
+    # buttons quietly fall back to the standard Qt style icons. The interface
+    # translations are there for the same reason: without the .qm the application
+    # quietly stays English.
     datas=[
         ("src/pdxloc/gui/icons", "pdxloc/gui/icons"),
         ("src/pdxloc/gui/translations", "pdxloc/gui/translations"),
@@ -91,10 +94,11 @@ exe = EXE(
     debug=False,
     strip=False,
     upx=False,
-    console=False,          # оконное приложение, без консоли
-    # Иконка самого exe. Иконку окна и панели задач она НЕ задаёт — ту ставит
-    # `app.setWindowIcon` из `gui/icons/app.png`. Оба файла собирает
-    # `tools/make_icon.py` из одного исходника.
+    console=False,          # a windowed application, no console
+    # The icon of the exe itself. It does NOT set the icon of the window and of
+    # the taskbar — that one is set by `app.setWindowIcon` from
+    # `gui/icons/app.png`. Both files are built by `tools/make_icon.py` out of
+    # one source.
     icon="pdx-translator.ico",
     version=version_info,
 )

@@ -1,4 +1,4 @@
-# Данные пользователя — никогда не коммитим
+# The user's data — never committed
 *.sqlite3
 *.sqlite3-*
 *.sqlite3.*
@@ -11,7 +11,7 @@ Bdd/
 Projects/
 backups/
 
-# Окружение и сборка
+# The environment and the build
 .venv/
 venv/
 __pycache__/
@@ -21,33 +21,35 @@ build/
 dist/
 *.egg-info/
 
-# Редакторы и система
+# Editors and the system
 .vscode/
 .idea/
 Thumbs.db
 desktop.ini
 
-# Чужие инструменты, по которым сверяемся, — не наш код и не наша лицензия.
-# Лежат за пределами репозитория (`_reference` рядом с ним); правила — страховка
-# на случай, если папку снова распакуют сюда: один `git add -A` уложил бы
-# четверть гигабайта чужого проприетарного кода в историю навсегда.
+# Other people's tools we compare ourselves against — not our code and not our
+# licence. They live outside the repository (`_reference` next to it); the rules
+# are insurance in case the folder is unpacked here again: one `git add -A` would
+# lay a quarter of a gigabyte of somebody else's proprietary code into the
+# history forever.
 /LocKeysTransfer.exe
 /ModTranslationHelper*/
 /ModTranslationHelper*.rar
 
-# Глобальная настройка проверок — пользовательская, лежит рядом с приложением
-# (см. `settings.qa_rules_path`). Путь якорный: файл с таким же именем среди
-# тестовых данных игнорировать нельзя.
+# The global check setup — the user's own, kept next to the application (see
+# `settings.qa_rules_path`). The path is anchored: a file of the same name among
+# the test data must not be ignored.
 /qa_rules.json
 
-# Диагностический лог и его ротация. Пишется рядом с приложением, а при запуске
-# из исходников «рядом» — это корень репозитория (`settings.app_root`).
+# The diagnostic log and its rotation. Written next to the application, and when
+# run from the sources «next to» is the root of the repository
+# (`settings.app_root`).
 /pdx-translator.log
 /pdx-translator.log.*
 
-# Предпросмотр иконки — производная от tools/appicon*.svg, пересобирается
-# командой tools/make_icon.py.
+# The icon preview — a derivative of tools/appicon*.svg, rebuilt by the command
+# tools/make_icon.py.
 /tools/appicon-preview.png
 
-# Установщик — производная от dist/ и installer.iss, собирается в CI.
+# The installer — a derivative of dist/ and installer.iss, built in CI.
 /pdx-translator-setup-*.exe

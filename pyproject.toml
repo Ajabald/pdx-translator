@@ -1,18 +1,20 @@
 [project]
 name = "pdx-translator"
 version = "0.1.2"
-# Описание английское, как и главный README: GitHub показывает только его, и
-# описание пакета обязано читаться тем же человеком, что и карточка репозитория.
-# «Workbench», а не «переводчик»: инструмент отличается от батч-конвертеров,
-# занявших нишу, именно построчной работой, и слово это несёт.
+# The description is in English, like the main README: GitHub shows only that
+# one, and the package description has to read for the same person as the
+# repository card. «Workbench» rather than «translator»: the tool differs from
+# the batch converters holding the niche exactly by working row by row, and the
+# word carries that.
 description = "An offline workbench for translating Paradox mod localisation"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
-# Игры перечислены поимённо, потому что искать будут по ним, а не по слову
-# «Paradox»: у каждой своя сцена модов и своя аудитория переводчиков. CK3
-# впереди не стоит — игр семь, и они равноправны с 2026-08-11.
+# The games are listed by name because that is what people search by, not the
+# word «Paradox»: each has its own mod scene and its own audience of translators.
+# CK3 does not come first — there are eight of them and they are equals since
+# 2026-08-11.
 keywords = [
     "paradox-interactive", "localization", "translation", "modding",
     "translation-memory", "game-localization",
@@ -47,66 +49,69 @@ packages = ["src/pdxloc"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["realdata: тесты на реальных деревьях BLA (env PDXT_REALDATA)"]
+markers = ["realdata: tests on the real BLA trees (env PDXT_REALDATA)"]
 
 [tool.ruff]
-# Код свёрстан под ~100, но 34 строки переваливают за сотню на 1–10 символов, и
-# все они — либо текст сообщения в `translate(...)`, либо SQL: перенос там рвёт
-# читаемую строку ради счётчика. Планка в 110 оставляет правило рабочим — по-
-# настоящему длинную строку оно поймает.
+# The code is set to about 100 columns, but 34 lines run past a hundred by one to
+# ten characters, and every one of them is either the text of a message inside
+# `translate(...)` or SQL: wrapping there tears a readable line apart for the sake
+# of a counter. A limit of 110 keeps the rule working — a truly long line it will
+# still catch.
 line-length = 110
 target-version = "py311"
 
 [tool.ruff.lint]
-# E,F,W — то, что ловит любой линтер; B — ловушки вроде изменяемого значения
-# по умолчанию; SIM — упрощения; UP — устаревшие идиомы; RUF — правила самого
-# ruff. BLE и A выбраны не наугад: под них в коде уже расставлены `# noqa`,
-# и без этих правил метки были бы мёртвыми. Форматтер не включаем — код
-# свёрстан вручную и осмысленно.
+# E,F,W are what any linter catches; B the traps such as a mutable default; SIM
+# simplifications; UP outdated idioms; RUF the rules of ruff itself. BLE and A
+# were not picked at random: `# noqa` marks for them are already placed through
+# the code, and without those rules the marks would be dead. The formatter stays
+# off — the code is laid out by hand and on purpose.
 #
-# `N` (именование) намеренно не берём: Qt переопределяется camelCase-методами
-# (`rowCount`, `setData`) и сигналами в области класса — 69 срабатываний на
-# коде, который иначе выглядеть не может.
+# `N` (naming) is deliberately left out: Qt is overridden with camelCase methods
+# (`rowCount`, `setData`) and with signals at class level — 69 hits on code that
+# cannot look any other way.
 select = ["E", "F", "W", "B", "SIM", "UP", "RUF", "BLE", "A"]
 
-# Кириллица «похожа на латиницу»: 2880 срабатываний на комментариях и
-# сообщениях, написанных по-русски. Правило рассчитано на англоязычный код,
-# куда кириллическая «с» попадает по ошибке, — у нас наоборот.
+# Cyrillic «looks like Latin»: 2880 hits on comments and messages written in
+# Russian. The rule is meant for English code, where a Cyrillic «с» gets in by
+# mistake — here it is the other way round.
 #
-# RUF100 (мёртвая метка `# noqa`) — отдельная история. Меток таких 173, и почти
-# все безвредны: 158 в тестах — `# noqa: E402` при импорте после
-# `os.environ.setdefault("QT_QPA_PLATFORM", …)`. Автофикс сносит **всю строку
-# комментария**, а у нас после кода правила идёт объяснение — «реэкспорт»,
-# «читается как prefs.set(…)», «показываем пользователю любую ошибку». Терять
-# их ради чистоты отчёта нельзя, а править 173 места руками — diff без пользы.
+# RUF100 (a dead `# noqa` mark) is a story of its own. There are 173 such marks
+# and almost all are harmless: 158 in the tests are `# noqa: E402` on an import
+# after `os.environ.setdefault("QT_QPA_PLATFORM", …)`. The autofix removes **the
+# whole comment line**, while ours carry an explanation after the rule code — «a
+# re-export», «reads as prefs.set(…)», «we show the user any error». Losing those
+# for the sake of a clean report will not do, and mending 173 places by hand is a
+# diff with no use in it.
 #
-# RUF022/RUF023 требуют алфавитного `__all__` и `__slots__`: автофикс
-# разворачивает компактный список в столбик ради порядка, который никто не
-# читает. Группировка по смыслу полезнее алфавита.
+# RUF022/RUF023 demand an alphabetical `__all__` and `__slots__`: the autofix
+# unfolds a compact list into a column for the sake of an order nobody reads.
+# Grouping by meaning is more use than the alphabet.
 #
-# SIM118 («убери .keys()») в этом коде — вредный совет, а не вкусовщина.
-# Строки из SQLite приходят как `sqlite3.Row`, а он ищет оператором `in` по
-# **значениям**: у строки с колонкой game='ck3' проверка `"game" in row` даёт
-# False, зато `"ck3" in row` — True. Послушаться подсказки в `project.py`
-# значило бы, что игра проекта всегда читается как CK3, тихо и без ошибки.
+# SIM118 («drop the .keys()») is harmful advice in this code, not a matter of
+# taste. Rows from SQLite arrive as `sqlite3.Row`, and that searches by the `in`
+# operator over **values**: for a row with the column game='ck3' the check
+# `"game" in row` gives False, while `"ck3" in row` gives True. Obeying the hint
+# in `project.py` would mean the game of a project always reads as CK3, quietly
+# and without an error.
 #
-# Последние три спорят с осознанным выбором автора, а не с небрежностью:
-# SIM103 хочет `return not (a and b)` вместо раннего возврата, у которого есть
-# объясняющий комментарий; SIM105 — `contextlib.suppress` внутри цикла;
-# RUF012 считает ловушкой словари-константы класса (CHOICES, HINTS,
-# _PANEL_BY_PROVIDER), которые только читаются.
+# The last three argue with a deliberate choice of the author rather than with
+# carelessness: SIM103 wants `return not (a and b)` instead of an early return
+# that carries an explaining comment; SIM105 a `contextlib.suppress` inside a
+# loop; RUF012 counts class constant dictionaries (CHOICES, HINTS,
+# _PANEL_BY_PROVIDER) as a trap, though they are only ever read.
 ignore = [
     "RUF001", "RUF002", "RUF003", "RUF100", "RUF022", "RUF023", "SIM118",
     "SIM103", "SIM105", "RUF012",
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Тесты namespace'ят фикстуры именами модулей и переопределяют autouse-фикстуры
-# из conftest — для линтера это затенение имени.
+# The tests namespace their fixtures by module names and override autouse
+# fixtures from conftest — to a linter that is a shadowed name.
 "tests/*" = ["F811"]
-# `def rowCount(self, parent=QModelIndex())` — подпись модели Qt, а не ловушка
-# с изменяемым значением по умолчанию: пустой индекс неизменяем.
+# `def rowCount(self, parent=QModelIndex())` is the signature of a Qt model, not
+# a trap with a mutable default: an empty index is immutable.
 "src/pdxloc/gui/*" = ["B008"]
-# `ru_translations.py` и `zh_translations.py` — таблицы пар «оригинал → перевод»
-# по строке на пару. Переносить их значит ломать сопоставление глазами.
+# `ru_translations.py` and `zh_translations.py` are tables of «original →
+# translation» pairs, one line per pair. Wrapping them breaks reading by eye.
 "tools/*" = ["E501"]
