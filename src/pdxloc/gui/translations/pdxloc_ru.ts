@@ -3,7 +3,7 @@
 <context>
     <name>Actions</name>
     <message>
-        <location filename="../actions.py" line="+72" />
+        <location filename="../actions.py" line="+68" />
         <source>Projects…</source>
         <translation>Проекты…</translation>
     </message>
@@ -264,6 +264,16 @@
     </message>
     <message>
         <location line="+2" />
+        <source>Change translation folder…</source>
+        <translation>Сменить папку перевода…</translation>
+    </message>
+    <message>
+        <location line="+1" />
+        <source>Where the translation is read from and written to; may be empty until the first write</source>
+        <translation>Откуда перевод читается и куда пишется; до первой записи может быть пустой</translation>
+    </message>
+    <message>
+        <location line="+2" />
         <source>Project languages…</source>
         <translation>Языки проекта…</translation>
     </message>
@@ -278,7 +288,7 @@
         <translation>Открыть оригинал в проводнике</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+5" />
         <source>Check the whole project…</source>
         <translation>Проверить весь проект…</translation>
     </message>
@@ -313,7 +323,7 @@
         <translation>Записи памяти, подключённые базы и сборка новых баз — одним окном</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+5" />
         <source>Glossary…</source>
         <translation>Глоссарий…</translation>
     </message>
@@ -361,7 +371,7 @@
 <context>
     <name>Archive</name>
     <message>
-        <location filename="../archive_dialog.py" line="+20" />
+        <location filename="../archive_dialog.py" line="+21" />
         <source>File</source>
         <translation>Файл</translation>
     </message>
@@ -421,7 +431,7 @@ They do not reach the write-to-mod step but are kept here.</source>
 <context>
     <name>Ask</name>
     <message>
-        <location filename="../ask.py" line="+60" />
+        <location filename="../ask.py" line="+61" />
         <source>Do not ask again</source>
         <translation>Больше не спрашивать</translation>
     </message>
@@ -429,7 +439,7 @@ They do not reach the write-to-mod step but are kept here.</source>
 <context>
     <name>Concordance</name>
     <message>
-        <location filename="../concordance_dialog.py" line="+27" />
+        <location filename="../concordance_dialog.py" line="+28" />
         <source>How was this translated before</source>
         <translation>Как переводили это раньше</translation>
     </message>
@@ -477,7 +487,7 @@ They do not reach the write-to-mod step but are kept here.</source>
 <context>
     <name>Db</name>
     <message>
-        <location filename="../../db.py" line="+333" />
+        <location filename="../../db.py" line="+334" />
         <source>The database has schema version %1, the application expects %2. Please update the application.</source>
         <translation>БД имеет версию схемы %1, приложение ожидает %2. Обновите приложение.</translation>
     </message>
@@ -487,12 +497,12 @@ They do not reach the write-to-mod step but are kept here.</source>
         <translation>Не удалось обновить схему БД с версии %1 до %2.</translation>
     </message>
     <message>
-        <location line="+76" />
+        <location line="+77" />
         <source>Migration v1→v2: foreign keys violated: %1</source>
         <translation>Миграция v1→v2: нарушены внешние ключи: %1</translation>
     </message>
     <message>
-        <location line="+131" />
+        <location line="+132" />
         <source>Migration v2→v3: row count mismatch (was %1, became %2, orphaned %3)</source>
         <translation>Миграция v2→v3: расхождение в строках (было %1, стало %2, осиротевших %3)</translation>
     </message>
@@ -522,7 +532,7 @@ They do not reach the write-to-mod step but are kept here.</source>
         <translation>Миграция v3→v4: нарушены внешние ключи: %1</translation>
     </message>
     <message>
-        <location line="+169" />
+        <location line="+172" />
         <source>Migration v5→v6: row count mismatch (was %1, became %2)</source>
         <translation>Миграция v5→v6: не сходится число строк (было %1, стало %2)</translation>
     </message>
@@ -535,7 +545,7 @@ They do not reach the write-to-mod step but are kept here.</source>
 <context>
     <name>DetailPane</name>
     <message>
-        <location filename="../detail_pane.py" line="+59" />
+        <location filename="../detail_pane.py" line="+63" />
         <source>my translations</source>
         <translation>мои переводы</translation>
     </message>
@@ -555,7 +565,7 @@ They do not reach the write-to-mod step but are kept here.</source>
         <translation>экспорт проекта</translation>
     </message>
     <message>
-        <location line="+32" />
+        <location line="+36" />
         <source>Entry original (%1 similarity):</source>
         <translation>Оригинал записи (%1 сходства):</translation>
     </message>
@@ -625,7 +635,7 @@ The translation of the current row stays in place.</source>
 Перевод текущей строки останется на месте.</translation>
     </message>
     <message>
-        <location line="+133" />
+        <location line="+135" />
         <source>Original (EN):</source>
         <translation>Оригинал (EN):</translation>
     </message>
@@ -675,7 +685,7 @@ The translation of the current row stays in place.</source>
         <translation>Память переводов (двойной клик — подставить, правая кнопка — действия):</translation>
     </message>
     <message>
-        <location line="+68" />
+        <location line="+70" />
         <source>unsaved edits (Ctrl+S)</source>
         <translation>есть несохранённые правки (Ctrl+S)</translation>
     </message>
@@ -700,7 +710,7 @@ The translation of the current row stays in place.</source>
         <translation>Оригинал изменился%1 — было → стало:</translation>
     </message>
     <message>
-        <location filename="../../db.py" line="-836" />
+        <location filename="../../db.py" line="-842" />
         <source>Project</source>
         <translation>Проект</translation>
     </message>
@@ -738,7 +748,7 @@ The translation of the current row stays in place.</source>
         <translation>удалённые</translation>
     </message>
     <message>
-        <location line="+384" />
+        <location line="+387" />
         <source>Rows selected: %1</source>
         <translation>Выделено строк: %1</translation>
     </message>
@@ -797,7 +807,7 @@ The translation of the current row stays in place.</source>
 <context>
     <name>Export</name>
     <message>
-        <location filename="../export_dialog.py" line="+31" />
+        <location filename="../export_dialog.py" line="+32" />
         <source>Writing the translation to mod files</source>
         <translation>Запись перевода в файлы мода</translation>
     </message>
@@ -852,12 +862,12 @@ The translation of the current row stays in place.</source>
         <translation>Прежние версии складываются в папку backups — вне дерева локализации, иначе игра прочитает копии наравне с настоящими файлами</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+11" />
         <source>Mod folder:</source>
         <translation>Папка мода:</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+5" />
         <source>Browse…</source>
         <translation>Обзор…</translation>
     </message>
@@ -943,7 +953,7 @@ Continue?</source>
 %1</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+15" />
         <source>Files written: %1</source>
         <translation>Файлов записано: %1</translation>
     </message>
@@ -986,15 +996,20 @@ Continue?</source>
 <context>
     <name>Exporter</name>
     <message>
-        <location filename="../../core/exporter.py" line="+134" />
+        <location filename="../../core/exporter.py" line="+146" />
         <source>Project id=%1 not found</source>
         <translation>Проект id=%1 не найден</translation>
+    </message>
+    <message>
+        <location line="+9" />
+        <source>The project has no translation folder: choose where to write.</source>
+        <translation>У проекта нет папки перевода: выберите, куда записывать.</translation>
     </message>
 </context>
 <context>
     <name>FileTree</name>
     <message>
-        <location filename="../file_tree.py" line="+57" />
+        <location filename="../file_tree.py" line="+58" />
         <location line="+52" />
         <source>ALL</source>
         <translation>ВСЕ</translation>
@@ -1030,7 +1045,7 @@ Continue?</source>
         <translation>Пар</translation>
     </message>
     <message>
-        <location line="+155" />
+        <location line="+156" />
         <source>Search:</source>
         <translation>Поиск:</translation>
     </message>
@@ -1065,7 +1080,7 @@ Continue?</source>
         <translation>терминов: %1 · ждут разбора: %2</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+20" />
         <source>Candidates are counted over the translation memory: the project's own plus every attached database. Statistics only suggests — nothing reaches the original until you accept it.</source>
         <translation>Кандидаты считаются по памяти переводов: собственной памяти проекта и всем подключённым базам. Статистика только предлагает — в оригинал ничего не попадёт, пока вы не подтвердите.</translation>
     </message>
@@ -1149,7 +1164,7 @@ Candidates found so far will not be saved.</source>
 <context>
     <name>Import</name>
     <message>
-        <location filename="../import_dialog.py" line="+41" />
+        <location filename="../import_dialog.py" line="+43" />
         <source>Load translation from mod</source>
         <translation>Загрузить перевод из мода</translation>
     </message>
@@ -1184,7 +1199,7 @@ Candidates found so far will not be saved.</source>
         <translation>Не принимать строки, где перевод совпадает с оригиналом</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+17" />
         <source>Take the translations</source>
         <translation>Принять переводы</translation>
     </message>
@@ -1243,66 +1258,66 @@ Done. Undo it all with Ctrl+Z.</source>
 <context>
     <name>Languages</name>
     <message>
-        <location filename="../../core/languages.py" line="+36" />
-        <location line="+32" />
+        <location filename="../../core/languages.py" line="+37" />
+        <location line="+33" />
         <source>English</source>
         <translation>Английский</translation>
     </message>
     <message>
-        <location line="-31" />
-        <location line="+34" />
+        <location line="-32" />
+        <location line="+35" />
         <source>French</source>
         <translation>Французский</translation>
     </message>
     <message>
-        <location line="-33" />
-        <location line="+34" />
+        <location line="-34" />
+        <location line="+35" />
         <source>German</source>
         <translation>Немецкий</translation>
     </message>
     <message>
-        <location line="-33" />
-        <location line="+34" />
+        <location line="-34" />
+        <location line="+35" />
         <source>Spanish</source>
         <translation>Испанский</translation>
     </message>
     <message>
-        <location line="-33" />
-        <location line="+29" />
+        <location line="-34" />
+        <location line="+30" />
         <source>Russian</source>
         <translation>Русский</translation>
     </message>
     <message>
-        <location line="-28" />
+        <location line="-29" />
         <source>Simplified Chinese</source>
         <translation>Китайский упрощённый</translation>
     </message>
     <message>
         <location line="+1" />
-        <location line="+39" />
+        <location line="+40" />
         <source>Korean</source>
         <translation>Корейский</translation>
     </message>
     <message>
-        <location line="-38" />
-        <location line="+37" />
+        <location line="-39" />
+        <location line="+38" />
         <source>Japanese</source>
         <translation>Японский</translation>
     </message>
     <message>
-        <location line="-36" />
+        <location line="-37" />
         <source>Brazilian Portuguese</source>
         <translation>Португальский (Бразилия)</translation>
     </message>
     <message>
         <location line="+1" />
-        <location line="+31" />
+        <location line="+32" />
         <source>Polish</source>
         <translation>Польский</translation>
     </message>
     <message>
-        <location line="-30" />
-        <location line="+31" />
+        <location line="-31" />
+        <location line="+32" />
         <source>Turkish</source>
         <translation>Турецкий</translation>
     </message>
@@ -1335,14 +1350,14 @@ Done. Undo it all with Ctrl+Z.</source>
 <context>
     <name>LanguagesDialog</name>
     <message>
-        <location filename="../languages_dialog.py" line="+42" />
-        <location line="+177" />
+        <location filename="../languages_dialog.py" line="+43" />
+        <location line="+178" />
         <location line="+19" />
         <source>Project languages</source>
         <translation>Языки проекта</translation>
     </message>
     <message>
-        <location line="-188" />
+        <location line="-189" />
         <source>The game folder decides the file names (*_l_english.yml) and the header inside them. The text language says what the text actually is — machine translation, memory database naming and language-specific checks go by it.</source>
         <translation>Папка игры задаёт имена файлов (*_l_english.yml) и заголовок внутри них. Язык текста говорит, на каком языке он написан на самом деле — по нему работают машинный перевод, именование баз памяти и языковые правила проверки.</translation>
     </message>
@@ -1382,7 +1397,7 @@ Done. Undo it all with Ctrl+Z.</source>
         <translation>Применить</translation>
     </message>
     <message>
-        <location line="+103" />
+        <location line="+104" />
         <source>Only %1 files out of %2 carry the label _l_%3.
 
 Translations are not deleted: they stay in the archive and in the translation memory. Change the languages?</source>
@@ -1434,12 +1449,12 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Ключей нет в проекте: %1</translation>
     </message>
     <message>
-        <location line="+58" />
+        <location line="+61" />
         <source>Translation folder not found: %1</source>
         <translation>Папка перевода не найдена: %1</translation>
     </message>
     <message>
-        <location line="+160" />
+        <location line="+163" />
         <source>Project id=%1 not found</source>
         <translation>Проект id=%1 не найден</translation>
     </message>
@@ -1448,12 +1463,12 @@ Translations are not deleted: they stay in the archive and in the translation me
     <name>MainWindow</name>
     <message>
         <location filename="../main_window.py" line="+76" />
-        <location line="+480" />
+        <location line="+493" />
         <source>Choose or create a project</source>
         <translation>Выберите или создайте проект</translation>
     </message>
     <message>
-        <location line="-434" />
+        <location line="-446" />
         <source>Translation memory</source>
         <translation>Память переводов</translation>
     </message>
@@ -1471,7 +1486,7 @@ Build one now?</source>
 Собрать сейчас?</translation>
     </message>
     <message>
-        <location line="+98" />
+        <location line="+102" />
         <source>All</source>
         <translation>Все</translation>
     </message>
@@ -1481,8 +1496,8 @@ Build one now?</source>
         <translation>Без сортировки</translation>
     </message>
     <message>
-        <location line="+56" />
-        <location line="+43" />
+        <location line="+57" />
+        <location line="+44" />
         <source>Descending</source>
         <translation>По убыванию</translation>
     </message>
@@ -1497,7 +1512,7 @@ Build one now?</source>
         <translation>Сортировка</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+20" />
         <source>Columns</source>
         <translation>Колонки</translation>
     </message>
@@ -1512,12 +1527,12 @@ Build one now?</source>
         <translation>Прячет только кнопку панели — команда остаётся в меню, и её клавиша продолжает работать</translation>
     </message>
     <message>
-        <location line="+48" />
+        <location line="+49" />
         <source>Theme</source>
         <translation>Тема</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+17" />
         <source>Rule preset</source>
         <translation>Набор правил</translation>
     </message>
@@ -1527,7 +1542,7 @@ Build one now?</source>
         <translation>Набор проверок: %1</translation>
     </message>
     <message>
-        <location line="+98" />
+        <location line="+101" />
         <source>F2, double click</source>
         <translation>F2, двойной клик</translation>
     </message>
@@ -1563,12 +1578,12 @@ Translations that will be lost: %1 of %2 rows.</source>
     <message>
         <location line="+3" />
         <location line="+26" />
-        <location line="+17" />
+        <location line="+18" />
         <source>Delete project</source>
         <translation>Удаление проекта</translation>
     </message>
     <message>
-        <location line="-42" />
+        <location line="-43" />
         <source>Delete the project «%1» together with its file?
 
 %2%3
@@ -1616,7 +1631,7 @@ Most likely it is open in another program.</source>
         <translation>Проект удалён: %1 (файлов: %2)</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+9" />
         <source>The recycle bin did not accept the file, so it was deleted permanently:
 %1
 
@@ -1627,7 +1642,7 @@ Usually this means the file is larger than the bin allows.</source>
 Обычно это значит, что файл больше, чем корзина позволяет.</translation>
     </message>
     <message>
-        <location line="+36" />
+        <location line="+38" />
         <location line="+14" />
         <source>Project of another game</source>
         <translation>Проект другой игры</translation>
@@ -1674,12 +1689,12 @@ Move it to %4?</source>
 %1</translation>
     </message>
     <message>
-        <location line="+38" />
+        <location line="+39" />
         <source>%1 rows with no translatable text were marked as ignored (bare tags such as [GetName], empty values) — Ctrl+Z undoes it</source>
         <translation>%1 строк без переводимого текста помечены как игнорируемые (голые теги вроде [GetName], пустые значения) — Ctrl+Z вернёт как было</translation>
     </message>
     <message>
-        <location line="+35" />
+        <location line="+36" />
         <source>Open project</source>
         <translation>Открыть проект</translation>
     </message>
@@ -1745,7 +1760,7 @@ Opening the copy.</source>
         <translation>Выбрано строк: %1</translation>
     </message>
     <message>
-        <location line="+57" />
+        <location line="+58" />
         <location line="+7" />
         <source>Cosmetic edits</source>
         <translation>Косметические правки</translation>
@@ -1774,7 +1789,7 @@ The translations themselves do not change — the «Outdated» mark is removed. 
         <translation>Актуализировано строк: %1</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+18" />
         <source>Change of the original folder</source>
         <translation>Смена папки оригинала</translation>
     </message>
@@ -1786,6 +1801,20 @@ Scanning re-reads the files: translations are kept, changed rows become «Outdat
         <translation>Папка изменена. Сканировать проект сейчас?
 
 Сканирование перечитает файлы: переводы сохранятся, изменившиеся строки станут «Устарело».</translation>
+    </message>
+    <message>
+        <location line="+25" />
+        <source>Change of the translation folder</source>
+        <translation>Смена папки перевода</translation>
+    </message>
+    <message>
+        <location line="+1" />
+        <source>The folder has changed. Scan the project now?
+
+Scanning re-reads the files: the translation stays in the project, and what the new folder holds is picked up.</source>
+        <translation>Папка изменена. Сканировать проект сейчас?
+
+Сканирование перечитает файлы: перевод в проекте останется, а то, что лежит в новой папке, подхватится.</translation>
     </message>
     <message>
         <location line="+30" />
@@ -1940,22 +1969,22 @@ Scanning re-reads the files under the new names.</source>
 <context>
     <name>Mt</name>
     <message>
-        <location filename="../../core/mt_providers/__init__.py" line="+45" />
+        <location filename="../../core/mt_providers/__init__.py" line="+46" />
         <source>Off</source>
         <translation>Отключён</translation>
     </message>
     <message>
-        <location filename="../../core/mt.py" line="+153" />
+        <location filename="../../core/mt.py" line="+154" />
         <source>The provider returned %1 rows instead of %2</source>
         <translation>Провайдер вернул %1 строк вместо %2</translation>
     </message>
     <message>
-        <location filename="../../core/mt_providers/_http.py" line="+65" />
+        <location filename="../../core/mt_providers/_http.py" line="+66" />
         <source>Could not reach %1: %2</source>
         <translation>Не удалось связаться с %1: %2</translation>
     </message>
     <message>
-        <location line="+33" />
+        <location line="+34" />
         <source>%1 refused: the request limit or the quota is exhausted.</source>
         <translation>%1 отказал: исчерпан лимит запросов или объёма.</translation>
     </message>
@@ -2005,7 +2034,7 @@ Scanning re-reads the files under the new names.</source>
 <context>
     <name>MtDialog</name>
     <message>
-        <location filename="../mt_dialog.py" line="+33" />
+        <location filename="../mt_dialog.py" line="+35" />
         <source>Selected rows</source>
         <translation>Выделенные строки</translation>
     </message>
@@ -2025,7 +2054,7 @@ Scanning re-reads the files under the new names.</source>
         <translation>Весь проект</translation>
     </message>
     <message>
-        <location line="+78" />
+        <location line="+80" />
         <location line="+260" />
         <location line="+67" />
         <source>Machine translation</source>
@@ -2150,7 +2179,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>MtRun</name>
     <message>
-        <location filename="../../core/mt_run.py" line="+69" />
+        <location filename="../../core/mt_run.py" line="+72" />
         <source>Rows translated: %1</source>
         <translation>Переведено строк: %1</translation>
     </message>
@@ -2180,7 +2209,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Прервано. Переведённое к этому моменту сохранено — Ctrl+Z отменит весь прогон целиком.</translation>
     </message>
     <message>
-        <location line="+124" />
+        <location line="+126" />
         <source>The row is longer than the service accepts in one request. It was left untouched.</source>
         <translation>Строка длиннее, чем сервис принимает за один запрос. Она осталась нетронутой.</translation>
     </message>
@@ -2193,7 +2222,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>ParadoxCsv</name>
     <message>
-        <location filename="../../core/paradox_csv.py" line="+130" />
+        <location filename="../../core/paradox_csv.py" line="+134" />
         <source>%1:%2: a line without a «;» separator: %3</source>
         <translation>%1:%2: строка без разделителя «;»: %3</translation>
     </message>
@@ -2201,7 +2230,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>ParadoxYaml</name>
     <message>
-        <location filename="../../core/paradox_yaml.py" line="+63" />
+        <location filename="../../core/paradox_yaml.py" line="+64" />
         <source>%1:%2: an l_*: header was expected, found: %3</source>
         <translation>%1:%2: ожидался заголовок l_*:, найдено: %3</translation>
     </message>
@@ -2457,7 +2486,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Машинный перевод записывается со статусом «Машинный (не проверен)». В память переводов он не попадает и в мод не пишется, пока вы не разрешите это в окне записи.</translation>
     </message>
     <message>
-        <location line="+46" />
+        <location line="+47" />
         <source>The key is protected by Windows for your account. It is unreadable from another account, but a program running as you can read it.</source>
         <translation>Ключ защищён Windows для вашей учётной записи. Из другой учётной записи его не прочесть, но программа, запущенная от вашего имени, прочтёт.</translation>
     </message>
@@ -2482,12 +2511,12 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Сейчас ничего не скрыто</translation>
     </message>
     <message>
-        <location filename="../../core/mt_providers/deepl.py" line="+101" />
+        <location filename="../../core/mt_providers/deepl.py" line="+103" />
         <source>Used %1 of %2 characters</source>
         <translation>Израсходовано %1 из %2 символов</translation>
     </message>
     <message>
-        <location filename="../mt_worker.py" line="+173" />
+        <location filename="../mt_worker.py" line="+176" />
         <source>The key works.</source>
         <translation>Ключ работает.</translation>
     </message>
@@ -2510,12 +2539,12 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>импорт</translation>
     </message>
     <message>
-        <location line="+29" />
+        <location line="+35" />
         <source>The project file already exists: %1</source>
         <translation>Файл проекта уже существует: %1</translation>
     </message>
     <message>
-        <location line="+194" />
+        <location line="+199" />
         <source>(unnamed)</source>
         <translation>(без имени)</translation>
     </message>
@@ -2594,7 +2623,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Пометить выделенное замечание как ложное — больше не показывать</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+7" />
         <source>Configure this rule…</source>
         <translation>Настроить это правило…</translation>
     </message>
@@ -2617,7 +2646,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>QaRules</name>
     <message>
-        <location filename="../../core/qa_rules.py" line="+71" />
+        <location filename="../../core/qa_rules.py" line="+74" />
         <source>Markup</source>
         <translation>Разметка</translation>
     </message>
@@ -2652,12 +2681,12 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Свои правила</translation>
     </message>
     <message>
-        <location line="+494" />
+        <location line="+507" />
         <source>A repetition inside a repeated group — on a long row the check can take minutes. Consider (?:…) or a stricter pattern.</source>
         <translation>Повтор внутри повторяемой группы — на длинной строке проверка может занять минуты. Подумайте о (?:…) или более строгом шаблоне.</translation>
     </message>
     <message>
-        <location line="+125" />
+        <location line="+126" />
         <source>Same set of matches</source>
         <translation>Тот же набор совпадений</translation>
     </message>
@@ -2717,7 +2746,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Каждый перечисленный символ в переводе запрещён</translation>
     </message>
     <message>
-        <location line="+105" />
+        <location line="+108" />
         <source>Empty translation</source>
         <translation>Пустой перевод</translation>
     </message>
@@ -2767,7 +2796,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Оригинал и сам часто несбалансирован, а перевод тут ни при чём — потому и сверка с оригиналом</translation>
     </message>
     <message>
-        <location line="+200" />
+        <location line="+204" />
         <source>Every rule on, nothing forgiven. For the final read-through, when you would rather sift ten false alarms than miss one real fault.</source>
         <translation>Все правила включены, ничего не прощается. Для финальной вычитки, когда лучше перебрать десяток ложных тревог, чем пропустить одну настоящую.</translation>
     </message>
@@ -2802,7 +2831,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Встроенные значения и ничего сверху. Отсюда начинают, когда хотят настроить каждое правило руками.</translation>
     </message>
     <message>
-        <location line="-349" />
+        <location line="-353" />
         <source>Icons @…! and £…£</source>
         <translation>Иконки @…! и £…£</translation>
     </message>
@@ -2982,17 +3011,17 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Эвристика: шумит больше, чем помогает, поэтому выключена</translation>
     </message>
     <message>
-        <location line="+124" />
+        <location line="+127" />
         <source>Strict</source>
         <translation>Строгий</translation>
     </message>
     <message>
-        <location line="+57" />
+        <location line="+59" />
         <source>%1 — recommended for this project</source>
         <translation>%1 — рекомендуется для этого проекта</translation>
     </message>
     <message>
-        <location line="-56" />
+        <location line="-58" />
         <source>Breakage only</source>
         <translation>Только поломки</translation>
     </message>
@@ -3005,12 +3034,13 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>Relocate</name>
     <message>
-        <location filename="../../core/relocate.py" line="+58" />
+        <location filename="../../core/relocate.py" line="+64" />
+        <location line="+357" />
         <source>Folder: %1</source>
         <translation>Папка: %1</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="-355" />
         <source>%1 was chosen, but the localization files lie in %2 — that is what will be recorded.</source>
         <translation>Выбрана %1, но файлы локализации лежат в %2 — записана будет она.</translation>
     </message>
@@ -3066,7 +3096,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>Проект id=%1 не найден</translation>
     </message>
     <message>
-        <location line="+62" />
+        <location line="+63" />
         <source>Folder not found: %1</source>
         <translation>Папка не найдена: %1</translation>
     </message>
@@ -3078,7 +3108,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 %2</translation>
     </message>
     <message>
-        <location line="+51" />
+        <location line="+52" />
         <source>Only the text language changes — files and rows are not affected. Machine translation, memory database naming and language-specific checks will use the new value.</source>
         <translation>Меняется только язык текста — файлы и строки не затронуты. Новое значение получат машинный перевод, именование баз памяти и языковые правила проверки.</translation>
     </message>
@@ -3102,11 +3132,36 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <source>After the change a scan (F5) is needed: it re-reads the files under the new names.</source>
         <translation>После смены нужно сканирование (F5): оно перечитает файлы под новыми именами.</translation>
     </message>
+    <message>
+        <location line="+147" />
+        <source>The project is left without a translation folder — it is asked for at the first write into the mod.</source>
+        <translation>Проект остаётся без папки перевода — её спросят при первой записи в мод.</translation>
+    </message>
+    <message>
+        <location line="+6" />
+        <source>The folder does not exist yet — it is created at the first write.</source>
+        <translation>Папки ещё нет — она будет создана при первой записи.</translation>
+    </message>
+    <message>
+        <location line="+4" />
+        <source>Translation files found: %1 of %2</source>
+        <translation>Найдено файлов перевода: %1 из %2</translation>
+    </message>
+    <message>
+        <location line="+4" />
+        <source>No translation files for this project here — the folder is where the write will put them. Files known: %1</source>
+        <translation>Файлов перевода этого проекта здесь нет — в эту папку их и положит запись. Файлов в проекте: %1</translation>
+    </message>
+    <message>
+        <location line="+28" />
+        <source>This is a file, not a folder: %1</source>
+        <translation>Это файл, а не папка: %1</translation>
+    </message>
 </context>
 <context>
     <name>RootDialog</name>
     <message>
-        <location filename="../root_dialog.py" line="+29" />
+        <location filename="../root_dialog.py" line="+35" />
         <source>Change the original folder</source>
         <translation>Сменить папку оригинала</translation>
     </message>
@@ -3117,38 +3172,43 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
     </message>
     <message>
         <location line="+8" />
+        <location line="+111" />
         <source>Now: %1</source>
         <translation>Сейчас: %1</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="-105" />
+        <location line="+113" />
         <source>New folder:</source>
         <translation>Новая папка:</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="-109" />
+        <location line="+113" />
         <source>Browse…</source>
         <translation>Обзор…</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="-102" />
+        <location line="+113" />
         <source>Change the folder</source>
         <translation>Сменить папку</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="-102" />
         <source>Original folder</source>
         <translation>Папка оригинала</translation>
     </message>
     <message>
         <location line="+12" />
+        <location line="+113" />
         <source>Could not read the folder:
 %1</source>
         <translation>Не удалось прочитать папку:
 %1</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="-97" />
         <source>
 
 Rows that will become deleted: %1
@@ -3171,6 +3231,36 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>В новой папке нашлось %1 файлов из %2, известных базе.%3
 
 Переводы не удаляются: они остаются в архиве и в памяти переводов. Сменить папку?</translation>
+    </message>
+    <message>
+        <location line="+28" />
+        <source>Change the translation folder</source>
+        <translation>Сменить папку перевода</translation>
+    </message>
+    <message>
+        <location line="+8" />
+        <source>The folder the translation is read from at a scan and written into at a write. It may be left empty: the mod has no translation yet, and the folder is asked for at the first write.</source>
+        <translation>Папка, из которой перевод читается при сканировании и в которую он пишется при записи. Её можно оставить пустой: если перевода у мода ещё нет, папку спросят при первой записи.</translation>
+    </message>
+    <message>
+        <location line="+10" />
+        <source>Now: not chosen</source>
+        <translation>Сейчас: не выбрана</translation>
+    </message>
+    <message>
+        <location line="+32" />
+        <source>Translation folder</source>
+        <translation>Папка перевода</translation>
+    </message>
+    <message>
+        <location line="+29" />
+        <source>Change of the translation folder</source>
+        <translation>Смена папки перевода</translation>
+    </message>
+    <message>
+        <location line="+1" />
+        <source>The project will be left without a translation folder. Nothing is deleted: the translation stays in the project, and the folder is asked for at the first write. Continue?</source>
+        <translation>Проект останется без папки перевода. Ничего не удаляется: перевод остаётся в проекте, а папку спросят при первой записи. Продолжить?</translation>
     </message>
 </context>
 <context>
@@ -3201,7 +3291,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Сигнал</translation>
     </message>
     <message>
-        <location filename="../rules_param_editors.py" line="+37" />
+        <location filename="../rules_param_editors.py" line="+38" />
         <source>Comma separated: Concept, Select_CString</source>
         <translation>Через запятую: Concept, Select_CString</translation>
     </message>
@@ -3323,12 +3413,12 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Значений: %1</translation>
     </message>
     <message>
-        <location filename="../rules_window.py" line="+107" />
+        <location filename="../rules_window.py" line="+105" />
         <source>Preset:</source>
         <translation>Набор:</translation>
     </message>
     <message>
-        <location line="+18" />
+        <location line="+19" />
         <source>Scope:</source>
         <translation>Область:</translation>
     </message>
@@ -3404,12 +3494,12 @@ Translations are not deleted: they stay in the archive and in the translation me
     </message>
     <message>
         <location line="+33" />
-        <location line="+569" />
+        <location line="+572" />
         <source>Check</source>
         <translation>Проверка</translation>
     </message>
     <message>
-        <location line="-547" />
+        <location line="-550" />
         <source>Setting</source>
         <translation>Настройка</translation>
     </message>
@@ -3419,7 +3509,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Вернуть правило к набору</translation>
     </message>
     <message>
-        <location line="+528" />
+        <location line="+531" />
         <source>Check · %1</source>
         <translation>Проверка · %1</translation>
     </message>
@@ -3429,37 +3519,37 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>🔒 Базовое правило: сама проверка и её формулировка живут в приложении. Его можно выключить и смягчить, но не переписать и не удалить.</translation>
     </message>
     <message>
-        <location line="+207" />
+        <location line="+210" />
         <source>Own rule</source>
         <translation>Своё правило</translation>
     </message>
     <message>
-        <location line="-767" />
-        <location line="+774" />
+        <location line="-773" />
+        <location line="+780" />
         <source>Name:</source>
         <translation>Название:</translation>
     </message>
     <message>
-        <location line="-868" />
+        <location line="-874" />
         <source>Reset…</source>
         <translation>Сбросить…</translation>
     </message>
     <message>
         <location line="+4" />
-        <location line="+388" />
+        <location line="+391" />
         <location line="+5" />
         <source>Return built-in rules to the preset</source>
         <translation>Вернуть базовые правила к набору</translation>
     </message>
     <message>
-        <location line="-388" />
-        <location line="+403" />
+        <location line="-391" />
+        <location line="+406" />
         <location line="+4" />
         <source>Delete all own rules</source>
         <translation>Удалить все свои правила</translation>
     </message>
     <message>
-        <location line="-319" />
+        <location line="-322" />
         <source>same as the name</source>
         <translation>как называется</translation>
     </message>
@@ -3489,13 +3579,13 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>У этого правила нет настроек.</translation>
     </message>
     <message>
-        <location line="+13" />
-        <location line="+569" />
+        <location line="+14" />
+        <location line="+572" />
         <source>Examples — the rule checks itself with them:</source>
         <translation>Примеры — правило проверяет себя ими само:</translation>
     </message>
     <message>
-        <location line="-563" />
+        <location line="-566" />
         <source>Original</source>
         <translation>Оригинал</translation>
     </message>
@@ -3540,7 +3630,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Подставить пару из строки, выбранной в таблице проекта</translation>
     </message>
     <message>
-        <location line="+24" />
+        <location line="+25" />
         <source>Built-in rules</source>
         <translation>Базовые правила</translation>
     </message>
@@ -3565,7 +3655,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Правила своей выделки: их можно заводить, править, дублировать и удалять</translation>
     </message>
     <message>
-        <location line="+87" />
+        <location line="+88" />
         <source>Set by hand — differs from the preset</source>
         <translation>Настроено вручную — отличается от набора</translation>
     </message>
@@ -3664,17 +3754,17 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Заменить настройку для области «%1»?</translation>
     </message>
     <message>
-        <location line="+56" />
+        <location line="+55" />
         <source>The inflection helpers of the target language are added when a project is open — they come with its translation language.</source>
         <translation>Функции склонения языка перевода подключаются при открытом проекте — они приходят вместе с его языком.</translation>
     </message>
     <message>
-        <location line="+53" />
+        <location line="+54" />
         <source>The rule is set for all projects — here it can only be switched off</source>
         <translation>Правило задано на все проекты — здесь его можно только выключить</translation>
     </message>
     <message>
-        <location line="+40" />
+        <location line="+41" />
         <source>This rule has no self-check examples — try it on a pair above.</source>
         <translation>У этого правила нет примеров-самопроверок — проверьте его на паре выше.</translation>
     </message>
@@ -3714,7 +3804,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>Срабатываний посчитано на %1 переведённых строках проекта.</translation>
     </message>
     <message>
-        <location line="+52" />
+        <location line="+54" />
         <source>for example: No ellipsis as one character</source>
         <translation>например: Троеточие одним символом</translation>
     </message>
@@ -3739,7 +3829,7 @@ This is where issues go after the «Not an error» button in the check report (F
     </message>
     <message>
         <location line="+3" />
-        <location line="+55" />
+        <location line="+56" />
         <source>Return all</source>
         <translation>Вернуть все</translation>
     </message>
@@ -3936,7 +4026,7 @@ This is where issues go after the «Not an error» button in the check report (F
 <context>
     <name>ScanStats</name>
     <message>
-        <location filename="../../core/models.py" line="+60" />
+        <location filename="../../core/models.py" line="+63" />
         <source>EN files: %1, RU: %2</source>
         <translation>Файлов EN: %1, RU: %2</translation>
     </message>
@@ -4009,12 +4099,12 @@ This is where issues go after the «Not an error» button in the check report (F
 <context>
     <name>Scanner</name>
     <message>
-        <location filename="../../core/scanner.py" line="+122" />
+        <location filename="../../core/scanner.py" line="+126" />
         <source>Project id=%1 not found</source>
         <translation>Проект id=%1 не найден</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+13" />
         <source>Original folder not found: %1</source>
         <translation>Папка оригинала не найдена: %1</translation>
     </message>
@@ -4022,7 +4112,7 @@ This is where issues go after the «Not an error» button in the check report (F
 <context>
     <name>StartScreen</name>
     <message>
-        <location filename="../start_screen.py" line="+38" />
+        <location filename="../start_screen.py" line="+39" />
         <source>New project</source>
         <translation>Новый проект</translation>
     </message>
@@ -4053,23 +4143,23 @@ This is where issues go after the «Not an error» button in the check report (F
     </message>
     <message>
         <location line="+5" />
-        <location line="+61" />
+        <location line="+63" />
         <source>Browse…</source>
         <translation>Обзор…</translation>
     </message>
     <message>
-        <location line="-60" />
-        <location line="+166" />
+        <location line="-62" />
+        <location line="+171" />
         <source>Choose a folder</source>
         <translation>Выбор папки</translation>
     </message>
     <message>
-        <location line="-145" />
+        <location line="-150" />
         <source>Game folders:</source>
         <translation>Папки игры:</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+6" />
         <source>The text is in another language</source>
         <translation>Текст на другом языке</translation>
     </message>
@@ -4084,7 +4174,7 @@ This is where issues go after the «Not an error» button in the check report (F
         <translation>Языки текста:</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+13" />
         <source>Choose where to put the project file</source>
         <translation>Выбрать, куда положить файл проекта</translation>
     </message>
@@ -4094,16 +4184,7 @@ This is where issues go after the «Not an error» button in the check report (F
         <translation>Файл проекта:</translation>
     </message>
     <message>
-        <location line="+66" />
-        <source>The original folder is the one holding *_l_%1.yml (for example …\localization\english).
-The translation folder is where *_l_%2.yml go; it may not exist yet.
-The project file is portable: put it anywhere.</source>
-        <translation>Папка оригинала — та, где лежат *_l_%1.yml (например …\localization\english).
-Папка перевода — куда писать *_l_%2.yml; её может ещё не быть.
-Файл проекта переносим: его можно положить куда угодно.</translation>
-    </message>
-    <message>
-        <location line="+52" />
+        <location line="+121" />
         <source>Project file</source>
         <translation>Файл проекта</translation>
     </message>
@@ -4115,16 +4196,15 @@ The project file is portable: put it anywhere.</source>
     <message>
         <location line="+8" />
         <location line="+6" />
-        <location line="+6" />
-        <location line="+6" />
+        <location line="+7" />
         <location line="+5" />
-        <location line="+207" />
+        <location line="+209" />
         <location line="+15" />
         <source>Project</source>
         <translation>Проект</translation>
     </message>
     <message>
-        <location line="-244" />
+        <location line="-241" />
         <source>Enter the project name.</source>
         <translation>Укажите название проекта.</translation>
     </message>
@@ -4136,12 +4216,16 @@ The project file is portable: put it anywhere.</source>
 %1</translation>
     </message>
     <message>
-        <location line="+6" />
-        <source>Enter the translation folder.</source>
-        <translation>Укажите папку перевода.</translation>
+        <location line="-70" />
+        <source>The original folder is the one holding *_l_%1.yml (for example …\localization\english).
+The translation folder is where *_l_%2.yml go. Leave it empty if the mod has no translation yet — it is asked for at the first write.
+The project file is portable: put it anywhere.</source>
+        <translation>Папка оригинала — та, где лежат *_l_%1.yml (например …\localization\english).
+Папка перевода — куда писать *_l_%2.yml. Оставьте пустой, если перевода у мода ещё нет: её спросят при первой записи.
+Файл проекта переносим: его можно положить куда угодно.</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+77" />
         <source>Enter the project file.</source>
         <translation>Укажите файл проекта.</translation>
     </message>
@@ -4153,7 +4237,7 @@ The project file is portable: put it anywhere.</source>
 %1</translation>
     </message>
     <message>
-        <location line="+102" />
+        <location line="+104" />
         <source>Translation projects</source>
         <translation>Проекты перевода</translation>
     </message>
@@ -4237,7 +4321,7 @@ The file %1 itself stays on disk.</source>
 <context>
     <name>Stats</name>
     <message>
-        <location filename="../../core/stats.py" line="+81" />
+        <location filename="../../core/stats.py" line="+82" />
         <source>Translated %1 / %2 (%3%) · left %4</source>
         <translation>Переведено %1 / %2 (%3%) · осталось %4</translation>
     </message>
@@ -4260,7 +4344,7 @@ The file %1 itself stays on disk.</source>
 <context>
     <name>StatusChips</name>
     <message>
-        <location filename="../status_chips.py" line="+43" />
+        <location filename="../status_chips.py" line="+46" />
         <source>Rows with issues among those loaded — click to keep only them</source>
         <translation>Строк с замечаниями среди загруженных — клик оставит только их</translation>
     </message>
@@ -4316,7 +4400,7 @@ The file %1 itself stays on disk.</source>
 <context>
     <name>TextDiff</name>
     <message>
-        <location filename="../../core/textdiff.py" line="+150" />
+        <location filename="../../core/textdiff.py" line="+156" />
         <source>cosmetic edit</source>
         <translation>косметическая правка</translation>
     </message>
@@ -4368,17 +4452,17 @@ The file %1 itself stays on disk.</source>
     </message>
     <message>
         <location line="+24" />
-        <location line="+109" />
+        <location line="+110" />
         <source>Create the database</source>
         <translation>Создать базу</translation>
     </message>
     <message>
-        <location line="-107" />
+        <location line="-108" />
         <source>Interrupt</source>
         <translation>Прервать</translation>
     </message>
     <message>
-        <location line="+31" />
+        <location line="+32" />
         <source>Game:</source>
         <translation>Игра:</translation>
     </message>
@@ -4445,13 +4529,13 @@ The finished database appears in the folder %1.</source>
     </message>
     <message>
         <location line="+14" />
-        <location line="+142" />
+        <location line="+144" />
         <location line="+9" />
         <source>Export</source>
         <translation>Выгрузить</translation>
     </message>
     <message>
-        <location line="-87" />
+        <location line="-88" />
         <source> · took the nested translation folder: %1</source>
         <translation> · взята вложенная папка перевода: %1</translation>
     </message>
@@ -4466,7 +4550,7 @@ The finished database appears in the folder %1.</source>
         <translation> · проверены вложенные: %1</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+18" />
         <source>Localization folder found: %1</source>
         <translation>Найдена папка локализации: %1</translation>
     </message>
@@ -4655,7 +4739,7 @@ Continue?</source>
         <translation>Скрыть записи подключённых баз — они доступны только для чтения</translation>
     </message>
     <message>
-        <location line="+33" />
+        <location line="+34" />
         <source>Double click on a translation to edit it. Entries of attached databases are dimmed: their files are open read only.</source>
         <translation>Двойной клик по переводу — правка. Записи подключённых баз приглушены: их файлы открыты только на чтение.</translation>
     </message>
@@ -4670,7 +4754,7 @@ Continue?</source>
         <translation>Очистить мою память…</translation>
     </message>
     <message>
-        <location line="+51" />
+        <location line="+53" />
         <source> · from attached databases: %1</source>
         <translation> · из подключённых баз: %1</translation>
     </message>
@@ -4737,7 +4821,7 @@ The translations of the project rows stay in place — the memory fills up again
 <context>
     <name>TmImport</name>
     <message>
-        <location filename="../../core/tm_import.py" line="+68" />
+        <location filename="../../core/tm_import.py" line="+70" />
         <source>This SQLite build has no FTS5 — similarity search is unavailable</source>
         <translation>В этой сборке SQLite нет FTS5 — поиск похожих недоступен</translation>
     </message>
@@ -4772,7 +4856,7 @@ The translations of the project rows stay in place — the memory fills up again
         <translation>Предупреждений парсера: %1</translation>
     </message>
     <message>
-        <location line="+191" />
+        <location line="+196" />
         <source>Original folder not found: %1</source>
         <translation>Папка оригинала не найдена: %1</translation>
     </message>
@@ -4787,7 +4871,7 @@ The translations of the project rows stay in place — the memory fills up again
         <translation>Папка перевода не найдена: %1</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+11" />
         <source>The folder %1 has no localization files of the language «%2» (names like *_l_%2.yml were expected)</source>
         <translation>В папке %1 нет файлов локализации языка «%2» (ожидались имена вида *_l_%2.yml)</translation>
     </message>
@@ -4830,7 +4914,7 @@ Most likely it is attached to the current project — detach it in «Tools → T
 <context>
     <name>TmSources</name>
     <message>
-        <location filename="../tm_sources_tab.py" line="+41" />
+        <location filename="../tm_sources_tab.py" line="+43" />
         <source>Checked databases provide suggestions and autofill (%1 → %2). Changes apply immediately.</source>
         <translation>Отмеченные базы дают подсказки и автозаполнение (%1 → %2). Изменения применяются сразу.</translation>
     </message>
@@ -4882,7 +4966,7 @@ Building takes seconds and adds about 20% to the file size.</source>
         <translation>Языки базы не совпадают с языками проекта</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+7" />
         <source>The database is of another game — %1</source>
         <translation>База другой игры — %1</translation>
     </message>
@@ -4941,7 +5025,7 @@ The database now suggests not only exact matches but similar rows too.</source>
         <translation>Память переводов</translation>
     </message>
     <message>
-        <location line="+21" />
+        <location line="+22" />
         <source>Entries</source>
         <translation>Записи</translation>
     </message>
@@ -4956,7 +5040,7 @@ The database now suggests not only exact matches but similar rows too.</source>
         <translation>Собрать базу</translation>
     </message>
     <message>
-        <location line="+63" />
+        <location line="+64" />
         <source>Building a database</source>
         <translation>Сборка базы</translation>
     </message>
@@ -4973,13 +5057,13 @@ An unfinished database file will not be created.</source>
 <context>
     <name>Toolbar</name>
     <message>
-        <location filename="../main_window.py" line="-816" />
-        <location filename="../toolbar.py" line="+137" />
+        <location filename="../main_window.py" line="-855" />
+        <location filename="../toolbar.py" line="+139" />
         <source>Toolbar</source>
         <translation>Панель инструментов</translation>
     </message>
     <message>
-        <location filename="../toolbar.py" line="-75" />
+        <location filename="../toolbar.py" line="-76" />
         <source>Project languages: original → translation</source>
         <translation>Языки проекта: оригинал → перевод</translation>
     </message>
@@ -4990,7 +5074,7 @@ An unfinished database file will not be created.</source>
     </message>
     <message>
         <location line="+13" />
-        <location line="+34" />
+        <location line="+35" />
         <source>Memory databases</source>
         <translation>Базы памяти</translation>
     </message>
@@ -5008,25 +5092,25 @@ An unfinished database file will not be created.</source>
 <context>
     <name>UnitsTable</name>
     <message>
-        <location filename="../units_model.py" line="+34" />
-        <location line="+79" />
+        <location filename="../units_model.py" line="+35" />
+        <location line="+80" />
         <source>Key</source>
         <translation>Ключ</translation>
     </message>
     <message>
-        <location line="-78" />
-        <location line="+79" />
+        <location line="-79" />
+        <location line="+80" />
         <source>File</source>
         <translation>Файл</translation>
     </message>
     <message>
-        <location line="-77" />
-        <location line="+80" />
+        <location line="-78" />
+        <location line="+81" />
         <source>Status</source>
         <translation>Статус</translation>
     </message>
     <message>
-        <location line="-78" />
+        <location line="-79" />
         <source>C</source>
         <translation>К</translation>
     </message>
@@ -5036,7 +5120,7 @@ An unfinished database file will not be created.</source>
         <translation>И</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+11" />
         <source>Validate (F10)</source>
         <translation>Подтвердить (F10)</translation>
     </message>
@@ -5056,7 +5140,7 @@ An unfinished database file will not be created.</source>
         <translation>Игнорировать (Ctrl+Shift+F10)</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+6" />
         <source>The original was edited cosmetically (punctuation, case, spaces)</source>
         <translation>Оригинал правили косметически (пунктуация, регистр, пробелы)</translation>
     </message>
@@ -5106,7 +5190,7 @@ An unfinished database file will not be created.</source>
         <translation>Клик — по возрастанию, ещё — по убыванию, ещё — как было</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+9" />
         <source>Original</source>
         <translation>Оригинал</translation>
     </message>
@@ -5126,7 +5210,7 @@ An unfinished database file will not be created.</source>
         <translation>Замечания</translation>
     </message>
     <message>
-        <location line="+358" />
+        <location line="+361" />
         <source>deleted</source>
         <translation>удалён</translation>
     </message>
@@ -5134,31 +5218,31 @@ An unfinished database file will not be created.</source>
 <context>
     <name>Welcome</name>
     <message>
-        <location filename="../welcome_dialog.py" line="+51" />
-        <location line="+183" />
+        <location filename="../welcome_dialog.py" line="+50" />
+        <location line="+184" />
         <source>Getting started</source>
         <translation>Знакомство</translation>
     </message>
     <message>
-        <location line="-161" />
-        <location line="+162" />
+        <location line="-162" />
+        <location line="+163" />
         <source>Skip</source>
         <translation>Пропустить</translation>
     </message>
     <message>
-        <location line="-158" />
-        <location line="+159" />
+        <location line="-159" />
+        <location line="+160" />
         <source>Back</source>
         <translation>Назад</translation>
     </message>
     <message>
-        <location line="-156" />
-        <location line="+136" />
+        <location line="-157" />
+        <location line="+137" />
         <source>Next</source>
         <translation>Далее</translation>
     </message>
     <message>
-        <location line="-121" />
+        <location line="-122" />
         <source>Choose the language of the interface. It can be changed at any time in «File → Preferences».</source>
         <translation>Выберите язык интерфейса. Его можно поменять в любой момент в «Файл → Параметры».</translation>
     </message>
@@ -5169,12 +5253,12 @@ An unfinished database file will not be created.</source>
     </message>
     <message>
         <location line="+16" />
-        <location line="+66" />
+        <location line="+67" />
         <source>Build a database…</source>
         <translation>Собрать базу…</translation>
     </message>
     <message>
-        <location line="-43" />
+        <location line="-44" />
         <source>A project holds everything: rows, statuses, translation memory and the history of the original. It is a single file you can copy or hand to another person.</source>
         <translation>В проекте лежит всё: строки, статусы, память переводов и история оригинала. Это один файл — его можно скопировать или передать другому человеку.</translation>
     </message>
@@ -5189,7 +5273,7 @@ An unfinished database file will not be created.</source>
         <translation>Открыть проект…</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+16" />
         <source>Translation memory databases found: %1. They fill in strings the mod copied from the game and prompt you with how similar lines were translated before.</source>
         <translation>Найдено баз памяти переводов: %1. Они подставляют строки, которые мод скопировал из игры, и подсказывают, как переводили похожие.</translation>
     </message>

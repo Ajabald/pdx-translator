@@ -92,7 +92,7 @@ def _format_of(conn: sqlite3.Connection, en_root: Path) -> loc_formats.LocFormat
 
 
 def _encodings_of(conn: sqlite3.Connection, fmt: loc_formats.LocFormat,
-                  en_root: Path, ru_root: Path) -> tuple[str, str]:
+                  en_root: Path, ru_root: Path | None) -> tuple[str, str]:
     """The encodings of the source tree and of the translation tree.
 
     Kept apart because they really do differ: vanilla CK2 lies in cp1252 while
@@ -110,7 +110,7 @@ def _encodings_of(conn: sqlite3.Connection, fmt: loc_formats.LocFormat,
     if stored:
         return src, stored
     tgt = (paradox_csv.detect_encoding(fmt.files(ru_root))
-           if ru_root.is_dir() else "cp1251")
+           if ru_root is not None and ru_root.is_dir() else "cp1251")
     project_module.set_loc_encoding(conn, tgt)
     return src, tgt
 
@@ -125,7 +125,12 @@ def scan_project(
     if proj is None:
         raise ValueError(fill(translate("Scanner", "Project id=%1 not found"), project_id))
     en_root = Path(proj["en_root"])
-    ru_root = Path(proj["ru_root"])
+    # `None` means the project has no translation folder yet — a mod that is
+    # English only is created without one. Everything below the source side is
+    # then simply skipped; the folder is asked for at the first write.
+    from pdxloc.project import translation_root_of
+
+    ru_root = translation_root_of(proj["ru_root"])
     from pdxloc.project import languages as project_languages
 
     langs = project_languages(conn, project_id)
@@ -180,15 +185,16 @@ def scan_project(
         return entries
 
     ru_data: dict[str, dict[str, LocEntry]] = {}   # rel_path of the original -> key -> entry
-    for rel in en_data:
-        rel_tgt = fmt.map_relpath(rel, src_lang, tgt_lang)
-        ru_path = ru_root / rel_tgt
-        if ru_path.is_file():
-            ru_data[rel] = parse_ru_entries(ru_path, rel_tgt)
-            stats.files_ru += 1
+    if ru_root is not None:
+        for rel in en_data:
+            rel_tgt = fmt.map_relpath(rel, src_lang, tgt_lang)
+            ru_path = ru_root / rel_tgt
+            if ru_path.is_file():
+                ru_data[rel] = parse_ru_entries(ru_path, rel_tgt)
+                stats.files_ru += 1
 
     orphan_ru: dict[str, dict[str, LocEntry]] = {}  # rel_path of the translation -> key -> entry
-    if ru_root.is_dir():
+    if ru_root is not None and ru_root.is_dir():
         for p in fmt.files(ru_root, tgt_lang, skip_updated=True):
             rel_ru = p.relative_to(ru_root).as_posix()
             if fmt.map_relpath(rel_ru, tgt_lang, src_lang) in en_data:

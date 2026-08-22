@@ -152,6 +152,9 @@ ACTIONS: tuple[Act, ...] = (
     Act("en_root", QT_TRANSLATE_NOOP("Actions","Change original folder…"),
         tip=QT_TRANSLATE_NOOP("Actions","If the mod was re-downloaded elsewhere, or the "
                                    "project came from another person")),
+    Act("ru_root", QT_TRANSLATE_NOOP("Actions","Change translation folder…"),
+        tip=QT_TRANSLATE_NOOP("Actions","Where the translation is read from and written "
+                                   "to; may be empty until the first write")),
     Act("project_languages", QT_TRANSLATE_NOOP("Actions", "Project languages…"),
         tip=QT_TRANSLATE_NOOP("Actions", "Game folders (l_english) and the language "
                                          "the text is actually written in")),
@@ -217,7 +220,7 @@ MENU: tuple[tuple[str, tuple[str | None, ...]], ...] = (
       SEP, "@columns", "@buttons", SEP, "@sort", SEP, "@theme")),
     (QT_TRANSLATE_NOOP("MainWindow", "&Project"),
      ("scan", SEP, "actualize_cosmetic", "archive",
-      SEP, "en_root", "project_languages", SEP, "open_file")),
+      SEP, "en_root", "ru_root", "project_languages", SEP, "open_file")),
     (QT_TRANSLATE_NOOP("MainWindow", "&Check"),
      ("qa", SEP, "@qa_preset", SEP, "qa_rules", "qa_ignores")),
     (QT_TRANSLATE_NOOP("MainWindow", "T&ools"),

@@ -31,11 +31,16 @@ ZH: dict[str, dict[str, str]] = {}
 #
 # `Glossary` is **deliberately absent** here: the window is entirely new, and a
 # proofreading mark on it would be untrue. Let the context stay `unfinished` —
-# that is exactly the state it is in. The numbers for `Actions` (69→71) and
-# `DetailPane` (30→32) are raised: a couple of strings were added there, and they
-# were read next to their neighbours, exactly as the mark demands.
+# that is exactly the state it is in. The number for `DetailPane` (30→32) is
+# raised: a couple of strings were added there, and they were read next to their
+# neighbours, exactly as the mark demands.
+#
+# Six more contexts left the table in 0.1.2 — `Actions`, `Exporter`, `MainWindow`,
+# `Relocate`, `RootDialog`, `StartScreen`. The translation folder stopped being
+# obligatory, and each of them got new strings about it. The Chinese for those is
+# written to match the words already used in the window, but no native speaker has
+# read it, and raising the count would say otherwise.
 CHECKED: dict[str, int] = {
-    "Actions": 71,
     "Archive": 11,
     "Ask": 1,
     "Concordance": 9,
@@ -43,13 +48,11 @@ CHECKED: dict[str, int] = {
     "DetailPane": 32,
     "Editor": 17,
     "Export": 34,
-    "Exporter": 1,
     "FileTree": 1,
     "Import": 16,
     "Languages": 16,
     "LanguagesDialog": 11,
     "LocImport": 9,
-    "MainWindow": 82,
     "Mt": 12,
     "MtDialog": 27,
     "MtRun": 8,
@@ -61,8 +64,6 @@ CHECKED: dict[str, int] = {
     # the preset «HOI4 · Русский» were added to it — five strings a human has not
     # seen. The mark is taken off whole: bringing it back is for whoever rereads
     # the context, not for whoever added the strings.
-    "Relocate": 19,
-    "RootDialog": 11,
     # RulesWindow was proofread at 114 strings; in 0.1.2 the long-list field and
     # the explanation about the language layer were added to it. The mark is taken
     # off whole: bringing it back is for whoever rereads the context, not for
@@ -70,7 +71,6 @@ CHECKED: dict[str, int] = {
     "ScanDialog": 30,
     "ScanStats": 14,
     "Scanner": 2,
-    "StartScreen": 37,
     "Stats": 4,
     "StatusChips": 2,
     "Statuses": 8,
@@ -196,6 +196,10 @@ ZH["Actions"] = {
         "更改原文文件夹…",
     "If the mod was re-downloaded elsewhere, or the project came from another person":
         "如果模组重新下载到了别处，或项目来自他人",
+    "Change translation folder…":
+        "更改译文文件夹…",
+    "Where the translation is read from and written to; may be empty until the first write":
+        "译文从哪里读取、写入到哪里；首次写入之前可以为空",
     "Project languages…":
         "项目语言…",
     "Game folders (l_english) and the language the text is actually written in":
@@ -486,6 +490,8 @@ ZH["Export"] = {
 ZH["Exporter"] = {
     "Project id=%1 not found":
         "未找到 id=%1 的项目",
+    "The project has no translation folder: choose where to write.":
+        "项目尚未设置译文文件夹：请选择写入位置。",
 }
 
 ZH["FileTree"] = {
@@ -736,6 +742,10 @@ ZH["MainWindow"] = {
         "更改原文文件夹",
     "The folder has changed. Scan the project now?\n\nScanning re-reads the files: translations are kept, changed rows become «Outdated».":
         "文件夹已更改。现在扫描项目吗？\n\n扫描会重新读取文件：译文将保留，发生变化的行会变为「已过时」。",
+    "Change of the translation folder":
+        "更改译文文件夹",
+    "The folder has changed. Scan the project now?\n\nScanning re-reads the files: the translation stays in the project, and what the new folder holds is picked up.":
+        "文件夹已更改。现在扫描项目吗？\n\n扫描会重新读取文件：项目中的译文将保留，新文件夹中的内容会被读入。",
     "Project languages":
         "项目语言",
     "The language of the folders changed. Scan the project now?\n\nScanning re-reads the files under the new names.":
@@ -1216,6 +1226,16 @@ ZH["QaRules"] = {
 ZH["Relocate"] = {
     "Folder: %1":
         "文件夹：%1",
+    "The project is left without a translation folder — it is asked for at the first write into the mod.":
+        "项目将不设译文文件夹——首次写入模组时会询问。",
+    "The folder does not exist yet — it is created at the first write.":
+        "该文件夹尚不存在——首次写入时会创建。",
+    "Translation files found: %1 of %2":
+        "找到译文文件：%1 / %2",
+    "No translation files for this project here — the folder is where the write will put them. Files known: %1":
+        "此处没有本项目的译文文件——写入时会把它们放进这个文件夹。项目已知文件：%1",
+    "This is a file, not a folder: %1":
+        "这是文件，不是文件夹：%1",
     "%1 was chosen, but the localization files lie in %2 — that is what will be recorded.":
         "所选为 %1，但本地化文件位于 %2——将记录后者。",
     "Files matched: %1 out of the %2 the database knows.":
@@ -1257,6 +1277,18 @@ ZH["Relocate"] = {
 ZH["RootDialog"] = {
     "Change the original folder":
         "更改原文文件夹",
+    "Change the translation folder":
+        "更改译文文件夹",
+    "The folder the translation is read from at a scan and written into at a write. It may be left empty: the mod has no translation yet, and the folder is asked for at the first write.":
+        "扫描时从中读取译文、写入时写入其中的文件夹。可以留空：模组尚无译文时，首次写入会询问该文件夹。",
+    "Now: not chosen":
+        "当前：未选择",
+    "Translation folder":
+        "译文文件夹",
+    "Change of the translation folder":
+        "更改译文文件夹",
+    "The project will be left without a translation folder. Nothing is deleted: the translation stays in the project, and the folder is asked for at the first write. Continue?":
+        "项目将不设译文文件夹。不会删除任何内容：译文仍保留在项目中，首次写入时会询问文件夹。要继续吗？",
     "The folder the original is read from. It needs changing if the mod was re-downloaded elsewhere, the game library was moved, or the project came from another person.":
         "读取原文的文件夹。如果模组重新下载到了别处、游戏库被移动，或项目来自他人，就需要更改它。",
     "Now: %1":
@@ -1650,8 +1682,8 @@ ZH["StartScreen"] = {
         "选择项目文件的存放位置",
     "Project file:":
         "项目文件：",
-    "The original folder is the one holding *_l_%1.yml (for example …\\localization\\english).\nThe translation folder is where *_l_%2.yml go; it may not exist yet.\nThe project file is portable: put it anywhere.":
-        "原文文件夹是存放 *_l_%1.yml 的文件夹（例如 …\\localization\\english）。\n译文文件夹用于存放 *_l_%2.yml，它可以尚不存在。\n项目文件是可移动的：放在任何位置都可以。",
+    "The original folder is the one holding *_l_%1.yml (for example …\\localization\\english).\nThe translation folder is where *_l_%2.yml go. Leave it empty if the mod has no translation yet — it is asked for at the first write.\nThe project file is portable: put it anywhere.":
+        "原文文件夹是存放 *_l_%1.yml 的文件夹（例如 …\\localization\\english）。\n译文文件夹用于存放 *_l_%2.yml。如果模组尚无译文，可以留空——首次写入时会询问。\n项目文件是可移动的：放在任何位置都可以。",
     "Project file":
         "项目文件",
     "Translation project (*%1)":
@@ -1662,8 +1694,6 @@ ZH["StartScreen"] = {
         "请填写项目名称。",
     "The original folder does not exist:\n%1":
         "原文文件夹不存在：\n%1",
-    "Enter the translation folder.":
-        "请填写译文文件夹。",
     "Enter the project file.":
         "请填写项目文件。",
     "The file already exists:\n%1":

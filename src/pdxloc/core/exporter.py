@@ -133,6 +133,9 @@ def export_project(
 ) -> ExportReport:
     """Write the translation files. `out_root` defaults to the project's ru_root.
 
+    A project may have no translation folder at all — one for a mod that is
+    English only is created without it — and then `out_root` is obligatory.
+
     Previous versions of the overwritten files go into a tree of their own
     (`settings.backups_dir()`): they must not be kept next to the localisation —
     the game reads every `*.yml` from that folder and would load a copy on equal
@@ -141,7 +144,16 @@ def export_project(
     proj = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
     if proj is None:
         raise ValueError(fill(translate("Exporter", "Project id=%1 not found"), project_id))
-    root = out_root if out_root is not None else Path(proj["ru_root"])
+    from pdxloc.project import translation_root_of
+
+    root = Path(out_root) if out_root is not None else translation_root_of(proj["ru_root"])
+    if root is None:
+        # A project of a mod that has no translation yet is created without a
+        # folder to write into. Refusing here is the whole point: writing to
+        # wherever the application happens to be running would scatter the
+        # translation over the disk and look like success.
+        raise ValueError(translate(
+            "Exporter", "The project has no translation folder: choose where to write."))
     from pdxloc.project import languages as project_languages
 
     langs = project_languages(conn, project_id)

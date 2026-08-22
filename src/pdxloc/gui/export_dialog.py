@@ -103,10 +103,15 @@ class ExportDialog(QDialog):
                       "copies as if they were real files"))
         layout.addWidget(self.backup_check)
 
-        self.ru_root = proj["ru_root"]
+        # `None` when the project was created without a translation folder — a mod
+        # that is English only. The field then starts empty and the folder chosen
+        # here becomes the translation folder of the project.
+        self.ru_root = project_mod.translation_root_of(proj["ru_root"])
         row = QHBoxLayout()
         row.addWidget(QLabel(translate("Export", "Mod folder:")))
-        self.path_edit = QLineEdit(project_mod.get_export_root(conn) or self.ru_root)
+        self.path_edit = QLineEdit(
+            project_mod.get_export_root(conn)
+            or (str(self.ru_root) if self.ru_root else ""))
         row.addWidget(self.path_edit, 1)
         browse = QPushButton(translate("Export", "Browse…"))
         browse.setToolTip(translate(
@@ -173,7 +178,7 @@ class ExportDialog(QDialog):
             self.preview.setText(fill(translate(
                 "Export", "Files of the language «%1» are written for the game"),
                 self.tgt_lang))
-        same = bool(text) and Path(text) == Path(self.ru_root)
+        same = bool(text) and self.ru_root is not None and Path(text) == self.ru_root
         self.warning.setText(
             translate("Export",
                       "This is the folder the translation was imported from: "
@@ -253,6 +258,12 @@ class ExportDialog(QDialog):
             self.buttons.setEnabled(True)
 
         project_mod.set_export_root(self.conn, out_root)
+        if self.ru_root is None:
+            # The project had no translation folder — this write is what creates
+            # one. Remembering it here is what lets the next scan read those files
+            # back and notice an edit made outside the application.
+            project_mod.set_translation_root(self.conn, out_root, self.project_id)
+            self.ru_root = out_root
         project_mod.set_last_export_at(self.conn)
         lines = [
             fill(translate("Export", "Files written: %1"), report.files_written),

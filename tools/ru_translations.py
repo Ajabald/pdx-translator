@@ -96,6 +96,11 @@ RU["Actions"] = {
     "another person":
         "Если мод скачали заново в другое место или проект пришёл "
         "от другого человека",
+    "Change translation folder…": "Сменить папку перевода…",
+    "Where the translation is read from and written to; may be empty until "
+    "the first write":
+        "Откуда перевод читается и куда пишется; до первой записи может быть "
+        "пустой",
     "Show original in Explorer": "Открыть оригинал в проводнике",
     "Project languages…": "Языки проекта…",
     "Game folders (l_english) and the language the text is actually written in":
@@ -240,6 +245,13 @@ RU["MainWindow"] = {
         "Папка изменена. Сканировать проект сейчас?\n\nСканирование "
         "перечитает файлы: переводы сохранятся, изменившиеся строки "
         "станут «Устарело».",
+    "Change of the translation folder": "Смена папки перевода",
+    "The folder has changed. Scan the project now?\n\nScanning re-reads the "
+    "files: the translation stays in the project, and what the new folder "
+    "holds is picked up.":
+        "Папка изменена. Сканировать проект сейчас?\n\nСканирование "
+        "перечитает файлы: перевод в проекте останется, а то, что лежит в "
+        "новой папке, подхватится.",
     # undoing an operation
     "Undo": "Отмена",
     "Nothing to undo.": "Отменять нечего.",
@@ -463,6 +475,19 @@ RU["TmImport"] = {
 
 RU["Relocate"] = {
     "Folder: %1": "Папка: %1",
+    # папка перевода
+    "The project is left without a translation folder — it is asked for at the "
+    "first write into the mod.":
+        "Проект остаётся без папки перевода — её спросят при первой записи в мод.",
+    "The folder does not exist yet — it is created at the first write.":
+        "Папки ещё нет — она будет создана при первой записи.",
+    "Translation files found: %1 of %2":
+        "Найдено файлов перевода: %1 из %2",
+    "No translation files for this project here — the folder is where the "
+    "write will put them. Files known: %1":
+        "Файлов перевода этого проекта здесь нет — в эту папку их и положит "
+        "запись. Файлов в проекте: %1",
+    "This is a file, not a folder: %1": "Это файл, а не папка: %1",
     "%1 was chosen, but the localization files lie in %2 — that is what will "
     "be recorded.":
         "Выбрана %1, но файлы локализации лежат в %2 — записана будет она.",
@@ -557,7 +582,11 @@ RU["Scanner"] = {
     "Original folder not found: %1": "Папка оригинала не найдена: %1",
 }
 
-RU["Exporter"] = {"Project id=%1 not found": "Проект id=%1 не найден"}
+RU["Exporter"] = {
+    "Project id=%1 not found": "Проект id=%1 не найден",
+    "The project has no translation folder: choose where to write.":
+        "У проекта нет папки перевода: выберите, куда записывать.",
+}
 
 RU["MtDialog"] = {
     "Machine translation": "Машинный перевод",
@@ -694,6 +723,22 @@ RU["Theme"] = {"Light": "Светлая", "Dark": "Тёмная"}
 
 RU["RootDialog"] = {
     "Change the original folder": "Сменить папку оригинала",
+    # папка перевода
+    "Change the translation folder": "Сменить папку перевода",
+    "The folder the translation is read from at a scan and written into at a "
+    "write. It may be left empty: the mod has no translation yet, and the "
+    "folder is asked for at the first write.":
+        "Папка, из которой перевод читается при сканировании и в которую он "
+        "пишется при записи. Её можно оставить пустой: если перевода у мода "
+        "ещё нет, папку спросят при первой записи.",
+    "Now: not chosen": "Сейчас: не выбрана",
+    "Translation folder": "Папка перевода",
+    "Change of the translation folder": "Смена папки перевода",
+    "The project will be left without a translation folder. Nothing is "
+    "deleted: the translation stays in the project, and the folder is asked "
+    "for at the first write. Continue?":
+        "Проект останется без папки перевода. Ничего не удаляется: перевод "
+        "остаётся в проекте, а папку спросят при первой записи. Продолжить?",
     "The folder the original is read from. It needs changing if the mod was "
     "re-downloaded elsewhere, the game library was moved, or the project came "
     "from another person.":
@@ -1321,11 +1366,13 @@ RU["StartScreen"] = {
     "Project file": "Файл проекта",
     "The original folder is the one holding *_l_%1.yml "
     "(for example …\\localization\\english).\n"
-    "The translation folder is where *_l_%2.yml go; it may not exist yet.\n"
+    "The translation folder is where *_l_%2.yml go. Leave it empty if the mod "
+    "has no translation yet — it is asked for at the first write.\n"
     "The project file is portable: put it anywhere.":
         "Папка оригинала — та, где лежат *_l_%1.yml "
         "(например …\\localization\\english).\n"
-        "Папка перевода — куда писать *_l_%2.yml; её может ещё не быть.\n"
+        "Папка перевода — куда писать *_l_%2.yml. Оставьте пустой, если "
+        "перевода у мода ещё нет: её спросят при первой записи.\n"
         "Файл проекта переносим: его можно положить куда угодно.",
     "Translation project (*%1)": "Проект перевода (*%1)",
     "Translation project (*%1);;All files (*)":
@@ -1334,7 +1381,6 @@ RU["StartScreen"] = {
     "Enter the project name.": "Укажите название проекта.",
     "The original folder does not exist:\n%1":
         "Папка оригинала не существует:\n%1",
-    "Enter the translation folder.": "Укажите папку перевода.",
     "Enter the project file.": "Укажите файл проекта.",
     "The file already exists:\n%1": "Файл уже существует:\n%1",
     "Could not create the project:\n%1": "Не удалось создать проект:\n%1",

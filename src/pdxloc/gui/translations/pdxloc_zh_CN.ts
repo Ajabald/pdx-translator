@@ -3,365 +3,375 @@
 <context>
     <name>Actions</name>
     <message>
-        <location filename="../actions.py" line="+72" />
+        <location filename="../actions.py" line="+68" />
         <source>Projects…</source>
-        <translation>项目…</translation>
+        <translation type="unfinished">项目…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Back to the project list</source>
-        <translation>返回项目列表</translation>
+        <translation type="unfinished">返回项目列表</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Open project…</source>
-        <translation>打开项目…</translation>
+        <translation type="unfinished">打开项目…</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Save project as…</source>
-        <translation>项目另存为…</translation>
+        <translation type="unfinished">项目另存为…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Load translation from mod…</source>
-        <translation>从模组载入译文…</translation>
+        <translation type="unfinished">从模组载入译文…</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Take translations from ready localization files — someone else's translation of this mod, or your own edits made directly in the files</source>
-        <translation>从现成的本地化文件中获取译文——他人对本模组的翻译，或你直接在文件中所做的修改</translation>
+        <translation type="unfinished">从现成的本地化文件中获取译文——他人对本模组的翻译，或你直接在文件中所做的修改</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Write translation to mod…</source>
-        <translation>将译文写入模组…</translation>
+        <translation type="unfinished">将译文写入模组…</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Preferences…</source>
-        <translation>首选项…</translation>
+        <translation type="unfinished">首选项…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Quit</source>
-        <translation>退出</translation>
+        <translation type="unfinished">退出</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Copy cell</source>
-        <translation>复制单元格</translation>
+        <translation type="unfinished">复制单元格</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Paste into translation</source>
-        <translation>粘贴到译文</translation>
+        <translation type="unfinished">粘贴到译文</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Copy key</source>
-        <translation>复制键</translation>
+        <translation type="unfinished">复制键</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Reset translation</source>
-        <translation>重置译文</translation>
+        <translation type="unfinished">重置译文</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Save row translation</source>
-        <translation>保存本行译文</translation>
+        <translation type="unfinished">保存本行译文</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Edits are saved anyway when you leave the row — this is just in case</source>
-        <translation>离开该行时修改本就会保存——这只是以防万一</translation>
+        <translation type="unfinished">离开该行时修改本就会保存——这只是以防万一</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Undo last operation</source>
-        <translation>撤销上一次操作</translation>
+        <translation type="unfinished">撤销上一次操作</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Rolls back the last batch of edits. In the translation field Ctrl+Z still undoes typing</source>
-        <translation>回滚最后一批修改。在译文输入框中 Ctrl+Z 仍然撤销输入</translation>
+        <translation type="unfinished">回滚最后一批修改。在译文输入框中 Ctrl+Z 仍然撤销输入</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Translation = Original</source>
-        <translation>译文 = 原文</translation>
+        <translation type="unfinished">译文 = 原文</translation>
     </message>
     <message>
         <location line="+2" />
         <source>For names, numbers and anything untranslatable</source>
-        <translation>用于人名、数字以及一切无需翻译的内容</translation>
+        <translation type="unfinished">用于人名、数字以及一切无需翻译的内容</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Fill from translation memory</source>
-        <translation>从翻译记忆库填充</translation>
+        <translation type="unfinished">从翻译记忆库填充</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Machine-translate the row</source>
-        <translation>机器翻译该行</translation>
+        <translation type="unfinished">机器翻译该行</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Sends the original to the service set up in «File → Preferences». The result is marked «Machine (unchecked)»</source>
-        <translation>把原文发送给在「文件 → 首选项」中配置的服务。结果会标记为「机器翻译（未校对）」</translation>
+        <translation type="unfinished">把原文发送给在「文件 → 首选项」中配置的服务。结果会标记为「机器翻译（未校对）」</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Apply to all rows with the same original</source>
-        <translation>应用到原文相同的所有行</translation>
+        <translation type="unfinished">应用到原文相同的所有行</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Validate</source>
-        <translation>确认</translation>
+        <translation type="unfinished">确认</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Mark the row as reviewed</source>
-        <translation>将该行标记为已校对</translation>
+        <translation type="unfinished">将该行标记为已校对</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Unvalidate</source>
-        <translation>取消确认</translation>
+        <translation type="unfinished">取消确认</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Back to the «Translated» status</source>
-        <translation>退回「已翻译」状态</translation>
+        <translation type="unfinished">退回「已翻译」状态</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Custom status</source>
-        <translation>自定义状态</translation>
+        <translation type="unfinished">自定义状态</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Ignore</source>
-        <translation>忽略</translation>
+        <translation type="unfinished">忽略</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Nothing to translate — a row of bare tags, say</source>
-        <translation>没有可翻译的内容——例如只有标签的行</translation>
+        <translation type="unfinished">没有可翻译的内容——例如只有标签的行</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Next untranslated</source>
-        <translation>下一条未翻译</translation>
+        <translation type="unfinished">下一条未翻译</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Previous row</source>
-        <translation>上一行</translation>
+        <translation type="unfinished">上一行</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Next row</source>
-        <translation>下一行</translation>
+        <translation type="unfinished">下一行</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Save and go to next</source>
-        <translation>保存并转到下一行</translation>
+        <translation type="unfinished">保存并转到下一行</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Find row…</source>
-        <translation>查找行…</translation>
+        <translation type="unfinished">查找行…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Puts the cursor in the search box</source>
-        <translation>将光标置于搜索框</translation>
+        <translation type="unfinished">将光标置于搜索框</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Only with issues</source>
-        <translation>仅有问题的行</translation>
+        <translation type="unfinished">仅有问题的行</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Show only rows the check has questions about</source>
-        <translation>只显示检查有疑问的行</translation>
+        <translation type="unfinished">只显示检查有疑问的行</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Show deleted</source>
-        <translation>显示已删除</translation>
+        <translation type="unfinished">显示已删除</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Rows whose keys are gone from the original</source>
-        <translation>键已从原文中消失的行</translation>
+        <translation type="unfinished">键已从原文中消失的行</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Reset filters</source>
-        <translation>重置筛选</translation>
+        <translation type="unfinished">重置筛选</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Drops the status, file and search filters. The sort order stays</source>
-        <translation>清除状态、文件和搜索筛选。排序保持不变</translation>
+        <translation type="unfinished">清除状态、文件和搜索筛选。排序保持不变</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Toolbar</source>
-        <translation>工具栏</translation>
+        <translation type="unfinished">工具栏</translation>
     </message>
     <message>
         <location line="+1" />
         <source>File tree</source>
-        <translation>文件树</translation>
+        <translation type="unfinished">文件树</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Languages and databases in the header</source>
-        <translation>顶栏中的语言与数据库</translation>
+        <translation type="unfinished">顶栏中的语言与数据库</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Scan</source>
-        <translation>扫描</translation>
+        <translation type="unfinished">扫描</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Re-read the original files and find changes</source>
-        <translation>重新读取原文文件并查找变化</translation>
+        <translation type="unfinished">重新读取原文文件并查找变化</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Actualize cosmetic edits…</source>
-        <translation>确认表面修改…</translation>
+        <translation type="unfinished">确认表面修改…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Confirm translations of rows where the mod author only changed formatting</source>
-        <translation>确认模组作者仅改动了格式的那些行的译文</translation>
+        <translation type="unfinished">确认模组作者仅改动了格式的那些行的译文</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Archive of old translations…</source>
-        <translation>旧译文存档…</translation>
+        <translation type="unfinished">旧译文存档…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Change original folder…</source>
-        <translation>更改原文文件夹…</translation>
+        <translation type="unfinished">更改原文文件夹…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>If the mod was re-downloaded elsewhere, or the project came from another person</source>
-        <translation>如果模组重新下载到了别处，或项目来自他人</translation>
+        <translation type="unfinished">如果模组重新下载到了别处，或项目来自他人</translation>
+    </message>
+    <message>
+        <location line="+2" />
+        <source>Change translation folder…</source>
+        <translation type="unfinished">更改译文文件夹…</translation>
+    </message>
+    <message>
+        <location line="+1" />
+        <source>Where the translation is read from and written to; may be empty until the first write</source>
+        <translation type="unfinished">译文从哪里读取、写入到哪里；首次写入之前可以为空</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Project languages…</source>
-        <translation>项目语言…</translation>
+        <translation type="unfinished">项目语言…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Game folders (l_english) and the language the text is actually written in</source>
-        <translation>游戏文件夹（l_english）以及文本实际使用的语言</translation>
+        <translation type="unfinished">游戏文件夹（l_english）以及文本实际使用的语言</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Show original in Explorer</source>
-        <translation>在资源管理器中显示原文</translation>
+        <translation type="unfinished">在资源管理器中显示原文</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+5" />
         <source>Check the whole project…</source>
-        <translation>检查整个项目…</translation>
+        <translation type="unfinished">检查整个项目…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Configure checks…</source>
-        <translation>配置检查…</translation>
+        <translation type="unfinished">配置检查…</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Which rules are on, with what leniency, and how often they fire on this project</source>
-        <translation>哪些规则已启用、宽松程度如何，以及它们在本项目中触发的频率</translation>
+        <translation type="unfinished">哪些规则已启用、宽松程度如何，以及它们在本项目中触发的频率</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Marked «not an error»…</source>
-        <translation>标记为「不是错误」…</translation>
+        <translation type="unfinished">标记为「不是错误」…</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Silenced issues — they can be put back into the check</source>
-        <translation>已屏蔽的问题——可以重新纳入检查</translation>
+        <translation type="unfinished">已屏蔽的问题——可以重新纳入检查</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Translation memory…</source>
-        <translation>翻译记忆库…</translation>
+        <translation type="unfinished">翻译记忆库…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Memory entries, attached databases and building new ones — in a single window</source>
-        <translation>记忆库条目、已挂载的数据库以及新建数据库——都在同一个窗口中</translation>
+        <translation type="unfinished">记忆库条目、已挂载的数据库以及新建数据库——都在同一个窗口中</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="+5" />
         <source>Glossary…</source>
-        <translation>术语表…</translation>
+        <translation type="unfinished">术语表…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Terms and candidates for them: statistics suggests, you accept</source>
-        <translation>术语及其候选：统计给出建议，由你确认</translation>
+        <translation type="unfinished">术语及其候选：统计给出建议，由你确认</translation>
     </message>
     <message>
         <location line="+2" />
         <source>How was this translated before…</source>
-        <translation>以前是怎么翻译的…</translation>
+        <translation type="unfinished">以前是怎么翻译的…</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Search the memory for the selected piece of the original</source>
-        <translation>在记忆库中搜索选中的原文片段</translation>
+        <translation type="unfinished">在记忆库中搜索选中的原文片段</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Open databases folder</source>
-        <translation>打开数据库文件夹</translation>
+        <translation type="unfinished">打开数据库文件夹</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Machine translation…</source>
-        <translation>机器翻译…</translation>
+        <translation type="unfinished">机器翻译…</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Translate many rows at once through the service set up in «File → Preferences»</source>
-        <translation>通过在「文件 → 首选项」中配置的服务一次翻译多行</translation>
+        <translation type="unfinished">通过在「文件 → 首选项」中配置的服务一次翻译多行</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Keyboard shortcuts</source>
-        <translation>快捷键</translation>
+        <translation type="unfinished">快捷键</translation>
     </message>
     <message>
         <location line="+1" />
         <source>About</source>
-        <translation>关于</translation>
+        <translation type="unfinished">关于</translation>
     </message>
 </context>
 <context>
     <name>Archive</name>
     <message>
-        <location filename="../archive_dialog.py" line="+20" />
+        <location filename="../archive_dialog.py" line="+21" />
         <source>File</source>
         <translation>文件</translation>
     </message>
@@ -421,7 +431,7 @@ They do not reach the write-to-mod step but are kept here.</source>
 <context>
     <name>Ask</name>
     <message>
-        <location filename="../ask.py" line="+60" />
+        <location filename="../ask.py" line="+61" />
         <source>Do not ask again</source>
         <translation>不再询问</translation>
     </message>
@@ -429,7 +439,7 @@ They do not reach the write-to-mod step but are kept here.</source>
 <context>
     <name>Concordance</name>
     <message>
-        <location filename="../concordance_dialog.py" line="+27" />
+        <location filename="../concordance_dialog.py" line="+28" />
         <source>How was this translated before</source>
         <translation>以前是怎么翻译的</translation>
     </message>
@@ -477,7 +487,7 @@ They do not reach the write-to-mod step but are kept here.</source>
 <context>
     <name>Db</name>
     <message>
-        <location filename="../../db.py" line="+333" />
+        <location filename="../../db.py" line="+334" />
         <source>The database has schema version %1, the application expects %2. Please update the application.</source>
         <translation>数据库结构版本为 %1，而应用程序需要 %2。请更新应用程序。</translation>
     </message>
@@ -487,12 +497,12 @@ They do not reach the write-to-mod step but are kept here.</source>
         <translation>无法将数据库结构从版本 %1 升级到 %2。</translation>
     </message>
     <message>
-        <location line="+76" />
+        <location line="+77" />
         <source>Migration v1→v2: foreign keys violated: %1</source>
         <translation>迁移 v1→v2：外键校验失败：%1</translation>
     </message>
     <message>
-        <location line="+131" />
+        <location line="+132" />
         <source>Migration v2→v3: row count mismatch (was %1, became %2, orphaned %3)</source>
         <translation>迁移 v2→v3：行数不一致（原为 %1，现为 %2，孤立 %3）</translation>
     </message>
@@ -522,7 +532,7 @@ They do not reach the write-to-mod step but are kept here.</source>
         <translation>迁移 v3→v4：外键校验失败：%1</translation>
     </message>
     <message>
-        <location line="+169" />
+        <location line="+172" />
         <source>Migration v5→v6: row count mismatch (was %1, became %2)</source>
         <translation>迁移 v5→v6：行数不一致（原为 %1，现为 %2）</translation>
     </message>
@@ -535,7 +545,7 @@ They do not reach the write-to-mod step but are kept here.</source>
 <context>
     <name>DetailPane</name>
     <message>
-        <location filename="../detail_pane.py" line="+59" />
+        <location filename="../detail_pane.py" line="+63" />
         <source>my translations</source>
         <translation>我的译文</translation>
     </message>
@@ -555,7 +565,7 @@ They do not reach the write-to-mod step but are kept here.</source>
         <translation>项目导出</translation>
     </message>
     <message>
-        <location line="+32" />
+        <location line="+36" />
         <source>Entry original (%1 similarity):</source>
         <translation>条目原文（相似度 %1）：</translation>
     </message>
@@ -625,7 +635,7 @@ The translation of the current row stays in place.</source>
 当前行的译文保持不变。</translation>
     </message>
     <message>
-        <location line="+133" />
+        <location line="+135" />
         <source>Original (EN):</source>
         <translation>原文（EN）：</translation>
     </message>
@@ -675,7 +685,7 @@ The translation of the current row stays in place.</source>
         <translation>翻译记忆库（双击——插入，右键——操作）：</translation>
     </message>
     <message>
-        <location line="+68" />
+        <location line="+70" />
         <source>unsaved edits (Ctrl+S)</source>
         <translation>有未保存的修改（Ctrl+S）</translation>
     </message>
@@ -700,7 +710,7 @@ The translation of the current row stays in place.</source>
         <translation>原文已变化%1——原为 → 现为：</translation>
     </message>
     <message>
-        <location filename="../../db.py" line="-836" />
+        <location filename="../../db.py" line="-842" />
         <source>Project</source>
         <translation>项目</translation>
     </message>
@@ -738,7 +748,7 @@ The translation of the current row stays in place.</source>
         <translation>已删除</translation>
     </message>
     <message>
-        <location line="+384" />
+        <location line="+387" />
         <source>Rows selected: %1</source>
         <translation>已选行数：%1</translation>
     </message>
@@ -797,7 +807,7 @@ The translation of the current row stays in place.</source>
 <context>
     <name>Export</name>
     <message>
-        <location filename="../export_dialog.py" line="+31" />
+        <location filename="../export_dialog.py" line="+32" />
         <source>Writing the translation to mod files</source>
         <translation>将译文写入模组文件</translation>
     </message>
@@ -852,12 +862,12 @@ The translation of the current row stays in place.</source>
         <translation>旧版本会放入备份文件夹——位于本地化目录树之外，否则游戏会把副本当作正式文件读取</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+11" />
         <source>Mod folder:</source>
         <translation>模组文件夹：</translation>
     </message>
     <message>
-        <location line="+3" />
+        <location line="+5" />
         <source>Browse…</source>
         <translation>浏览…</translation>
     </message>
@@ -943,7 +953,7 @@ Continue?</source>
 %1</translation>
     </message>
     <message>
-        <location line="+9" />
+        <location line="+15" />
         <source>Files written: %1</source>
         <translation>已写入文件：%1</translation>
     </message>
@@ -986,15 +996,20 @@ Continue?</source>
 <context>
     <name>Exporter</name>
     <message>
-        <location filename="../../core/exporter.py" line="+134" />
+        <location filename="../../core/exporter.py" line="+146" />
         <source>Project id=%1 not found</source>
-        <translation>未找到 id=%1 的项目</translation>
+        <translation type="unfinished">未找到 id=%1 的项目</translation>
+    </message>
+    <message>
+        <location line="+9" />
+        <source>The project has no translation folder: choose where to write.</source>
+        <translation type="unfinished">项目尚未设置译文文件夹：请选择写入位置。</translation>
     </message>
 </context>
 <context>
     <name>FileTree</name>
     <message>
-        <location filename="../file_tree.py" line="+57" />
+        <location filename="../file_tree.py" line="+58" />
         <location line="+52" />
         <source>ALL</source>
         <translation>全部</translation>
@@ -1030,7 +1045,7 @@ Continue?</source>
         <translation type="unfinished">对数</translation>
     </message>
     <message>
-        <location line="+155" />
+        <location line="+156" />
         <source>Search:</source>
         <translation type="unfinished">搜索：</translation>
     </message>
@@ -1065,7 +1080,7 @@ Continue?</source>
         <translation type="unfinished">术语：%1 · 待审阅：%2</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+20" />
         <source>Candidates are counted over the translation memory: the project's own plus every attached database. Statistics only suggests — nothing reaches the original until you accept it.</source>
         <translation type="unfinished">候选是基于翻译记忆库统计得出的：包括项目自身的记忆库和所有已挂载的数据库。统计只负责建议——在你接受之前，原文不会受到任何影响。</translation>
     </message>
@@ -1149,7 +1164,7 @@ Candidates found so far will not be saved.</source>
 <context>
     <name>Import</name>
     <message>
-        <location filename="../import_dialog.py" line="+41" />
+        <location filename="../import_dialog.py" line="+43" />
         <source>Load translation from mod</source>
         <translation>从模组载入译文</translation>
     </message>
@@ -1184,7 +1199,7 @@ Candidates found so far will not be saved.</source>
         <translation>不取译文与原文相同的行</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+17" />
         <source>Take the translations</source>
         <translation>获取译文</translation>
     </message>
@@ -1243,66 +1258,66 @@ Done. Undo it all with Ctrl+Z.</source>
 <context>
     <name>Languages</name>
     <message>
-        <location filename="../../core/languages.py" line="+36" />
-        <location line="+32" />
+        <location filename="../../core/languages.py" line="+37" />
+        <location line="+33" />
         <source>English</source>
         <translation>英语</translation>
     </message>
     <message>
-        <location line="-31" />
-        <location line="+34" />
+        <location line="-32" />
+        <location line="+35" />
         <source>French</source>
         <translation>法语</translation>
     </message>
     <message>
-        <location line="-33" />
-        <location line="+34" />
+        <location line="-34" />
+        <location line="+35" />
         <source>German</source>
         <translation>德语</translation>
     </message>
     <message>
-        <location line="-33" />
-        <location line="+34" />
+        <location line="-34" />
+        <location line="+35" />
         <source>Spanish</source>
         <translation>西班牙语</translation>
     </message>
     <message>
-        <location line="-33" />
-        <location line="+29" />
+        <location line="-34" />
+        <location line="+30" />
         <source>Russian</source>
         <translation>俄语</translation>
     </message>
     <message>
-        <location line="-28" />
+        <location line="-29" />
         <source>Simplified Chinese</source>
         <translation>简体中文</translation>
     </message>
     <message>
         <location line="+1" />
-        <location line="+39" />
+        <location line="+40" />
         <source>Korean</source>
         <translation>韩语</translation>
     </message>
     <message>
-        <location line="-38" />
-        <location line="+37" />
+        <location line="-39" />
+        <location line="+38" />
         <source>Japanese</source>
         <translation>日语</translation>
     </message>
     <message>
-        <location line="-36" />
+        <location line="-37" />
         <source>Brazilian Portuguese</source>
         <translation>巴西葡萄牙语</translation>
     </message>
     <message>
         <location line="+1" />
-        <location line="+31" />
+        <location line="+32" />
         <source>Polish</source>
         <translation>波兰语</translation>
     </message>
     <message>
-        <location line="-30" />
-        <location line="+31" />
+        <location line="-31" />
+        <location line="+32" />
         <source>Turkish</source>
         <translation>土耳其语</translation>
     </message>
@@ -1335,14 +1350,14 @@ Done. Undo it all with Ctrl+Z.</source>
 <context>
     <name>LanguagesDialog</name>
     <message>
-        <location filename="../languages_dialog.py" line="+42" />
-        <location line="+177" />
+        <location filename="../languages_dialog.py" line="+43" />
+        <location line="+178" />
         <location line="+19" />
         <source>Project languages</source>
         <translation>项目语言</translation>
     </message>
     <message>
-        <location line="-188" />
+        <location line="-189" />
         <source>The game folder decides the file names (*_l_english.yml) and the header inside them. The text language says what the text actually is — machine translation, memory database naming and language-specific checks go by it.</source>
         <translation>游戏文件夹决定文件名（*_l_english.yml）及其内部的标头。文本语言说明文本实际所用的语言——机器翻译、记忆库命名以及与语言相关的检查都以它为准。</translation>
     </message>
@@ -1382,7 +1397,7 @@ Done. Undo it all with Ctrl+Z.</source>
         <translation>应用</translation>
     </message>
     <message>
-        <location line="+103" />
+        <location line="+104" />
         <source>Only %1 files out of %2 carry the label _l_%3.
 
 Translations are not deleted: they stay in the archive and in the translation memory. Change the languages?</source>
@@ -1434,12 +1449,12 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation>项目中不存在的键：%1</translation>
     </message>
     <message>
-        <location line="+58" />
+        <location line="+61" />
         <source>Translation folder not found: %1</source>
         <translation>未找到译文文件夹：%1</translation>
     </message>
     <message>
-        <location line="+160" />
+        <location line="+163" />
         <source>Project id=%1 not found</source>
         <translation>未找到 id=%1 的项目</translation>
     </message>
@@ -1449,58 +1464,58 @@ Translations are not deleted: they stay in the archive and in the translation me
     <message>
         <location filename="../actions.py" line="+7" />
         <source>&amp;File</source>
-        <translation>文件(&amp;F)</translation>
+        <translation type="unfinished">文件(&amp;F)</translation>
     </message>
     <message>
         <location line="+3" />
         <source>&amp;Edit</source>
-        <translation>编辑(&amp;E)</translation>
+        <translation type="unfinished">编辑(&amp;E)</translation>
     </message>
     <message>
         <location line="+3" />
         <source>&amp;Translation</source>
-        <translation>翻译(&amp;T)</translation>
+        <translation type="unfinished">翻译(&amp;T)</translation>
     </message>
     <message>
         <location line="+4" />
         <source>F&amp;ilters</source>
-        <translation>筛选(&amp;I)</translation>
+        <translation type="unfinished">筛选(&amp;I)</translation>
     </message>
     <message>
         <location line="+3" />
         <source>&amp;View</source>
-        <translation>视图(&amp;V)</translation>
+        <translation type="unfinished">视图(&amp;V)</translation>
     </message>
     <message>
         <location line="+3" />
         <source>&amp;Project</source>
-        <translation>项目(&amp;P)</translation>
+        <translation type="unfinished">项目(&amp;P)</translation>
     </message>
     <message>
         <location line="+3" />
         <source>&amp;Check</source>
-        <translation>检查(&amp;C)</translation>
+        <translation type="unfinished">检查(&amp;C)</translation>
     </message>
     <message>
         <location line="+2" />
         <source>T&amp;ools</source>
-        <translation>工具(&amp;O)</translation>
+        <translation type="unfinished">工具(&amp;O)</translation>
     </message>
     <message>
         <location line="+2" />
         <source>&amp;Help</source>
-        <translation>帮助(&amp;H)</translation>
+        <translation type="unfinished">帮助(&amp;H)</translation>
     </message>
     <message>
         <location filename="../main_window.py" line="+76" />
-        <location line="+480" />
+        <location line="+493" />
         <source>Choose or create a project</source>
-        <translation>选择或创建项目</translation>
+        <translation type="unfinished">选择或创建项目</translation>
     </message>
     <message>
-        <location line="-434" />
+        <location line="-446" />
         <source>Translation memory</source>
-        <translation>翻译记忆库</translation>
+        <translation type="unfinished">翻译记忆库</translation>
     </message>
     <message>
         <location line="+1" />
@@ -1509,117 +1524,117 @@ Translations are not deleted: they stay in the archive and in the translation me
 A database built from your copy of the game fills in strings the mod copied from it — often hundreds of them.
 
 Build one now?</source>
-        <translation>目前没有任何翻译记忆库数据库。
+        <translation type="unfinished">目前没有任何翻译记忆库数据库。
 
 用你自己的游戏副本构建的数据库可以填充模组从游戏中复制的字符串——往往有数百条。
 
 现在就构建吗？</translation>
     </message>
     <message>
-        <location line="+98" />
+        <location line="+102" />
         <source>All</source>
-        <translation>全部</translation>
+        <translation type="unfinished">全部</translation>
     </message>
     <message>
         <location line="+4" />
         <source>No sorting</source>
-        <translation>不排序</translation>
+        <translation type="unfinished">不排序</translation>
     </message>
     <message>
-        <location line="+56" />
-        <location line="+43" />
+        <location line="+57" />
+        <location line="+44" />
         <source>Descending</source>
-        <translation>降序</translation>
+        <translation type="unfinished">降序</translation>
     </message>
     <message>
         <location line="-19" />
         <source>Show</source>
-        <translation>显示</translation>
+        <translation type="unfinished">显示</translation>
     </message>
     <message>
         <location line="+13" />
         <source>Sort</source>
-        <translation>排序</translation>
+        <translation type="unfinished">排序</translation>
     </message>
     <message>
-        <location line="+19" />
+        <location line="+20" />
         <source>Columns</source>
-        <translation>列</translation>
+        <translation type="unfinished">列</translation>
     </message>
     <message>
         <location line="+6" />
         <source>Status buttons</source>
-        <translation>状态按钮</translation>
+        <translation type="unfinished">状态按钮</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Hides the toolbar button only — the command stays in the menu and its shortcut keeps working</source>
-        <translation>只隐藏工具栏按钮——命令仍留在菜单中，快捷键照常可用</translation>
+        <translation type="unfinished">只隐藏工具栏按钮——命令仍留在菜单中，快捷键照常可用</translation>
     </message>
     <message>
-        <location line="+48" />
+        <location line="+49" />
         <source>Theme</source>
-        <translation>主题</translation>
+        <translation type="unfinished">主题</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="+17" />
         <source>Rule preset</source>
-        <translation>规则预设</translation>
+        <translation type="unfinished">规则预设</translation>
     </message>
     <message>
         <location line="+21" />
         <source>Check preset: %1</source>
-        <translation>检查预设：%1</translation>
+        <translation type="unfinished">检查预设：%1</translation>
     </message>
     <message>
-        <location line="+98" />
+        <location line="+101" />
         <source>F2, double click</source>
-        <translation>F2、双击</translation>
+        <translation type="unfinished">F2、双击</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Edit the translation in the cell</source>
-        <translation>直接在单元格中编辑译文</translation>
+        <translation type="unfinished">直接在单元格中编辑译文</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Keyboard shortcuts</source>
-        <translation>快捷键</translation>
+        <translation type="unfinished">快捷键</translation>
     </message>
     <message>
         <location line="+29" />
         <source>
 
 Translations that will be lost: %1 of %2 rows.</source>
-        <translation>
+        <translation type="unfinished">
 
 将丢失的译文：%2 行中的 %1 行。</translation>
     </message>
     <message>
         <location line="+3" />
         <source>The file goes to the recycle bin</source>
-        <translation>文件将移入回收站</translation>
+        <translation type="unfinished">文件将移入回收站</translation>
     </message>
     <message>
         <location line="+2" />
         <source>The file will be deleted</source>
-        <translation>文件将被删除</translation>
+        <translation type="unfinished">文件将被删除</translation>
     </message>
     <message>
         <location line="+3" />
         <location line="+26" />
-        <location line="+17" />
+        <location line="+18" />
         <source>Delete project</source>
-        <translation>删除项目</translation>
+        <translation type="unfinished">删除项目</translation>
     </message>
     <message>
-        <location line="-42" />
+        <location line="-43" />
         <source>Delete the project «%1» together with its file?
 
 %2%3
 
 %4. Mod files and translation memory databases are untouched.</source>
-        <translation>连同文件一起删除项目「%1」？
+        <translation type="unfinished">连同文件一起删除项目「%1」？
 
 %2%3
 
@@ -1628,17 +1643,17 @@ Translations that will be lost: %1 of %2 rows.</source>
     <message>
         <location line="+6" />
         <source>Delete</source>
-        <translation>删除</translation>
+        <translation type="unfinished">删除</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Cancel</source>
-        <translation>取消</translation>
+        <translation type="unfinished">取消</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Delete the backups next to it as well</source>
-        <translation>同时删除旁边的备份</translation>
+        <translation type="unfinished">同时删除旁边的备份</translation>
     </message>
     <message>
         <location line="+14" />
@@ -1648,7 +1663,7 @@ Translations that will be lost: %1 of %2 rows.</source>
 %2
 
 Most likely it is open in another program.</source>
-        <translation>无法删除文件：
+        <translation type="unfinished">无法删除文件：
 %1
 
 %2
@@ -1658,102 +1673,102 @@ Most likely it is open in another program.</source>
     <message>
         <location line="+9" />
         <source>Project deleted: %1 (%2 files)</source>
-        <translation>已删除项目：%1（%2 个文件）</translation>
+        <translation type="unfinished">已删除项目：%1（%2 个文件）</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+9" />
         <source>The recycle bin did not accept the file, so it was deleted permanently:
 %1
 
 Usually this means the file is larger than the bin allows.</source>
-        <translation>回收站未接收该文件，因此已被永久删除：
+        <translation type="unfinished">回收站未接收该文件，因此已被永久删除：
 %1
 
 通常这说明文件超出了回收站允许的大小。</translation>
     </message>
     <message>
-        <location line="+36" />
+        <location line="+38" />
         <location line="+14" />
         <source>Project of another game</source>
-        <translation>属于其他游戏的项目</translation>
+        <translation type="unfinished">属于其他游戏的项目</translation>
     </message>
     <message>
         <location line="-13" />
         <source>The project «%1» belongs to %2, but lies in the folder of %3.
 
 Move it to %4?</source>
-        <translation>项目「%1」属于 %2，却放在 %3 的文件夹中。
+        <translation type="unfinished">项目「%1」属于 %2，却放在 %3 的文件夹中。
 
 要把它移到 %4 吗？</translation>
     </message>
     <message>
         <location line="+5" />
         <source>no game in particular</source>
-        <translation>不属于任何游戏</translation>
+        <translation type="unfinished">不属于任何游戏</translation>
     </message>
     <message>
         <location line="+9" />
         <source>Could not move the file:
 %1</source>
-        <translation>无法移动文件：
+        <translation type="unfinished">无法移动文件：
 %1</translation>
     </message>
     <message>
         <location line="+9" />
         <location line="+8" />
         <source>Project</source>
-        <translation>项目</translation>
+        <translation type="unfinished">项目</translation>
     </message>
     <message>
         <location line="-7" />
         <source>Project file not found:
 %1</source>
-        <translation>未找到项目文件：
+        <translation type="unfinished">未找到项目文件：
 %1</translation>
     </message>
     <message>
         <location line="+8" />
         <source>Could not open the project:
 %1</source>
-        <translation>无法打开项目：
+        <translation type="unfinished">无法打开项目：
 %1</translation>
     </message>
     <message>
-        <location line="+38" />
+        <location line="+39" />
         <source>%1 rows with no translatable text were marked as ignored (bare tags such as [GetName], empty values) — Ctrl+Z undoes it</source>
-        <translation>%1 行没有可翻译文本，已标记为忽略（例如仅有 [GetName] 之类标签、空值）——按 Ctrl+Z 可撤销</translation>
+        <translation type="unfinished">%1 行没有可翻译文本，已标记为忽略（例如仅有 [GetName] 之类标签、空值）——按 Ctrl+Z 可撤销</translation>
     </message>
     <message>
-        <location line="+35" />
+        <location line="+36" />
         <source>Open project</source>
-        <translation>打开项目</translation>
+        <translation type="unfinished">打开项目</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Translation project (*%1);;All files (*)</source>
-        <translation>翻译项目 (*%1);;所有文件 (*)</translation>
+        <translation type="unfinished">翻译项目 (*%1);;所有文件 (*)</translation>
     </message>
     <message>
         <location line="+10" />
         <source>Save project as</source>
-        <translation>项目另存为</translation>
+        <translation type="unfinished">项目另存为</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Translation project (*%1)</source>
-        <translation>翻译项目 (*%1)</translation>
+        <translation type="unfinished">翻译项目 (*%1)</translation>
     </message>
     <message>
         <location line="+12" />
         <location line="+4" />
         <source>Saving</source>
-        <translation>正在保存</translation>
+        <translation type="unfinished">正在保存</translation>
     </message>
     <message>
         <location line="-3" />
         <source>Could not save:
 %1</source>
-        <translation>无法保存：
+        <translation type="unfinished">无法保存：
 %1</translation>
     </message>
     <message>
@@ -1762,7 +1777,7 @@ Move it to %4?</source>
 %1
 
 Opening the copy.</source>
-        <translation>项目已保存：
+        <translation type="unfinished">项目已保存：
 %1
 
 正在打开该副本。</translation>
@@ -1770,37 +1785,37 @@ Opening the copy.</source>
     <message>
         <location line="+15" />
         <source>Scan interrupted — changes were not saved</source>
-        <translation>扫描已中断——更改未保存</translation>
+        <translation type="unfinished">扫描已中断——更改未保存</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Scanning</source>
-        <translation>正在扫描</translation>
+        <translation type="unfinished">正在扫描</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Error:
 %1</source>
-        <translation>错误：
+        <translation type="unfinished">错误：
 %1</translation>
     </message>
     <message>
         <location line="+18" />
         <source>Rows selected: %1</source>
-        <translation>已选行数：%1</translation>
+        <translation type="unfinished">已选行数：%1</translation>
     </message>
     <message>
-        <location line="+57" />
+        <location line="+58" />
         <location line="+7" />
         <source>Cosmetic edits</source>
-        <translation>表面修改</translation>
+        <translation type="unfinished">表面修改</translation>
     </message>
     <message>
         <location line="-6" />
         <source>There are no outdated rows with cosmetic edits.
 
 Those are changes of punctuation, case and spaces — when the meaning of the original did not change.</source>
-        <translation>没有仅含表面修改的过时行。
+        <translation type="unfinished">没有仅含表面修改的过时行。
 
 表面修改指标点、大小写和空格的变动——即原文含义没有改变。</translation>
     </message>
@@ -1809,153 +1824,167 @@ Those are changes of punctuation, case and spaces — when the meaning of the or
         <source>Confirm translations of %1 rows where the original was edited cosmetically only?
 
 The translations themselves do not change — the «Outdated» mark is removed. The operation can be undone (Ctrl+Z).</source>
-        <translation>确认原文仅有表面修改的 %1 行的译文？
+        <translation type="unfinished">确认原文仅有表面修改的 %1 行的译文？
 
 译文本身不会改变——只是移除「已过时」标记。该操作可以撤销（Ctrl+Z）。</translation>
     </message>
     <message>
         <location line="+12" />
         <source>Rows actualized: %1</source>
-        <translation>已确认行数：%1</translation>
+        <translation type="unfinished">已确认行数：%1</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+18" />
         <source>Change of the original folder</source>
-        <translation>更改原文文件夹</translation>
+        <translation type="unfinished">更改原文文件夹</translation>
     </message>
     <message>
         <location line="+1" />
         <source>The folder has changed. Scan the project now?
 
 Scanning re-reads the files: translations are kept, changed rows become «Outdated».</source>
-        <translation>文件夹已更改。现在扫描项目吗？
+        <translation type="unfinished">文件夹已更改。现在扫描项目吗？
 
 扫描会重新读取文件：译文将保留，发生变化的行会变为「已过时」。</translation>
     </message>
     <message>
+        <location line="+25" />
+        <source>Change of the translation folder</source>
+        <translation type="unfinished">更改译文文件夹</translation>
+    </message>
+    <message>
+        <location line="+1" />
+        <source>The folder has changed. Scan the project now?
+
+Scanning re-reads the files: the translation stays in the project, and what the new folder holds is picked up.</source>
+        <translation type="unfinished">文件夹已更改。现在扫描项目吗？
+
+扫描会重新读取文件：项目中的译文将保留，新文件夹中的内容会被读入。</translation>
+    </message>
+    <message>
         <location line="+30" />
         <source>Project languages</source>
-        <translation>项目语言</translation>
+        <translation type="unfinished">项目语言</translation>
     </message>
     <message>
         <location line="+1" />
         <source>The language of the folders changed. Scan the project now?
 
 Scanning re-reads the files under the new names.</source>
-        <translation>文件夹的语言已更改。现在扫描项目吗？
+        <translation type="unfinished">文件夹的语言已更改。现在扫描项目吗？
 
 扫描会按新的文件名重新读取文件。</translation>
     </message>
     <message>
         <location line="+12" />
         <source>Undo</source>
-        <translation>撤销</translation>
+        <translation type="unfinished">撤销</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Nothing to undo.</source>
-        <translation>没有可撤销的操作。</translation>
+        <translation type="unfinished">没有可撤销的操作。</translation>
     </message>
     <message>
         <location line="+4" />
         <source>actualization</source>
-        <translation>确认表面修改</translation>
+        <translation type="unfinished">确认表面修改</translation>
     </message>
     <message>
         <location line="+1" />
         <source>status change</source>
-        <translation>状态更改</translation>
+        <translation type="unfinished">状态更改</translation>
     </message>
     <message>
         <location line="+1" />
         <source>translation edit</source>
-        <translation>译文修改</translation>
+        <translation type="unfinished">译文修改</translation>
     </message>
     <message>
         <location line="+1" />
         <source>bulk replace</source>
-        <translation>批量替换</translation>
+        <translation type="unfinished">批量替换</translation>
     </message>
     <message>
         <location line="+1" />
         <source>glossary rules</source>
-        <translation>术语表规则</translation>
+        <translation type="unfinished">术语表规则</translation>
     </message>
     <message>
         <location line="+1" />
         <source>fill from memory</source>
-        <translation>从记忆库填充</translation>
+        <translation type="unfinished">从记忆库填充</translation>
     </message>
     <message>
         <location line="+1" />
         <source>translation import</source>
-        <translation>译文导入</translation>
+        <translation type="unfinished">译文导入</translation>
     </message>
     <message>
         <location line="+1" />
         <source>auto-ignore of rows with nothing to translate</source>
-        <translation>自动忽略无可翻译内容的行</translation>
+        <translation type="unfinished">自动忽略无可翻译内容的行</translation>
     </message>
     <message>
         <location line="+2" />
         <source>machine translation</source>
-        <translation>机器翻译</translation>
+        <translation type="unfinished">机器翻译</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Undo operation</source>
-        <translation>撤销操作</translation>
+        <translation type="unfinished">撤销操作</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Undo the last operation (%1) and return %2 rows to their previous state?</source>
-        <translation>撤销上一次操作（%1）并将 %2 行恢复到先前状态？</translation>
+        <translation type="unfinished">撤销上一次操作（%1）并将 %2 行恢复到先前状态？</translation>
     </message>
     <message>
         <location line="+9" />
         <source>Rows reverted: %1</source>
-        <translation>已恢复行数：%1</translation>
+        <translation type="unfinished">已恢复行数：%1</translation>
     </message>
     <message>
         <location line="+102" />
         <source>(no project open)</source>
-        <translation>（未打开项目）</translation>
+        <translation type="unfinished">（未打开项目）</translation>
     </message>
     <message>
         <location line="+4" />
         <source>A translator's workbench for the localisation of Paradox game mods.&lt;br&gt;Format: Paradox pseudo-YAML (UTF-8 with BOM) and the older CSV.&lt;br&gt;&lt;br&gt;</source>
-        <translation>用于 Paradox 游戏模组本地化的译者工作台。&lt;br&gt;格式：Paradox 伪 YAML（带 BOM 的 UTF-8）以及旧版 CSV。&lt;br&gt;&lt;br&gt;</translation>
+        <translation type="unfinished">用于 Paradox 游戏模组本地化的译者工作台。&lt;br&gt;格式：Paradox 伪 YAML（带 BOM 的 UTF-8）以及旧版 CSV。&lt;br&gt;&lt;br&gt;</translation>
     </message>
     <message>
         <location line="+5" />
         <source>This program comes with ABSOLUTELY NO WARRANTY. It is free software, and you are welcome to redistribute it under the terms of the GNU General Public License, version 3 or later — see the LICENSE file.&lt;br&gt;&lt;br&gt;Uses Qt through PySide6 under the GNU LGPL v3.&lt;br&gt;&lt;br&gt;</source>
-        <translation>本程序不提供任何担保。这是自由软件，欢迎你依照 GNU 通用公共许可证第 3 版或更新版本的条款重新分发它——参见 LICENSE 文件。&lt;br&gt;&lt;br&gt;通过 PySide6 使用 Qt，依照 GNU LGPL v3 授权。&lt;br&gt;&lt;br&gt;</translation>
+        <translation type="unfinished">本程序不提供任何担保。这是自由软件，欢迎你依照 GNU 通用公共许可证第 3 版或更新版本的条款重新分发它——参见 LICENSE 文件。&lt;br&gt;&lt;br&gt;通过 PySide6 使用 Qt，依照 GNU LGPL v3 授权。&lt;br&gt;&lt;br&gt;</translation>
     </message>
     <message>
         <location line="+6" />
         <source>Project: %1&lt;br&gt;Memory databases: %2</source>
-        <translation>项目：%1&lt;br&gt;记忆库数据库：%2</translation>
+        <translation type="unfinished">项目：%1&lt;br&gt;记忆库数据库：%2</translation>
     </message>
 </context>
 <context>
     <name>Mt</name>
     <message>
-        <location filename="../../core/mt_providers/__init__.py" line="+45" />
+        <location filename="../../core/mt_providers/__init__.py" line="+46" />
         <source>Off</source>
         <translation>关闭</translation>
     </message>
     <message>
-        <location filename="../../core/mt.py" line="+153" />
+        <location filename="../../core/mt.py" line="+154" />
         <source>The provider returned %1 rows instead of %2</source>
         <translation>服务返回了 %1 行，而不是 %2 行</translation>
     </message>
     <message>
-        <location filename="../../core/mt_providers/_http.py" line="+65" />
+        <location filename="../../core/mt_providers/_http.py" line="+66" />
         <source>Could not reach %1: %2</source>
         <translation>无法连接到 %1：%2</translation>
     </message>
     <message>
-        <location line="+33" />
+        <location line="+34" />
         <source>%1 refused: the request limit or the quota is exhausted.</source>
         <translation>%1 拒绝了请求：请求次数或用量配额已用尽。</translation>
     </message>
@@ -2005,7 +2034,7 @@ Scanning re-reads the files under the new names.</source>
 <context>
     <name>MtDialog</name>
     <message>
-        <location filename="../mt_dialog.py" line="+33" />
+        <location filename="../mt_dialog.py" line="+35" />
         <source>Selected rows</source>
         <translation>选中的行</translation>
     </message>
@@ -2025,7 +2054,7 @@ Scanning re-reads the files under the new names.</source>
         <translation>整个项目</translation>
     </message>
     <message>
-        <location line="+78" />
+        <location line="+80" />
         <location line="+260" />
         <location line="+67" />
         <source>Machine translation</source>
@@ -2150,7 +2179,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>MtRun</name>
     <message>
-        <location filename="../../core/mt_run.py" line="+69" />
+        <location filename="../../core/mt_run.py" line="+72" />
         <source>Rows translated: %1</source>
         <translation>已翻译行数：%1</translation>
     </message>
@@ -2180,7 +2209,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>已中断。此前翻译的内容已保留——按 Ctrl+Z 可撤销整次运行。</translation>
     </message>
     <message>
-        <location line="+124" />
+        <location line="+126" />
         <source>The row is longer than the service accepts in one request. It was left untouched.</source>
         <translation>该行超过了服务单次请求可接受的长度，因此未做处理。</translation>
     </message>
@@ -2193,7 +2222,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>ParadoxCsv</name>
     <message>
-        <location filename="../../core/paradox_csv.py" line="+130" />
+        <location filename="../../core/paradox_csv.py" line="+134" />
         <source>%1:%2: a line without a «;» separator: %3</source>
         <translation type="unfinished">%1:%2：缺少「;」分隔符的行：%3</translation>
     </message>
@@ -2201,7 +2230,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>ParadoxYaml</name>
     <message>
-        <location filename="../../core/paradox_yaml.py" line="+63" />
+        <location filename="../../core/paradox_yaml.py" line="+64" />
         <source>%1:%2: an l_*: header was expected, found: %3</source>
         <translation>%1:%2：应为 l_*: 标头，实际为：%3</translation>
     </message>
@@ -2457,7 +2486,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>机器翻译以「机器翻译（未校对）」状态写入。它不会进入翻译记忆库，在你于写入窗口中允许之前也不会写入模组。</translation>
     </message>
     <message>
-        <location line="+46" />
+        <location line="+47" />
         <source>The key is protected by Windows for your account. It is unreadable from another account, but a program running as you can read it.</source>
         <translation>该密钥由 Windows 按你的账户加以保护。其他账户无法读取，但以你的身份运行的程序可以读取。</translation>
     </message>
@@ -2482,12 +2511,12 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>目前没有隐藏任何提示</translation>
     </message>
     <message>
-        <location filename="../../core/mt_providers/deepl.py" line="+101" />
+        <location filename="../../core/mt_providers/deepl.py" line="+103" />
         <source>Used %1 of %2 characters</source>
         <translation>已使用 %2 个字符中的 %1 个</translation>
     </message>
     <message>
-        <location filename="../mt_worker.py" line="+173" />
+        <location filename="../mt_worker.py" line="+176" />
         <source>The key works.</source>
         <translation>密钥可用。</translation>
     </message>
@@ -2510,12 +2539,12 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>导入</translation>
     </message>
     <message>
-        <location line="+29" />
+        <location line="+35" />
         <source>The project file already exists: %1</source>
         <translation>项目文件已存在：%1</translation>
     </message>
     <message>
-        <location line="+194" />
+        <location line="+199" />
         <source>(unnamed)</source>
         <translation>（未命名）</translation>
     </message>
@@ -2594,7 +2623,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>将选中的问题标记为误报——不再显示</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+7" />
         <source>Configure this rule…</source>
         <translation>配置该规则…</translation>
     </message>
@@ -2617,7 +2646,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>QaRules</name>
     <message>
-        <location filename="../../core/qa_rules.py" line="+71" />
+        <location filename="../../core/qa_rules.py" line="+74" />
         <source>Markup</source>
         <translation type="unfinished">标记</translation>
     </message>
@@ -2652,12 +2681,12 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation type="unfinished">自定义规则</translation>
     </message>
     <message>
-        <location line="+494" />
+        <location line="+507" />
         <source>A repetition inside a repeated group — on a long row the check can take minutes. Consider (?:…) or a stricter pattern.</source>
         <translation type="unfinished">重复组内还有重复——在长文本上这项检查可能耗时数分钟。建议改用 (?:…) 或更严格的模式。</translation>
     </message>
     <message>
-        <location line="+125" />
+        <location line="+126" />
         <source>Same set of matches</source>
         <translation type="unfinished">匹配集合一致</translation>
     </message>
@@ -2717,7 +2746,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation type="unfinished">所列出的每个字符都不允许出现在译文中</translation>
     </message>
     <message>
-        <location line="+105" />
+        <location line="+108" />
         <source>Empty translation</source>
         <translation type="unfinished">译文为空</translation>
     </message>
@@ -2767,7 +2796,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation type="unfinished">原文本身常常就不成对，与译文无关——因此才要与原文比对</translation>
     </message>
     <message>
-        <location line="+200" />
+        <location line="+204" />
         <source>Every rule on, nothing forgiven. For the final read-through, when you would rather sift ten false alarms than miss one real fault.</source>
         <translation type="unfinished">全部规则开启，不留任何宽容。适合定稿前的通读：宁可筛掉十条误报，也不放过一处真问题。</translation>
     </message>
@@ -2802,7 +2831,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation type="unfinished">仅使用内置数值，之上不加任何设置。想逐条手动调整规则，就从这里开始。</translation>
     </message>
     <message>
-        <location line="-349" />
+        <location line="-353" />
         <source>Icons @…! and £…£</source>
         <translation type="unfinished">图标 @…! 和 £…£</translation>
     </message>
@@ -2982,17 +3011,17 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation type="unfinished">一条启发式规则：噪声大于价值，因此默认关闭</translation>
     </message>
     <message>
-        <location line="+124" />
+        <location line="+127" />
         <source>Strict</source>
         <translation type="unfinished">严格</translation>
     </message>
     <message>
-        <location line="+57" />
+        <location line="+59" />
         <source>%1 — recommended for this project</source>
         <translation type="unfinished">%1 — 推荐用于本项目</translation>
     </message>
     <message>
-        <location line="-56" />
+        <location line="-58" />
         <source>Breakage only</source>
         <translation type="unfinished">仅致命问题</translation>
     </message>
@@ -3005,155 +3034,186 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>Relocate</name>
     <message>
-        <location filename="../../core/relocate.py" line="+58" />
+        <location filename="../../core/relocate.py" line="+64" />
+        <location line="+357" />
         <source>Folder: %1</source>
-        <translation>文件夹：%1</translation>
+        <translation type="unfinished">文件夹：%1</translation>
     </message>
     <message>
-        <location line="+2" />
+        <location line="-355" />
         <source>%1 was chosen, but the localization files lie in %2 — that is what will be recorded.</source>
-        <translation>所选为 %1，但本地化文件位于 %2——将记录后者。</translation>
+        <translation type="unfinished">所选为 %1，但本地化文件位于 %2——将记录后者。</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Files matched: %1 out of the %2 the database knows.</source>
-        <translation>匹配到的文件：%1 / 数据库已知的 %2 个。</translation>
+        <translation type="unfinished">匹配到的文件：%1 / 数据库已知的 %2 个。</translation>
     </message>
     <message>
         <location line="+4" />
         <source>, of them %1 with a translation will go to the archive.</source>
-        <translation>，其中 %1 个带译文的将转入存档。</translation>
+        <translation type="unfinished">，其中 %1 个带译文的将转入存档。</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Files not found: %1 — %2</source>
-        <translation>未找到的文件：%1 — %2</translation>
+        <translation type="unfinished">未找到的文件：%1 — %2</translation>
     </message>
     <message>
         <location line="+2" />
         <source>%1 rows will become deleted</source>
-        <translation>%1 行将变为已删除</translation>
+        <translation type="unfinished">%1 行将变为已删除</translation>
     </message>
     <message>
         <location line="+5" />
         <location line="+9" />
         <source>  … and %1 more</source>
-        <translation>  ……还有 %1 个</translation>
+        <translation type="unfinished">  ……还有 %1 个</translation>
     </message>
     <message>
         <location line="-6" />
         <source>New files: %1 — rows from them appear on the next scan.</source>
-        <translation>新文件：%1——其中的行将在下次扫描时出现。</translation>
+        <translation type="unfinished">新文件：%1——其中的行将在下次扫描时出现。</translation>
     </message>
     <message>
         <location line="+9" />
         <source>Not a single database file was found in this folder. Looks like another mod's folder was chosen: after the change the whole translation goes to the archive.</source>
-        <translation>该文件夹中没有找到任何数据库中的文件。看起来选中的是另一个模组的文件夹：更改之后整份译文都会转入存档。</translation>
+        <translation type="unfinished">该文件夹中没有找到任何数据库中的文件。看起来选中的是另一个模组的文件夹：更改之后整份译文都会转入存档。</translation>
     </message>
     <message>
         <location line="+6" />
         <source>The file set matches completely — the translation is safe.</source>
-        <translation>文件集合完全一致——译文是安全的。</translation>
+        <translation type="unfinished">文件集合完全一致——译文是安全的。</translation>
     </message>
     <message>
         <location line="+4" />
         <source>After the folder change a scan (F5) is needed: it re-reads the files and shows what changed in the original.</source>
-        <translation>更改文件夹后需要扫描（F5）：它会重新读取文件并显示原文中的变化。</translation>
+        <translation type="unfinished">更改文件夹后需要扫描（F5）：它会重新读取文件并显示原文中的变化。</translation>
     </message>
     <message>
         <location line="+11" />
         <source>Project id=%1 not found</source>
-        <translation>未找到 id=%1 的项目</translation>
+        <translation type="unfinished">未找到 id=%1 的项目</translation>
     </message>
     <message>
-        <location line="+62" />
+        <location line="+63" />
         <source>Folder not found: %1</source>
-        <translation>未找到文件夹：%1</translation>
+        <translation type="unfinished">未找到文件夹：%1</translation>
     </message>
     <message>
         <location line="+14" />
         <source>The folder has no localization files *%1*.yml:
 %2</source>
-        <translation>该文件夹中没有本地化文件 *%1*.yml：
+        <translation type="unfinished">该文件夹中没有本地化文件 *%1*.yml：
 %2</translation>
     </message>
     <message>
-        <location line="+51" />
+        <location line="+52" />
         <source>Only the text language changes — files and rows are not affected. Machine translation, memory database naming and language-specific checks will use the new value.</source>
-        <translation>只更改文本语言——文件和行不受影响。机器翻译、记忆库命名以及与语言相关的检查将使用新值。</translation>
+        <translation type="unfinished">只更改文本语言——文件和行不受影响。机器翻译、记忆库命名以及与语言相关的检查将使用新值。</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Files with the label _l_%1 in the original folder: %2 of the %3 the database knows.</source>
-        <translation>原文文件夹中带 _l_%1 标记的文件：%2 / 数据库已知的 %3 个。</translation>
+        <translation type="unfinished">原文文件夹中带 _l_%1 标记的文件：%2 / 数据库已知的 %3 个。</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Not a single file was found. After the change the scan will consider every row deleted and the translations will go to the archive.</source>
-        <translation>没有找到任何文件。更改之后，扫描会把所有行都视为已删除，译文将转入存档。</translation>
+        <translation type="unfinished">没有找到任何文件。更改之后，扫描会把所有行都视为已删除，译文将转入存档。</translation>
     </message>
     <message>
         <location line="+6" />
         <source>%1 rows will become deleted, of them %2 with a translation.</source>
-        <translation>%1 行将变为已删除，其中 %2 行带有译文。</translation>
+        <translation type="unfinished">%1 行将变为已删除，其中 %2 行带有译文。</translation>
     </message>
     <message>
         <location line="+5" />
         <source>After the change a scan (F5) is needed: it re-reads the files under the new names.</source>
-        <translation>更改之后需要扫描（F5）：它会按新的文件名重新读取文件。</translation>
+        <translation type="unfinished">更改之后需要扫描（F5）：它会按新的文件名重新读取文件。</translation>
+    </message>
+    <message>
+        <location line="+147" />
+        <source>The project is left without a translation folder — it is asked for at the first write into the mod.</source>
+        <translation type="unfinished">项目将不设译文文件夹——首次写入模组时会询问。</translation>
+    </message>
+    <message>
+        <location line="+6" />
+        <source>The folder does not exist yet — it is created at the first write.</source>
+        <translation type="unfinished">该文件夹尚不存在——首次写入时会创建。</translation>
+    </message>
+    <message>
+        <location line="+4" />
+        <source>Translation files found: %1 of %2</source>
+        <translation type="unfinished">找到译文文件：%1 / %2</translation>
+    </message>
+    <message>
+        <location line="+4" />
+        <source>No translation files for this project here — the folder is where the write will put them. Files known: %1</source>
+        <translation type="unfinished">此处没有本项目的译文文件——写入时会把它们放进这个文件夹。项目已知文件：%1</translation>
+    </message>
+    <message>
+        <location line="+28" />
+        <source>This is a file, not a folder: %1</source>
+        <translation type="unfinished">这是文件，不是文件夹：%1</translation>
     </message>
 </context>
 <context>
     <name>RootDialog</name>
     <message>
-        <location filename="../root_dialog.py" line="+29" />
+        <location filename="../root_dialog.py" line="+35" />
         <source>Change the original folder</source>
-        <translation>更改原文文件夹</translation>
+        <translation type="unfinished">更改原文文件夹</translation>
     </message>
     <message>
         <location line="+8" />
         <source>The folder the original is read from. It needs changing if the mod was re-downloaded elsewhere, the game library was moved, or the project came from another person.</source>
-        <translation>读取原文的文件夹。如果模组重新下载到了别处、游戏库被移动，或项目来自他人，就需要更改它。</translation>
+        <translation type="unfinished">读取原文的文件夹。如果模组重新下载到了别处、游戏库被移动，或项目来自他人，就需要更改它。</translation>
     </message>
     <message>
         <location line="+8" />
+        <location line="+111" />
         <source>Now: %1</source>
-        <translation>当前：%1</translation>
+        <translation type="unfinished">当前：%1</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="-105" />
+        <location line="+113" />
         <source>New folder:</source>
-        <translation>新文件夹：</translation>
+        <translation type="unfinished">新文件夹：</translation>
     </message>
     <message>
-        <location line="+4" />
+        <location line="-109" />
+        <location line="+113" />
         <source>Browse…</source>
-        <translation>浏览…</translation>
+        <translation type="unfinished">浏览…</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="-102" />
+        <location line="+113" />
         <source>Change the folder</source>
-        <translation>更改文件夹</translation>
+        <translation type="unfinished">更改文件夹</translation>
     </message>
     <message>
-        <location line="+11" />
+        <location line="-102" />
         <source>Original folder</source>
-        <translation>原文文件夹</translation>
+        <translation type="unfinished">原文文件夹</translation>
     </message>
     <message>
         <location line="+12" />
+        <location line="+113" />
         <source>Could not read the folder:
 %1</source>
-        <translation>无法读取文件夹：
+        <translation type="unfinished">无法读取文件夹：
 %1</translation>
     </message>
     <message>
-        <location line="+16" />
+        <location line="-97" />
         <source>
 
 Rows that will become deleted: %1
 Translations that go to the archive: %2</source>
-        <translation>
+        <translation type="unfinished">
 
 将变为已删除的行：%1
 转入存档的译文：%2</translation>
@@ -3161,16 +3221,46 @@ Translations that go to the archive: %2</source>
     <message>
         <location line="+6" />
         <source>Change of the original folder</source>
-        <translation>更改原文文件夹</translation>
+        <translation type="unfinished">更改原文文件夹</translation>
     </message>
     <message>
         <location line="+1" />
         <source>The new folder holds %1 files out of the %2 the database knows.%3
 
 Translations are not deleted: they stay in the archive and in the translation memory. Change the folder?</source>
-        <translation>新文件夹中包含数据库已知的 %2 个文件中的 %1 个。%3
+        <translation type="unfinished">新文件夹中包含数据库已知的 %2 个文件中的 %1 个。%3
 
 译文不会被删除：它们保留在存档和翻译记忆库中。要更改文件夹吗？</translation>
+    </message>
+    <message>
+        <location line="+28" />
+        <source>Change the translation folder</source>
+        <translation type="unfinished">更改译文文件夹</translation>
+    </message>
+    <message>
+        <location line="+8" />
+        <source>The folder the translation is read from at a scan and written into at a write. It may be left empty: the mod has no translation yet, and the folder is asked for at the first write.</source>
+        <translation type="unfinished">扫描时从中读取译文、写入时写入其中的文件夹。可以留空：模组尚无译文时，首次写入会询问该文件夹。</translation>
+    </message>
+    <message>
+        <location line="+10" />
+        <source>Now: not chosen</source>
+        <translation type="unfinished">当前：未选择</translation>
+    </message>
+    <message>
+        <location line="+32" />
+        <source>Translation folder</source>
+        <translation type="unfinished">译文文件夹</translation>
+    </message>
+    <message>
+        <location line="+29" />
+        <source>Change of the translation folder</source>
+        <translation type="unfinished">更改译文文件夹</translation>
+    </message>
+    <message>
+        <location line="+1" />
+        <source>The project will be left without a translation folder. Nothing is deleted: the translation stays in the project, and the folder is asked for at the first write. Continue?</source>
+        <translation type="unfinished">项目将不设译文文件夹。不会删除任何内容：译文仍保留在项目中，首次写入时会询问文件夹。要继续吗？</translation>
     </message>
 </context>
 <context>
@@ -3201,7 +3291,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation type="unfinished">提示</translation>
     </message>
     <message>
-        <location filename="../rules_param_editors.py" line="+37" />
+        <location filename="../rules_param_editors.py" line="+38" />
         <source>Comma separated: Concept, Select_CString</source>
         <translation type="unfinished">以逗号分隔：Concept, Select_CString</translation>
     </message>
@@ -3323,12 +3413,12 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation type="unfinished">条目数：%1</translation>
     </message>
     <message>
-        <location filename="../rules_window.py" line="+107" />
+        <location filename="../rules_window.py" line="+105" />
         <source>Preset:</source>
         <translation type="unfinished">预设：</translation>
     </message>
     <message>
-        <location line="+18" />
+        <location line="+19" />
         <source>Scope:</source>
         <translation type="unfinished">范围：</translation>
     </message>
@@ -3404,12 +3494,12 @@ Translations are not deleted: they stay in the archive and in the translation me
     </message>
     <message>
         <location line="+33" />
-        <location line="+569" />
+        <location line="+572" />
         <source>Check</source>
         <translation type="unfinished">检查</translation>
     </message>
     <message>
-        <location line="-547" />
+        <location line="-550" />
         <source>Setting</source>
         <translation type="unfinished">设置</translation>
     </message>
@@ -3419,7 +3509,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation type="unfinished">将该规则恢复为预设</translation>
     </message>
     <message>
-        <location line="+528" />
+        <location line="+531" />
         <source>Check · %1</source>
         <translation type="unfinished">检查 · %1</translation>
     </message>
@@ -3429,37 +3519,37 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation type="unfinished">🔒 内置规则：检查本身及其措辞都在应用程序中。可以关闭、可以放宽，但无法改写或删除。</translation>
     </message>
     <message>
-        <location line="+207" />
+        <location line="+210" />
         <source>Own rule</source>
         <translation type="unfinished">自定义规则</translation>
     </message>
     <message>
-        <location line="-767" />
-        <location line="+774" />
+        <location line="-773" />
+        <location line="+780" />
         <source>Name:</source>
         <translation type="unfinished">名称：</translation>
     </message>
     <message>
-        <location line="-868" />
+        <location line="-874" />
         <source>Reset…</source>
         <translation type="unfinished">重置…</translation>
     </message>
     <message>
         <location line="+4" />
-        <location line="+388" />
+        <location line="+391" />
         <location line="+5" />
         <source>Return built-in rules to the preset</source>
         <translation type="unfinished">将内置规则恢复为预设</translation>
     </message>
     <message>
-        <location line="-388" />
-        <location line="+403" />
+        <location line="-391" />
+        <location line="+406" />
         <location line="+4" />
         <source>Delete all own rules</source>
         <translation type="unfinished">删除全部自定义规则</translation>
     </message>
     <message>
-        <location line="-319" />
+        <location line="-322" />
         <source>same as the name</source>
         <translation type="unfinished">与名称相同</translation>
     </message>
@@ -3489,13 +3579,13 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation type="unfinished">该规则没有可调设置。</translation>
     </message>
     <message>
-        <location line="+13" />
-        <location line="+569" />
+        <location line="+14" />
+        <location line="+572" />
         <source>Examples — the rule checks itself with them:</source>
         <translation type="unfinished">示例——规则以此自检：</translation>
     </message>
     <message>
-        <location line="-563" />
+        <location line="-566" />
         <source>Original</source>
         <translation type="unfinished">原文</translation>
     </message>
@@ -3540,7 +3630,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation type="unfinished">插入项目表格中选中行的原文与译文</translation>
     </message>
     <message>
-        <location line="+24" />
+        <location line="+25" />
         <source>Built-in rules</source>
         <translation type="unfinished">内置规则</translation>
     </message>
@@ -3565,7 +3655,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation type="unfinished">你自己的规则：可以添加、编辑、复制和删除</translation>
     </message>
     <message>
-        <location line="+87" />
+        <location line="+88" />
         <source>Set by hand — differs from the preset</source>
         <translation type="unfinished">已手动设置——与预设不同</translation>
     </message>
@@ -3664,17 +3754,17 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation type="unfinished">替换「%1」的设置？</translation>
     </message>
     <message>
-        <location line="+56" />
+        <location line="+55" />
         <source>The inflection helpers of the target language are added when a project is open — they come with its translation language.</source>
         <translation type="unfinished">译文语言的变格函数在打开项目后才会加入——它们随项目的译文语言而来。</translation>
     </message>
     <message>
-        <location line="+53" />
+        <location line="+54" />
         <source>The rule is set for all projects — here it can only be switched off</source>
         <translation type="unfinished">该规则设定于所有项目——在这里只能将其关闭</translation>
     </message>
     <message>
-        <location line="+40" />
+        <location line="+41" />
         <source>This rule has no self-check examples — try it on a pair above.</source>
         <translation type="unfinished">该规则没有自检示例——请在上方的一对文本上试用它。</translation>
     </message>
@@ -3714,7 +3804,7 @@ Translations are not deleted: they stay in the archive and in the translation me
         <translation type="unfinished">已在项目的 %1 行已翻译内容上统计触发次数。</translation>
     </message>
     <message>
-        <location line="+52" />
+        <location line="+54" />
         <source>for example: No ellipsis as one character</source>
         <translation type="unfinished">例如：不要用单字符省略号</translation>
     </message>
@@ -3739,7 +3829,7 @@ This is where issues go after the «Not an error» button in the check report (F
     </message>
     <message>
         <location line="+3" />
-        <location line="+55" />
+        <location line="+56" />
         <source>Return all</source>
         <translation type="unfinished">全部恢复</translation>
     </message>
@@ -3936,7 +4026,7 @@ This is where issues go after the «Not an error» button in the check report (F
 <context>
     <name>ScanStats</name>
     <message>
-        <location filename="../../core/models.py" line="+60" />
+        <location filename="../../core/models.py" line="+63" />
         <source>EN files: %1, RU: %2</source>
         <translation>原文文件：%1，译文：%2</translation>
     </message>
@@ -4009,12 +4099,12 @@ This is where issues go after the «Not an error» button in the check report (F
 <context>
     <name>Scanner</name>
     <message>
-        <location filename="../../core/scanner.py" line="+122" />
+        <location filename="../../core/scanner.py" line="+126" />
         <source>Project id=%1 not found</source>
         <translation>未找到 id=%1 的项目</translation>
     </message>
     <message>
-        <location line="+8" />
+        <location line="+13" />
         <source>Original folder not found: %1</source>
         <translation>未找到原文文件夹：%1</translation>
     </message>
@@ -4022,214 +4112,208 @@ This is where issues go after the «Not an error» button in the check report (F
 <context>
     <name>StartScreen</name>
     <message>
-        <location filename="../start_screen.py" line="+38" />
+        <location filename="../start_screen.py" line="+39" />
         <source>New project</source>
-        <translation>新建项目</translation>
+        <translation type="unfinished">新建项目</translation>
     </message>
     <message>
         <location line="+12" />
         <source>Format is the same across the series. Of another game — type its name: it gets a pen of its own next to the rest</source>
-        <translation>整个系列的格式相同。其他游戏——直接填写它的名称：它会在旁边获得自己的专属目录</translation>
+        <translation type="unfinished">整个系列的格式相同。其他游戏——直接填写它的名称：它会在旁边获得自己的专属目录</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Game:</source>
-        <translation>游戏：</translation>
+        <translation type="unfinished">游戏：</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Name:</source>
-        <translation>名称：</translation>
+        <translation type="unfinished">名称：</translation>
     </message>
     <message>
         <location line="+5" />
         <source>Original folder:</source>
-        <translation>原文文件夹：</translation>
+        <translation type="unfinished">原文文件夹：</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Translation folder:</source>
-        <translation>译文文件夹：</translation>
+        <translation type="unfinished">译文文件夹：</translation>
     </message>
     <message>
         <location line="+5" />
-        <location line="+61" />
+        <location line="+63" />
         <source>Browse…</source>
-        <translation>浏览…</translation>
+        <translation type="unfinished">浏览…</translation>
     </message>
     <message>
-        <location line="-60" />
-        <location line="+166" />
+        <location line="-62" />
+        <location line="+171" />
         <source>Choose a folder</source>
-        <translation>选择文件夹</translation>
+        <translation type="unfinished">选择文件夹</translation>
     </message>
     <message>
-        <location line="-145" />
+        <location line="-150" />
         <source>Game folders:</source>
-        <translation>游戏文件夹：</translation>
+        <translation type="unfinished">游戏文件夹：</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+6" />
         <source>The text is in another language</source>
-        <translation>文本使用其他语言</translation>
+        <translation type="unfinished">文本使用其他语言</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Portuguese in CK3, say, lives in l_english files: the game has no folder of its own for it</source>
-        <translation>例如 CK3 中的葡萄牙语存放在 l_english 文件中：游戏没有为它单独设文件夹</translation>
+        <translation type="unfinished">例如 CK3 中的葡萄牙语存放在 l_english 文件中：游戏没有为它单独设文件夹</translation>
     </message>
     <message>
         <location line="+21" />
         <source>Text languages:</source>
-        <translation>文本语言：</translation>
+        <translation type="unfinished">文本语言：</translation>
     </message>
     <message>
-        <location line="+12" />
+        <location line="+13" />
         <source>Choose where to put the project file</source>
-        <translation>选择项目文件的存放位置</translation>
+        <translation type="unfinished">选择项目文件的存放位置</translation>
     </message>
     <message>
         <location line="+4" />
         <source>Project file:</source>
-        <translation>项目文件：</translation>
+        <translation type="unfinished">项目文件：</translation>
     </message>
     <message>
-        <location line="+66" />
-        <source>The original folder is the one holding *_l_%1.yml (for example …\localization\english).
-The translation folder is where *_l_%2.yml go; it may not exist yet.
-The project file is portable: put it anywhere.</source>
-        <translation>原文文件夹是存放 *_l_%1.yml 的文件夹（例如 …\localization\english）。
-译文文件夹用于存放 *_l_%2.yml，它可以尚不存在。
-项目文件是可移动的：放在任何位置都可以。</translation>
-    </message>
-    <message>
-        <location line="+52" />
+        <location line="+121" />
         <source>Project file</source>
-        <translation>项目文件</translation>
+        <translation type="unfinished">项目文件</translation>
     </message>
     <message>
         <location line="+1" />
         <source>Translation project (*%1)</source>
-        <translation>翻译项目 (*%1)</translation>
+        <translation type="unfinished">翻译项目 (*%1)</translation>
     </message>
     <message>
         <location line="+8" />
         <location line="+6" />
-        <location line="+6" />
-        <location line="+6" />
+        <location line="+7" />
         <location line="+5" />
-        <location line="+207" />
+        <location line="+209" />
         <location line="+15" />
         <source>Project</source>
-        <translation>项目</translation>
+        <translation type="unfinished">项目</translation>
     </message>
     <message>
-        <location line="-244" />
+        <location line="-241" />
         <source>Enter the project name.</source>
-        <translation>请填写项目名称。</translation>
+        <translation type="unfinished">请填写项目名称。</translation>
     </message>
     <message>
         <location line="+6" />
         <source>The original folder does not exist:
 %1</source>
-        <translation>原文文件夹不存在：
+        <translation type="unfinished">原文文件夹不存在：
 %1</translation>
     </message>
     <message>
-        <location line="+6" />
-        <source>Enter the translation folder.</source>
-        <translation>请填写译文文件夹。</translation>
+        <location line="-70" />
+        <source>The original folder is the one holding *_l_%1.yml (for example …\localization\english).
+The translation folder is where *_l_%2.yml go. Leave it empty if the mod has no translation yet — it is asked for at the first write.
+The project file is portable: put it anywhere.</source>
+        <translation type="unfinished">原文文件夹是存放 *_l_%1.yml 的文件夹（例如 …\localization\english）。
+译文文件夹用于存放 *_l_%2.yml。如果模组尚无译文，可以留空——首次写入时会询问。
+项目文件是可移动的：放在任何位置都可以。</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+77" />
         <source>Enter the project file.</source>
-        <translation>请填写项目文件。</translation>
+        <translation type="unfinished">请填写项目文件。</translation>
     </message>
     <message>
         <location line="+5" />
         <source>The file already exists:
 %1</source>
-        <translation>文件已存在：
+        <translation type="unfinished">文件已存在：
 %1</translation>
     </message>
     <message>
-        <location line="+102" />
+        <location line="+104" />
         <source>Translation projects</source>
-        <translation>翻译项目</translation>
+        <translation type="unfinished">翻译项目</translation>
     </message>
     <message>
         <location line="+3" />
         <source>Create…</source>
-        <translation>新建…</translation>
+        <translation type="unfinished">新建…</translation>
     </message>
     <message>
         <location line="+1" />
         <location line="+16" />
         <source>Open</source>
-        <translation>打开</translation>
+        <translation type="unfinished">打开</translation>
     </message>
     <message>
         <location line="-15" />
         <source>Open file…</source>
-        <translation>打开文件…</translation>
+        <translation type="unfinished">打开文件…</translation>
     </message>
     <message>
         <location line="+1" />
         <location line="+15" />
         <source>Show in Explorer</source>
-        <translation>在资源管理器中显示</translation>
+        <translation type="unfinished">在资源管理器中显示</translation>
     </message>
     <message>
         <location line="-14" />
         <location line="+132" />
         <source>Remove from the list</source>
-        <translation>从列表中移除</translation>
+        <translation type="unfinished">从列表中移除</translation>
     </message>
     <message>
         <location line="-131" />
         <source>Delete…</source>
-        <translation>删除…</translation>
+        <translation type="unfinished">删除…</translation>
     </message>
     <message>
         <location line="+41" />
         <source>Game not specified</source>
-        <translation>未指定游戏</translation>
+        <translation type="unfinished">未指定游戏</translation>
     </message>
     <message>
         <location line="+19" />
         <source>file not found</source>
-        <translation>未找到文件</translation>
+        <translation type="unfinished">未找到文件</translation>
     </message>
     <message>
         <location line="+37" />
         <source>Could not create the project:
 %1</source>
-        <translation>无法创建项目：
+        <translation type="unfinished">无法创建项目：
 %1</translation>
     </message>
     <message>
         <location line="+15" />
         <source>Project file not found:
 %1</source>
-        <translation>未找到项目文件：
+        <translation type="unfinished">未找到项目文件：
 %1</translation>
     </message>
     <message>
         <location line="+6" />
         <source>Open project</source>
-        <translation>打开项目</translation>
+        <translation type="unfinished">打开项目</translation>
     </message>
     <message>
         <location line="+2" />
         <source>Translation project (*%1);;All files (*)</source>
-        <translation>翻译项目 (*%1);;所有文件 (*)</translation>
+        <translation type="unfinished">翻译项目 (*%1);;所有文件 (*)</translation>
     </message>
     <message>
         <location line="+12" />
         <source>Remove the project from the recent list?
 
 The file %1 itself stays on disk.</source>
-        <translation>从最近列表中移除该项目？
+        <translation type="unfinished">从最近列表中移除该项目？
 
 文件 %1 本身仍保留在磁盘上。</translation>
     </message>
@@ -4237,7 +4321,7 @@ The file %1 itself stays on disk.</source>
 <context>
     <name>Stats</name>
     <message>
-        <location filename="../../core/stats.py" line="+81" />
+        <location filename="../../core/stats.py" line="+82" />
         <source>Translated %1 / %2 (%3%) · left %4</source>
         <translation>已翻译 %1 / %2（%3%）· 剩余 %4</translation>
     </message>
@@ -4260,7 +4344,7 @@ The file %1 itself stays on disk.</source>
 <context>
     <name>StatusChips</name>
     <message>
-        <location filename="../status_chips.py" line="+43" />
+        <location filename="../status_chips.py" line="+46" />
         <source>Rows with issues among those loaded — click to keep only them</source>
         <translation>已载入的行中有问题的行——点击只保留它们</translation>
     </message>
@@ -4316,7 +4400,7 @@ The file %1 itself stays on disk.</source>
 <context>
     <name>TextDiff</name>
     <message>
-        <location filename="../../core/textdiff.py" line="+150" />
+        <location filename="../../core/textdiff.py" line="+156" />
         <source>cosmetic edit</source>
         <translation>表面修改</translation>
     </message>
@@ -4368,17 +4452,17 @@ The file %1 itself stays on disk.</source>
     </message>
     <message>
         <location line="+24" />
-        <location line="+109" />
+        <location line="+110" />
         <source>Create the database</source>
         <translation>创建数据库</translation>
     </message>
     <message>
-        <location line="-107" />
+        <location line="-108" />
         <source>Interrupt</source>
         <translation>中断</translation>
     </message>
     <message>
-        <location line="+31" />
+        <location line="+32" />
         <source>Game:</source>
         <translation>游戏：</translation>
     </message>
@@ -4445,13 +4529,13 @@ The finished database appears in the folder %1.</source>
     </message>
     <message>
         <location line="+14" />
-        <location line="+142" />
+        <location line="+144" />
         <location line="+9" />
         <source>Export</source>
         <translation>导出</translation>
     </message>
     <message>
-        <location line="-87" />
+        <location line="-88" />
         <source> · took the nested translation folder: %1</source>
         <translation> · 已采用嵌套的译文文件夹：%1</translation>
     </message>
@@ -4466,7 +4550,7 @@ The finished database appears in the folder %1.</source>
         <translation> · 已检查嵌套目录：%1</translation>
     </message>
     <message>
-        <location line="+17" />
+        <location line="+18" />
         <source>Localization folder found: %1</source>
         <translation>找到本地化文件夹：%1</translation>
     </message>
@@ -4655,7 +4739,7 @@ Continue?</source>
         <translation>隐藏已挂载数据库的条目——它们是只读的</translation>
     </message>
     <message>
-        <location line="+33" />
+        <location line="+34" />
         <source>Double click on a translation to edit it. Entries of attached databases are dimmed: their files are open read only.</source>
         <translation>双击译文即可编辑。已挂载数据库的条目显示为灰色：它们的文件以只读方式打开。</translation>
     </message>
@@ -4670,7 +4754,7 @@ Continue?</source>
         <translation>清空我的记忆库…</translation>
     </message>
     <message>
-        <location line="+51" />
+        <location line="+53" />
         <source> · from attached databases: %1</source>
         <translation> · 来自已挂载的数据库：%1</translation>
     </message>
@@ -4737,7 +4821,7 @@ The translations of the project rows stay in place — the memory fills up again
 <context>
     <name>TmImport</name>
     <message>
-        <location filename="../../core/tm_import.py" line="+68" />
+        <location filename="../../core/tm_import.py" line="+70" />
         <source>This SQLite build has no FTS5 — similarity search is unavailable</source>
         <translation>该 SQLite 版本不含 FTS5——无法进行相似度搜索</translation>
     </message>
@@ -4772,7 +4856,7 @@ The translations of the project rows stay in place — the memory fills up again
         <translation>解析器警告：%1</translation>
     </message>
     <message>
-        <location line="+191" />
+        <location line="+196" />
         <source>Original folder not found: %1</source>
         <translation>未找到原文文件夹：%1</translation>
     </message>
@@ -4787,7 +4871,7 @@ The translations of the project rows stay in place — the memory fills up again
         <translation>未找到译文文件夹：%1</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+11" />
         <source>The folder %1 has no localization files of the language «%2» (names like *_l_%2.yml were expected)</source>
         <translation>文件夹 %1 中没有语言「%2」的本地化文件（应为 *_l_%2.yml 这样的文件名）</translation>
     </message>
@@ -4830,7 +4914,7 @@ Most likely it is attached to the current project — detach it in «Tools → T
 <context>
     <name>TmSources</name>
     <message>
-        <location filename="../tm_sources_tab.py" line="+41" />
+        <location filename="../tm_sources_tab.py" line="+43" />
         <source>Checked databases provide suggestions and autofill (%1 → %2). Changes apply immediately.</source>
         <translation>勾选的数据库会提供建议和自动填充（%1 → %2）。更改立即生效。</translation>
     </message>
@@ -4882,7 +4966,7 @@ Building takes seconds and adds about 20% to the file size.</source>
         <translation>数据库的语言与项目的语言不一致</translation>
     </message>
     <message>
-        <location line="+6" />
+        <location line="+7" />
         <source>The database is of another game — %1</source>
         <translation>该数据库属于其他游戏——%1</translation>
     </message>
@@ -4941,7 +5025,7 @@ The database now suggests not only exact matches but similar rows too.</source>
         <translation>翻译记忆库</translation>
     </message>
     <message>
-        <location line="+21" />
+        <location line="+22" />
         <source>Entries</source>
         <translation>条目</translation>
     </message>
@@ -4956,7 +5040,7 @@ The database now suggests not only exact matches but similar rows too.</source>
         <translation>构建数据库</translation>
     </message>
     <message>
-        <location line="+63" />
+        <location line="+64" />
         <source>Building a database</source>
         <translation>正在构建数据库</translation>
     </message>
@@ -4973,13 +5057,13 @@ An unfinished database file will not be created.</source>
 <context>
     <name>Toolbar</name>
     <message>
-        <location filename="../main_window.py" line="-816" />
-        <location filename="../toolbar.py" line="+137" />
+        <location filename="../main_window.py" line="-855" />
+        <location filename="../toolbar.py" line="+139" />
         <source>Toolbar</source>
         <translation>工具栏</translation>
     </message>
     <message>
-        <location filename="../toolbar.py" line="-75" />
+        <location filename="../toolbar.py" line="-76" />
         <source>Project languages: original → translation</source>
         <translation>项目语言：原文 → 译文</translation>
     </message>
@@ -4990,7 +5074,7 @@ An unfinished database file will not be created.</source>
     </message>
     <message>
         <location line="+13" />
-        <location line="+34" />
+        <location line="+35" />
         <source>Memory databases</source>
         <translation>记忆库数据库</translation>
     </message>
@@ -5008,25 +5092,25 @@ An unfinished database file will not be created.</source>
 <context>
     <name>UnitsTable</name>
     <message>
-        <location filename="../units_model.py" line="+34" />
-        <location line="+79" />
+        <location filename="../units_model.py" line="+35" />
+        <location line="+80" />
         <source>Key</source>
         <translation>键</translation>
     </message>
     <message>
-        <location line="-78" />
-        <location line="+79" />
+        <location line="-79" />
+        <location line="+80" />
         <source>File</source>
         <translation>文件</translation>
     </message>
     <message>
-        <location line="-77" />
-        <location line="+80" />
+        <location line="-78" />
+        <location line="+81" />
         <source>Status</source>
         <translation>状态</translation>
     </message>
     <message>
-        <location line="-78" />
+        <location line="-79" />
         <source>C</source>
         <translation>自</translation>
     </message>
@@ -5036,7 +5120,7 @@ An unfinished database file will not be created.</source>
         <translation>忽</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+11" />
         <source>Validate (F10)</source>
         <translation>确认 (F10)</translation>
     </message>
@@ -5056,7 +5140,7 @@ An unfinished database file will not be created.</source>
         <translation>忽略 (Ctrl+Shift+F10)</translation>
     </message>
     <message>
-        <location line="+5" />
+        <location line="+6" />
         <source>The original was edited cosmetically (punctuation, case, spaces)</source>
         <translation>原文只有表面修改（标点、大小写、空格）</translation>
     </message>
@@ -5106,7 +5190,7 @@ An unfinished database file will not be created.</source>
         <translation>单击——升序，再次——降序，再次——恢复原样</translation>
     </message>
     <message>
-        <location line="+10" />
+        <location line="+9" />
         <source>Original</source>
         <translation>原文</translation>
     </message>
@@ -5126,7 +5210,7 @@ An unfinished database file will not be created.</source>
         <translation>问题</translation>
     </message>
     <message>
-        <location line="+358" />
+        <location line="+361" />
         <source>deleted</source>
         <translation>已删除</translation>
     </message>
@@ -5134,31 +5218,31 @@ An unfinished database file will not be created.</source>
 <context>
     <name>Welcome</name>
     <message>
-        <location filename="../welcome_dialog.py" line="+51" />
-        <location line="+183" />
+        <location filename="../welcome_dialog.py" line="+50" />
+        <location line="+184" />
         <source>Getting started</source>
         <translation>快速上手</translation>
     </message>
     <message>
-        <location line="-161" />
-        <location line="+162" />
+        <location line="-162" />
+        <location line="+163" />
         <source>Skip</source>
         <translation>跳过</translation>
     </message>
     <message>
-        <location line="-158" />
-        <location line="+159" />
+        <location line="-159" />
+        <location line="+160" />
         <source>Back</source>
         <translation>上一步</translation>
     </message>
     <message>
-        <location line="-156" />
-        <location line="+136" />
+        <location line="-157" />
+        <location line="+137" />
         <source>Next</source>
         <translation>下一步</translation>
     </message>
     <message>
-        <location line="-121" />
+        <location line="-122" />
         <source>Choose the language of the interface. It can be changed at any time in «File → Preferences».</source>
         <translation>请选择界面语言。之后随时可以在「文件 → 首选项」中更改。</translation>
     </message>
@@ -5169,12 +5253,12 @@ An unfinished database file will not be created.</source>
     </message>
     <message>
         <location line="+16" />
-        <location line="+66" />
+        <location line="+67" />
         <source>Build a database…</source>
         <translation>构建数据库…</translation>
     </message>
     <message>
-        <location line="-43" />
+        <location line="-44" />
         <source>A project holds everything: rows, statuses, translation memory and the history of the original. It is a single file you can copy or hand to another person.</source>
         <translation>项目中保存着一切：行、状态、翻译记忆库以及原文的历史。它就是一个文件，可以复制，也可以交给别人。</translation>
     </message>
@@ -5189,7 +5273,7 @@ An unfinished database file will not be created.</source>
         <translation>打开项目…</translation>
     </message>
     <message>
-        <location line="+15" />
+        <location line="+16" />
         <source>Translation memory databases found: %1. They fill in strings the mod copied from the game and prompt you with how similar lines were translated before.</source>
         <translation>找到翻译记忆库数据库：%1 个。它们会填充模组从游戏中复制的字符串，并提示相似的行以前是怎么翻译的。</translation>
     </message>

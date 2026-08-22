@@ -87,6 +87,35 @@ def scanned(request, tmp_path):
     conn.close()
 
 
+@pytest.mark.parametrize("layout", ["папки языка", "один мод", "язык в глубине пути"])
+def test_the_offered_translation_folder_is_the_real_one(layout, tmp_path) -> None:
+    """The window creating a project must not send the translation past the mod.
+
+    The offer used to be a guess by the folder name, and for a mod holding both
+    languages in one tree it answered a folder outside the mod. Nothing failed:
+    the project simply found no translation and later offered to write there.
+    """
+    from pdxloc.core import relocate
+
+    en_root, ru_root = LAYOUTS[layout](tmp_path)
+
+    assert relocate.suggest_target_root(en_root) == ru_root
+
+
+def test_a_translation_in_another_mod_is_not_invented(tmp_path) -> None:
+    """Two mods of the workshop: the pack lives elsewhere and cannot be guessed.
+
+    The offer then stays inside the mod being translated — the write belongs
+    there — and the pack is pointed at by hand, in «Change translation folder».
+    """
+    from pdxloc.core import relocate
+
+    en_root, ru_root = layout_workshop(tmp_path)
+
+    offered = relocate.suggest_target_root(en_root)
+    assert offered == en_root and offered != ru_root
+
+
 def test_existing_translation_is_never_lost(scanned) -> None:
     """The main canary: the translation lies on the disk — it is obliged to be found.
 

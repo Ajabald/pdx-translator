@@ -42,7 +42,7 @@ def create_project(
     *,
     name: str,
     src_root: Path | str,
-    tgt_root: Path | str,
+    tgt_root: Path | str = "",
     game: str = games.CK3,
     src_lang: str = "english",
     tgt_lang: str = "russian",
@@ -54,6 +54,11 @@ def create_project(
     The locales are empty by default: that means "the same as the language
     folder", and they need filling in only when translating into a language the
     game does not have.
+
+    `tgt_root` is empty by default for the same kind of reason: a mod that has
+    no translation yet has no such folder either, and inventing a path at this
+    point would only be a guess. It is asked for at the first write into the mod
+    and can be set later (see `set_translation_root`).
     """
     path = Path(path)
     if path.exists():
@@ -466,6 +471,33 @@ def _set_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
     conn.execute(
         "INSERT INTO project_meta (key, value) VALUES (?, ?) "
         "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (key, value))
+    conn.commit()
+
+
+def translation_root_of(value: str | None) -> Path | None:
+    """The stored translation folder as a path; `None` when it is not set.
+
+    Empty is a lawful value, not an oversight: a mod that has no translation yet
+    is created without one, and the folder is asked for at the first write into
+    the mod. The one thing that must never happen is `Path("")` — that is the
+    current directory, and the scan would take it for the translation tree.
+    """
+    text = (value or "").strip()
+    return Path(text) if text else None
+
+
+def translation_root(conn: sqlite3.Connection, project_id: int = 1) -> Path | None:
+    """The translation folder of the project; `None` when it is not set."""
+    row = conn.execute(
+        "SELECT ru_root FROM projects WHERE id = ?", (project_id,)).fetchone()
+    return translation_root_of(row["ru_root"] if row else None)
+
+
+def set_translation_root(conn: sqlite3.Connection, path: Path | str | None,
+                         project_id: int = 1) -> None:
+    """Write the translation folder. `None` clears it back to «not chosen»."""
+    conn.execute("UPDATE projects SET ru_root = ? WHERE id = ?",
+                 ("" if path is None else str(path), project_id))
     conn.commit()
 
 

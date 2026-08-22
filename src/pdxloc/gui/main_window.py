@@ -157,6 +157,7 @@ class MainWindow(QMainWindow):
         connect("actualize_cosmetic", self._actualize_cosmetic)
         connect("archive", self._show_archive)
         connect("en_root", self._change_en_root)
+        connect("ru_root", self._change_translation_root)
         connect("project_languages", self._change_languages)
         connect("tm", self._tm_manager)
         connect("glossary", self._glossary)
@@ -943,6 +944,32 @@ class MainWindow(QMainWindow):
                       "The folder has changed. Scan the project now?\n\n"
                       "Scanning re-reads the files: translations are kept, changed "
                       "rows become «Outdated»."))
+        if answer == QMessageBox.Yes:
+            self.scan_current()
+
+    def _change_translation_root(self) -> None:
+        """Change the folder the translation is read from and written into.
+
+        A scan is offered for the same reason as with the original folder: until
+        it runs, the project holds what the former folder gave. A project that
+        had no folder at all has nothing to reread, so there we keep quiet.
+        """
+        from pdxloc.gui.root_dialog import TranslationRootDialog
+
+        if self.conn is None:
+            return
+        had_root = project.translation_root(self.conn, PROJECT_ID) is not None
+        dlg = TranslationRootDialog(self.conn, PROJECT_ID, self)
+        if not dlg.exec():
+            return
+        if project.translation_root(self.conn, PROJECT_ID) is None or not had_root:
+            return
+        answer = QMessageBox.question(
+            self, translate("MainWindow", "Change of the translation folder"),
+            translate("MainWindow",
+                      "The folder has changed. Scan the project now?\n\n"
+                      "Scanning re-reads the files: the translation stays in the "
+                      "project, and what the new folder holds is picked up."))
         if answer == QMessageBox.Yes:
             self.scan_current()
 

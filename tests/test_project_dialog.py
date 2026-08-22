@@ -6,6 +6,7 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest  # noqa: E402
+from PySide6.QtWidgets import QDialog  # noqa: E402
 
 from pdxloc import project, settings  # noqa: E402
 
@@ -116,6 +117,53 @@ def test_target_not_overwritten(dialog, tmp_path):
     dialog._suggest_target()
 
     assert dialog.tgt_edit.text() == str(tmp_path / "своя папка")
+
+
+def test_a_mod_with_both_languages_keeps_the_same_root(dialog, tmp_path):
+    """The root is …\\mod\\localization, and the translation lives in that same root.
+
+    The sibling guess answered …\\mod\\russian — outside the mod. The project then
+    found no translation at all and offered to write the mod past itself.
+    """
+    root = tmp_path / "mod" / "localization"
+    (root / "english").mkdir(parents=True)
+    dialog.src_edit.setText(str(root))
+    dialog._suggest_target()
+
+    assert dialog.tgt_edit.text() == str(root)
+
+
+def test_the_translation_folder_may_be_left_empty(dialog, tmp_path, make_tree):
+    """A mod that is English only has no such folder — demanding one invents a path."""
+    src = make_tree({"m_l_english.yml": EN}, "en")
+    dialog.name_edit.setText("Только английский")
+    dialog.src_edit.setText(str(src))
+    dialog.tgt_edit.setText("")
+
+    dialog._validate()      # the window used to refuse here
+
+    assert dialog.result() == QDialog.Accepted
+    assert dialog.values()["tgt_root"] == ""
+
+
+def test_an_empty_folder_creates_a_working_project(dialog, tmp_path, make_tree):
+    """The whole point: translating a mod nobody has translated yet."""
+    from pdxloc.core.scanner import scan_project
+
+    src = make_tree({"m_l_english.yml": EN}, "en")
+    dialog.name_edit.setText("Без перевода")
+    dialog.src_edit.setText(str(src))
+    dialog.tgt_edit.setText("")
+    values = dialog.values()
+
+    conn = project.create_project(
+        values["path"], name=values["name"], src_root=values["src_root"],
+        tgt_root=values["tgt_root"])
+    try:
+        assert scan_project(conn, 1).new == 1
+        assert project.translation_root(conn) is None
+    finally:
+        conn.close()
 
 
 def test_browse_buttons_are_labelled(dialog):

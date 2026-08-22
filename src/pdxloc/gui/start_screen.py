@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from pdxloc import settings
-from pdxloc.core import games, languages as lang_mod
+from pdxloc.core import games, languages as lang_mod, relocate
 from pdxloc.core.i18n import fill, translate
 from pdxloc.core.languages import PARADOX_LANGUAGES
 from pdxloc.gui import shell, theme
@@ -207,8 +207,9 @@ class ProjectDialog(QDialog):
                 "StartScreen",
                 "The original folder is the one holding *_l_%1.yml "
                 "(for example …\\localization\\english).\n"
-                "The translation folder is where *_l_%2.yml go; it may not "
-                "exist yet.\nThe project file is portable: put it anywhere."),
+                "The translation folder is where *_l_%2.yml go. Leave it empty "
+                "if the mod has no translation yet — it is asked for at the "
+                "first write.\nThe project file is portable: put it anywhere."),
                 src, tgt))
 
     def _suggest_file(self, name: str) -> None:
@@ -218,19 +219,20 @@ class ProjectDialog(QDialog):
                 / (safe_name(name) + settings.PROJECT_EXT)))
 
     def _suggest_target(self) -> None:
-        """Fill in the neighbouring folder of the translation language.
+        """Offer the translation folder for the chosen original one.
 
-        In CK3 the language trees lie side by side: …\\localization\\english and
-        …\\localization\\russian. For a new project the translation folder usually
-        does not exist yet, so we propose a path rather than look for a directory.
+        The answer comes from `relocate.suggest_target_root`: where a translation
+        is already on disk it is the folder that really pairs with the original,
+        otherwise a path for the write to create. The field stays editable and
+        may be emptied — a mod that is English only has no such folder yet.
         """
         src = self.src_edit.text().strip()
         if not src or self.tgt_edit.text().strip():
             return
+        src_lang = self.src_lang.currentText().strip() or "english"
         tgt_lang = self.tgt_lang.currentText().strip() or "russian"
-        src_path = Path(src)
-        sibling = src_path.parent / tgt_lang if src_path.name != tgt_lang else src_path
-        self.tgt_edit.setText(str(sibling))
+        self.tgt_edit.setText(str(
+            relocate.suggest_target_root(src, src_lang, tgt_lang)))
 
     def _start_dir(self, edit: QLineEdit) -> str:
         """Where to open the browser: the current value, otherwise the last choice."""
@@ -273,11 +275,6 @@ class ProjectDialog(QDialog):
                 self, translate("StartScreen", "Project"),
                 fill(translate("StartScreen",
                                "The original folder does not exist:\n%1"), src))
-            return
-        if not self.tgt_edit.text().strip():
-            QMessageBox.warning(
-                self, translate("StartScreen", "Project"),
-                translate("StartScreen", "Enter the translation folder."))
             return
         path = self._project_path()
         if path is None:
