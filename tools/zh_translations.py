@@ -1686,6 +1686,8 @@ ZH["StartScreen"] = {
         "原文文件夹是存放 *_l_%1.yml 的文件夹（例如 …\\localization\\english）。\n译文文件夹用于存放 *_l_%2.yml。如果模组尚无译文，可以留空——首次写入时会询问。\n项目文件是可移动的：放在任何位置都可以。",
     "Project file":
         "项目文件",
+    "…\\localization\\%1 — optional, asked at the first write":
+        "…\\localization\\%1 —— 可留空，首次写入时询问",
     "Translation project (*%1)":
         "翻译项目 (*%1)",
     "Project":

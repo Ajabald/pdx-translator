@@ -3034,13 +3034,13 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>Relocate</name>
     <message>
-        <location filename="../../core/relocate.py" line="+64" />
-        <location line="+357" />
+        <location filename="../../core/relocate.py" line="+59" />
+        <location line="+289" />
         <source>Folder: %1</source>
         <translation type="unfinished">文件夹：%1</translation>
     </message>
     <message>
-        <location line="-355" />
+        <location line="-287" />
         <source>%1 was chosen, but the localization files lie in %2 — that is what will be recorded.</source>
         <translation type="unfinished">所选为 %1，但本地化文件位于 %2——将记录后者。</translation>
     </message>
@@ -3133,7 +3133,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation type="unfinished">更改之后需要扫描（F5）：它会按新的文件名重新读取文件。</translation>
     </message>
     <message>
-        <location line="+147" />
+        <location line="+79" />
         <source>The project is left without a translation folder — it is asked for at the first write into the mod.</source>
         <translation type="unfinished">项目将不设译文文件夹——首次写入模组时会询问。</translation>
     </message>
@@ -4143,18 +4143,18 @@ This is where issues go after the «Not an error» button in the check report (F
     </message>
     <message>
         <location line="+5" />
-        <location line="+63" />
+        <location line="+62" />
         <source>Browse…</source>
         <translation type="unfinished">浏览…</translation>
     </message>
     <message>
-        <location line="-62" />
-        <location line="+171" />
+        <location line="-61" />
+        <location line="+160" />
         <source>Choose a folder</source>
         <translation type="unfinished">选择文件夹</translation>
     </message>
     <message>
-        <location line="-150" />
+        <location line="-140" />
         <source>Game folders:</source>
         <translation type="unfinished">游戏文件夹：</translation>
     </message>
@@ -4184,7 +4184,12 @@ This is where issues go after the «Not an error» button in the check report (F
         <translation type="unfinished">项目文件：</translation>
     </message>
     <message>
-        <location line="+121" />
+        <location line="+69" />
+        <source>…\localization\%1 — optional, asked at the first write</source>
+        <translation type="unfinished">…\localization\%1 —— 可留空，首次写入时询问</translation>
+    </message>
+    <message>
+        <location line="+40" />
         <source>Project file</source>
         <translation type="unfinished">项目文件</translation>
     </message>
@@ -4216,7 +4221,7 @@ This is where issues go after the «Not an error» button in the check report (F
 %1</translation>
     </message>
     <message>
-        <location line="-70" />
+        <location line="-52" />
         <source>The original folder is the one holding *_l_%1.yml (for example …\localization\english).
 The translation folder is where *_l_%2.yml go. Leave it empty if the mod has no translation yet — it is asked for at the first write.
 The project file is portable: put it anywhere.</source>
@@ -4225,7 +4230,7 @@ The project file is portable: put it anywhere.</source>
 项目文件是可移动的：放在任何位置都可以。</translation>
     </message>
     <message>
-        <location line="+77" />
+        <location line="+59" />
         <source>Enter the project file.</source>
         <translation type="unfinished">请填写项目文件。</translation>
     </message>

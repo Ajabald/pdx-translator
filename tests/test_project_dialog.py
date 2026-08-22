@@ -77,21 +77,21 @@ def test_bare_file_name_goes_to_the_pen(dialog, tmp_path):
         tmp_path / "Projects" / "CK3" / "другое-имя.pdxproj")
 
 
-def test_target_folder_suggested_from_source(dialog, tmp_path):
-    """…\\localization\\english was given — the translation folder is offered by itself."""
+def test_choosing_the_original_leaves_the_translation_field_alone(dialog, tmp_path):
+    """One field filling in another is a guess, and a guess here costs a project.
+
+    The folder used to be filled in the moment the original was chosen. Where the
+    guess missed — a mod keeping both languages in one tree — the project quietly
+    found no translation at all; where it hit, it still put a path into a field
+    nobody had touched.
+    """
     src = tmp_path / "mod" / "localization" / "english"
+    src.mkdir(parents=True)
+
     dialog.src_edit.setText(str(src))
-    dialog._suggest_target()
+    dialog.src_edit.editingFinished.emit()
 
-    assert dialog.tgt_edit.text() == str(tmp_path / "mod" / "localization" / "russian")
-
-
-def test_target_suggestion_follows_language(dialog, tmp_path):
-    dialog.tgt_lang.setCurrentText("french")
-    dialog.src_edit.setText(str(tmp_path / "loc" / "english"))
-    dialog._suggest_target()
-
-    assert dialog.tgt_edit.text().endswith("french")
+    assert dialog.tgt_edit.text() == ""
 
 
 def test_placeholders_follow_the_chosen_languages(dialog):
@@ -99,38 +99,20 @@ def test_placeholders_follow_the_chosen_languages(dialog):
 
     While it stood at english→russian, the dialog contradicted itself: below it
     spoke of polish, while in the field russian was offered.
+
+    The translation one says one thing more — that the field may stay empty. It
+    is the only place in the window where that shows at a glance.
     """
-    assert dialog.tgt_edit.placeholderText().endswith("russian")
+    assert "russian" in dialog.tgt_edit.placeholderText()
+    assert "optional" in dialog.tgt_edit.placeholderText()
 
     dialog.src_lang.setCurrentText("french")
     dialog.tgt_lang.setCurrentText("polish")
 
     assert dialog.src_edit.placeholderText().endswith("french")
-    assert dialog.tgt_edit.placeholderText().endswith("polish")
+    assert "polish" in dialog.tgt_edit.placeholderText()
     assert "l_french" in dialog.hint.text()      # and the original too, not only the translation
     assert "l_polish" in dialog.hint.text()
-
-
-def test_target_not_overwritten(dialog, tmp_path):
-    dialog.tgt_edit.setText(str(tmp_path / "своя папка"))
-    dialog.src_edit.setText(str(tmp_path / "loc" / "english"))
-    dialog._suggest_target()
-
-    assert dialog.tgt_edit.text() == str(tmp_path / "своя папка")
-
-
-def test_a_mod_with_both_languages_keeps_the_same_root(dialog, tmp_path):
-    """The root is …\\mod\\localization, and the translation lives in that same root.
-
-    The sibling guess answered …\\mod\\russian — outside the mod. The project then
-    found no translation at all and offered to write the mod past itself.
-    """
-    root = tmp_path / "mod" / "localization"
-    (root / "english").mkdir(parents=True)
-    dialog.src_edit.setText(str(root))
-    dialog._suggest_target()
-
-    assert dialog.tgt_edit.text() == str(root)
 
 
 def test_the_translation_folder_may_be_left_empty(dialog, tmp_path, make_tree):
@@ -181,7 +163,7 @@ def test_creates_working_project(dialog, tmp_path, make_tree):
     src = make_tree({"m_l_english.yml": EN}, "en")
     dialog.name_edit.setText("Проверка")
     dialog.src_edit.setText(str(src))
-    dialog._suggest_target()
+    dialog.tgt_edit.setText(str(tmp_path / "ru"))
     values = dialog.values()
 
     conn = project.create_project(

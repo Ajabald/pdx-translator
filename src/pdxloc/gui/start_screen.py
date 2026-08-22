@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from pdxloc import settings
-from pdxloc.core import games, languages as lang_mod, relocate
+from pdxloc.core import games, languages as lang_mod
 from pdxloc.core.i18n import fill, translate
 from pdxloc.core.languages import PARADOX_LANGUAGES
 from pdxloc.gui import shell, theme
@@ -73,7 +73,6 @@ class ProjectDialog(QDialog):
             btn.clicked.connect(lambda _, e=edit: self._browse_dir(e))
             row.addWidget(btn)
             form.addRow(label, row)
-        self.src_edit.editingFinished.connect(self._suggest_target)
 
         langs = QHBoxLayout()
         self.src_lang = QComboBox()
@@ -201,7 +200,13 @@ class ProjectDialog(QDialog):
         src = self.src_lang.currentText().strip() or "english"
         tgt = self.tgt_lang.currentText().strip() or "russian"
         self.src_edit.setPlaceholderText(f"…\\localization\\{src}")
-        self.tgt_edit.setPlaceholderText(f"…\\localization\\{tgt}")
+        # The placeholder of the translation field carries one thing more than a
+        # path shape: that the field may stay empty. Nothing else in the window
+        # says so at a glance, and an empty obligatory-looking field reads as an
+        # unfinished form.
+        self.tgt_edit.setPlaceholderText(fill(translate(
+            "StartScreen", "…\\localization\\%1 — optional, asked at the first write"),
+            tgt))
         self.hint.setText(
             fill(translate(
                 "StartScreen",
@@ -218,22 +223,6 @@ class ProjectDialog(QDialog):
                 settings.projects_pen(self.game_id())
                 / (safe_name(name) + settings.PROJECT_EXT)))
 
-    def _suggest_target(self) -> None:
-        """Offer the translation folder for the chosen original one.
-
-        The answer comes from `relocate.suggest_target_root`: where a translation
-        is already on disk it is the folder that really pairs with the original,
-        otherwise a path for the write to create. The field stays editable and
-        may be emptied — a mod that is English only has no such folder yet.
-        """
-        src = self.src_edit.text().strip()
-        if not src or self.tgt_edit.text().strip():
-            return
-        src_lang = self.src_lang.currentText().strip() or "english"
-        tgt_lang = self.tgt_lang.currentText().strip() or "russian"
-        self.tgt_edit.setText(str(
-            relocate.suggest_target_root(src, src_lang, tgt_lang)))
-
     def _start_dir(self, edit: QLineEdit) -> str:
         """Where to open the browser: the current value, otherwise the last choice."""
         return edit.text().strip() or settings.last_browse_dir()
@@ -246,8 +235,6 @@ class ProjectDialog(QDialog):
             return
         edit.setText(path)
         settings.set_last_browse_dir(path)
-        if edit is self.src_edit:
-            self._suggest_target()
 
     def _browse_file(self) -> None:
         current = self.file_edit.text().strip()

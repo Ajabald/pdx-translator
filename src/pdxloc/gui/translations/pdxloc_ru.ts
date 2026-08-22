@@ -3034,13 +3034,13 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
 <context>
     <name>Relocate</name>
     <message>
-        <location filename="../../core/relocate.py" line="+64" />
-        <location line="+357" />
+        <location filename="../../core/relocate.py" line="+59" />
+        <location line="+289" />
         <source>Folder: %1</source>
         <translation>Папка: %1</translation>
     </message>
     <message>
-        <location line="-355" />
+        <location line="-287" />
         <source>%1 was chosen, but the localization files lie in %2 — that is what will be recorded.</source>
         <translation>Выбрана %1, но файлы локализации лежат в %2 — записана будет она.</translation>
     </message>
@@ -3133,7 +3133,7 @@ The result is written with the «Machine (unchecked)» status. The whole run is 
         <translation>После смены нужно сканирование (F5): оно перечитает файлы под новыми именами.</translation>
     </message>
     <message>
-        <location line="+147" />
+        <location line="+79" />
         <source>The project is left without a translation folder — it is asked for at the first write into the mod.</source>
         <translation>Проект остаётся без папки перевода — её спросят при первой записи в мод.</translation>
     </message>
@@ -4143,18 +4143,18 @@ This is where issues go after the «Not an error» button in the check report (F
     </message>
     <message>
         <location line="+5" />
-        <location line="+63" />
+        <location line="+62" />
         <source>Browse…</source>
         <translation>Обзор…</translation>
     </message>
     <message>
-        <location line="-62" />
-        <location line="+171" />
+        <location line="-61" />
+        <location line="+160" />
         <source>Choose a folder</source>
         <translation>Выбор папки</translation>
     </message>
     <message>
-        <location line="-150" />
+        <location line="-140" />
         <source>Game folders:</source>
         <translation>Папки игры:</translation>
     </message>
@@ -4184,7 +4184,12 @@ This is where issues go after the «Not an error» button in the check report (F
         <translation>Файл проекта:</translation>
     </message>
     <message>
-        <location line="+121" />
+        <location line="+69" />
+        <source>…\localization\%1 — optional, asked at the first write</source>
+        <translation>…\localization\%1 — необязательно, спросим при первой записи</translation>
+    </message>
+    <message>
+        <location line="+40" />
         <source>Project file</source>
         <translation>Файл проекта</translation>
     </message>
@@ -4216,7 +4221,7 @@ This is where issues go after the «Not an error» button in the check report (F
 %1</translation>
     </message>
     <message>
-        <location line="-70" />
+        <location line="-52" />
         <source>The original folder is the one holding *_l_%1.yml (for example …\localization\english).
 The translation folder is where *_l_%2.yml go. Leave it empty if the mod has no translation yet — it is asked for at the first write.
 The project file is portable: put it anywhere.</source>
@@ -4225,7 +4230,7 @@ The project file is portable: put it anywhere.</source>
 Файл проекта переносим: его можно положить куда угодно.</translation>
     </message>
     <message>
-        <location line="+77" />
+        <location line="+59" />
         <source>Enter the project file.</source>
         <translation>Укажите файл проекта.</translation>
     </message>

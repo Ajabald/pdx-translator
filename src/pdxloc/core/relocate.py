@@ -26,11 +26,6 @@ from pdxloc.core.tm_import import language_dirs
 # localization/replace/english is three levels.
 MAX_DEPTH = 3
 
-# How many folders next to the original one are tried when nothing else pairs.
-# A game's `localisation` holds a dozen language folders, and each candidate
-# costs a walk over the source tree — some 40 ms on vanilla HOI4.
-MAX_NEIGHBOURS = 12
-
 
 @dataclass
 class RootPreview:
@@ -315,74 +310,6 @@ def preview_language_change(
 # The same story as with the original folder, only worse: `ru_root` used to be
 # written when the project was created and by nothing else at all, while it is
 # the folder the translation is read from and written into.
-
-
-def suggest_target_root(src_root: Path | str, src_lang: str = "english",
-                        tgt_lang: str = "russian") -> Path:
-    """The translation folder to propose for a chosen original one.
-
-    Where a translation already lies on disk we answer by the disk: the folder
-    that really pairs with the original wins. That matters most for a mod
-    holding both languages in one tree — there the translation root is the very
-    same folder, because the language sits inside the relative path
-    (`english/x_l_english.yml` → `russian/x_l_russian.yml`), and the sibling
-    guess used to send the whole project past the mod.
-
-    Where there is no translation yet — the usual case for a new project — there
-    is nothing to measure, and we propose a path: the sibling language folder if
-    the original folder is a language folder itself, otherwise the same root, so
-    the write lands inside the mod rather than next to it.
-    """
-    src_root = Path(src_root)
-    if not src_root.is_dir():
-        return _proposed_target(src_root, src_lang, tgt_lang)
-
-    best, _ = score_target_roots(src_root, src_lang, tgt_lang)
-    return best if best is not None else _proposed_target(src_root, src_lang, tgt_lang)
-
-
-def _proposed_target(src_root: Path, src_lang: str, tgt_lang: str) -> Path:
-    """A path for a translation that does not exist yet."""
-    return src_root.parent / tgt_lang if src_root.name == src_lang else src_root
-
-
-def score_target_roots(
-    src_root: Path, src_lang: str = "english", tgt_lang: str = "russian",
-) -> tuple[Path | None, list[tuple[Path, int]]]:
-    """Folders that could hold the translation, each with the pairs found in it.
-
-    The candidates are cheap on purpose — the sibling language folder, the root
-    itself, language folders inside it, and, only when none of those pairs, the
-    neighbours of the root: a translation kept in a folder with a name of its
-    own (`…\\en` and `…\\ru`) has nothing in the path to recognise it by.
-    """
-    from pdxloc.core.tm_import import count_pairs
-
-    def scored(paths: list[Path]) -> list[tuple[Path, int]]:
-        out: list[tuple[Path, int]] = []
-        seen: set[Path] = set()
-        for path in paths:
-            if not path.is_dir():
-                continue
-            key = path.resolve()
-            if key in seen:
-                continue
-            seen.add(key)
-            out.append((path, count_pairs(src_root, path, src_lang, tgt_lang)[0]))
-        return out
-
-    near = [src_root.parent / tgt_lang, src_root,
-            *language_dirs(src_root, tgt_lang, max_depth=MAX_DEPTH)]
-    candidates = scored(near)
-    best = max(candidates, key=lambda item: item[1], default=(None, 0))
-    if best[1]:
-        return best[0], candidates
-
-    neighbours = sorted(p for p in src_root.parent.glob("*")
-                        if p.is_dir() and p.resolve() != src_root.resolve())
-    candidates += scored(neighbours[:MAX_NEIGHBOURS])
-    best = max(candidates, key=lambda item: item[1], default=(None, 0))
-    return (best[0] if best[1] else None), candidates
 
 
 @dataclass

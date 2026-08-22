@@ -2,9 +2,10 @@
 
 A mod that is English only has no translation tree at all, and until 0.1.2 the
 window creating a project demanded one anyway: the field was obligatory, filled
-in with a guess, and after that unchangeable — `ru_root` was written once and by
-nothing else. A guess that missed cost the project every translation on disk
-silently, because the scan only ever asks whether the folder is there.
+in the moment the original folder was chosen, and after that unchangeable —
+`ru_root` was written once and by nothing else. A path guessed from the name of
+a neighbouring folder cost the project every translation on disk silently,
+because the scan only ever asks whether the folder is there.
 
 Two things are pinned down here: an unset folder is a lawful state that no part
 of the application may read as «the current directory», and a folder chosen for
@@ -79,60 +80,6 @@ def test_an_explicit_folder_still_writes(db, make_tree, tmp_path):
 
     assert report.files_written == 1
     assert (out / "m_l_russian.yml").is_file()
-
-
-# --- proposing a folder for a chosen original ----------------------------
-
-
-def test_a_language_folder_gets_its_sibling(tmp_path):
-    """The canonical layout: …\\localization\\english and …\\localization\\russian."""
-    src = tmp_path / "mod" / "localization" / "english"
-    src.mkdir(parents=True)
-
-    assert relocate.suggest_target_root(src) == src.parent / "russian"
-
-
-def test_a_localization_root_keeps_the_same_root(tmp_path):
-    """The original and the translation in one mod: the root is the same folder.
-
-    The sibling guess used to answer …\\mod\\russian here — outside the mod, where
-    the game reads nothing and the scan finds no pairs.
-    """
-    src = tmp_path / "mod" / "localization"
-    (src / "english").mkdir(parents=True)
-
-    assert relocate.suggest_target_root(src) == src
-
-
-def test_the_folder_holding_the_translation_wins(tmp_path, make_tree):
-    """Where a translation is already on disk, the disk answers, not the path."""
-    root = tmp_path / "mod" / "localization"
-    (root / "english").mkdir(parents=True)
-    (root / "english" / "m_l_english.yml").write_text(EN, encoding="utf-8-sig")
-    (root / "russian").mkdir()
-    (root / "russian" / "m_l_russian.yml").write_text(RU, encoding="utf-8-sig")
-
-    assert relocate.suggest_target_root(root) == root
-    assert relocate.suggest_target_root(root / "english") == root / "russian"
-
-
-def test_a_neighbour_with_a_name_of_its_own_is_found(tmp_path):
-    """Folders named `en` and `ru` carry no language in the path — only pairs tell."""
-    src = tmp_path / "en"
-    (src / "agot").mkdir(parents=True)
-    (src / "agot" / "m_l_english.yml").write_text(EN, encoding="utf-8-sig")
-    tgt = tmp_path / "ru"
-    (tgt / "agot").mkdir(parents=True)
-    (tgt / "agot" / "m_l_russian.yml").write_text(RU, encoding="utf-8-sig")
-
-    assert relocate.suggest_target_root(src) == tgt
-
-
-def test_a_folder_that_is_not_there_yet_still_gets_a_path(tmp_path):
-    """A new project has nothing to measure — the answer is a proposal, not a find."""
-    src = tmp_path / "mod" / "localization" / "english"
-
-    assert relocate.suggest_target_root(src) == src.parent / "russian"
 
 
 # --- changing the folder of an existing project --------------------------

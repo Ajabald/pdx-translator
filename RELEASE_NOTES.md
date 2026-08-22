@@ -35,14 +35,15 @@ What 0.1.2 adds and fixes is below; the description of 0.1.0 follows it, unchang
 
 ## 🔧 Fixed
 
-* **The offered translation folder could point past the mod.** It was guessed
-  from the name of the original folder, so a mod keeping both languages in one
-  tree — `…\mod\localization` with `english` and `russian` inside — was offered
-  `…\mod\russian`, a folder the game never reads. Nothing failed: the project
-  simply found no translation and later offered to write into the wrong place.
-  The offer now comes from the pairs actually on disk. And because the folder
-  used to be written once and by nothing else, a project created with the wrong
-  one stayed wrong for life; that is what the new command is for.
+* **Choosing the original folder no longer fills in the translation one.** It
+  used to be guessed from the name of the neighbouring folder, so a mod keeping
+  both languages in one tree — `…\mod\localization` with `english` and `russian`
+  inside — got `…\mod\russian`, a folder the game never reads. Nothing failed:
+  the project simply found no translation, and later offered to write into that
+  same wrong place. The field is filled in by you now, and the grey hint in it
+  says it may be left empty. And because the folder used to be written once and
+  by nothing else, a project created with the wrong one stayed wrong for life;
+  that is what the new command is for.
 
 * **The first-run wizard could not build the first database.** «Build a
   database…» did nothing at all: the memory window wanted an open project, and
