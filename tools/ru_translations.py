@@ -907,10 +907,10 @@ RU["RulesWindow"] = {
     "any — any discrepancy, fewer — lost ones only, more — extra ones only":
         "any — любое расхождение, fewer — только потерянные, "
         "more — только лишние",
-    "The wrapper is not «on top of» but «instead of» the reference — 59% of "
-    "all bracket discrepancies":
-        "Обёртка не «сверх», а «вместо» ссылки — 59% всех расхождений "
-        "по скобкам",
+    "Stay silent when a reference is replaced by a wrapper: one lost and one "
+    "added is a swap, not a loss":
+        "Молчать, когда ссылка заменена обёрткой: одна потеряна, одна "
+        "добавлена — это замена, а не потеря",
     "Stay silent if the same space is in the original":
         "Молчать, если такой же пробел есть в оригинале",
     "Stay silent if the original itself is unbalanced":

@@ -1340,8 +1340,8 @@ ZH["RulesWindow"] = {
         "multiset——计入数量，set——只看组成，count——只看总数",
     "any — any discrepancy, fewer — lost ones only, more — extra ones only":
         "any——任何差异，fewer——只看缺少的，more——只看多出的",
-    "The wrapper is not «on top of» but «instead of» the reference — 59% of all bracket discrepancies":
-        "包裹不是「叠加在」引用之上，而是「取代」了它——占括号差异的 59%",
+    "Stay silent when a reference is replaced by a wrapper: one lost and one added is a swap, not a loss":
+        "当引用被包裹取代时不作声：少了一个、多了一个，这是替换而非丢失",
     "Stay silent if the same space is in the original":
         "如果原文中也有同样的空格则不报",
     "Stay silent if the original itself is unbalanced":

@@ -3324,8 +3324,8 @@ Translations are not deleted: they stay in the archive and in the translation me
     </message>
     <message>
         <location line="+3" />
-        <source>The wrapper is not «on top of» but «instead of» the reference — 59% of all bracket discrepancies</source>
-        <translation type="unfinished">包裹不是「叠加在」引用之上，而是「取代」了它——占括号差异的 59%</translation>
+        <source>Stay silent when a reference is replaced by a wrapper: one lost and one added is a swap, not a loss</source>
+        <translation type="unfinished">当引用被包裹取代时不作声：少了一个、多了一个，这是替换而非丢失</translation>
     </message>
     <message>
         <location line="+3" />

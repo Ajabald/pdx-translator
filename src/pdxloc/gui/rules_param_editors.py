@@ -52,8 +52,8 @@ class ParamEditors(QWidget):
             "RulesWindow", "any — any discrepancy, fewer — lost ones only, "
                            "more — extra ones only"),
         "allow_replacement": QT_TRANSLATE_NOOP(
-            "RulesWindow", "The wrapper is not «on top of» but «instead of» the "
-                           "reference — 59% of all bracket discrepancies"),
+            "RulesWindow", "Stay silent when a reference is replaced by a "
+                           "wrapper: one lost and one added is a swap, not a loss"),
         "compare_with_source": QT_TRANSLATE_NOOP(
             "RulesWindow", "Stay silent if the same space is in the original"),
         "only_if_source_balanced": QT_TRANSLATE_NOOP(
